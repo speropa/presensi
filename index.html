@@ -56,6 +56,14 @@
         .nav-link.active {
             color: #2563eb; /* blue-600 */
         }
+        /* Styling for vertical table headers */
+        .vertical-th {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            white-space: nowrap;
+            padding-bottom: 8px;
+            padding-top: 8px;
+        }
     </style>
 </head>
 <body class="antialiased text-gray-800">
@@ -139,12 +147,11 @@
                 <div id="content-area" class="hidden">
                     <div class="bg-white p-4 rounded-xl shadow-md mb-6">
                         <label for="kegiatan-pembelajaran" class="text-sm font-bold text-gray-700">Kegiatan Hari Ini</label>
-                        <p class="text-xs text-gray-500 mb-2">Deskripsi kegiatan untuk tanggal yang dipilih. Akan tersimpan otomatis.</p>
-                        <input type="text" id="kegiatan-pembelajaran" placeholder="Contoh: Mengerjakan Latihan Bab 3" class="w-full mt-1 p-2 border rounded-lg bg-gray-50">
+                        <input type="text" id="kegiatan-pembelajaran" placeholder="Contoh: Mengerjakan Latihan Bab 3" class="w-full mt-2 p-2 border rounded-lg bg-gray-50">
                         
                         <div class="mt-4 pt-4 border-t">
                             <h4 class="text-sm font-semibold mb-2">Riwayat Kegiatan</h4>
-                            <div id="kegiatan-history-list" class="space-y-3 text-sm">
+                            <div id="kegiatan-history-list" class="space-y-3 text-xs">
                                 <!-- Riwayat kegiatan akan dimuat di sini -->
                             </div>
                             <button id="kegiatan-history-toggle-more" data-state="partial" class="text-blue-600 text-xs font-semibold mt-2 hidden">
@@ -170,7 +177,20 @@
             <!-- Kelola Siswa Page -->
             <div id="page-kelola-siswa" class="page-content hidden">
                 <div class="bg-white p-4 rounded-xl shadow-md mb-6">
-                    <h3 class="text-lg font-bold mb-3">Tambah Siswa Baru</h3>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold">Tambah Siswa Baru</h3>
+                        <div class="flex items-center space-x-2">
+                            <label for="csv-upload" class="bg-blue-500 text-white font-medium py-2 px-3 rounded-lg hover:bg-blue-600 cursor-pointer flex items-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                <span class="hidden sm:inline">Unggah</span>
+                            </label>
+                            <input type="file" id="csv-upload" class="hidden" accept=".csv">
+                            <button id="download-template-btn" class="bg-gray-600 text-white font-medium py-2 px-3 rounded-lg hover:bg-gray-700 flex items-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                <span class="hidden sm:inline">Unduh</span>
+                            </button>
+                        </div>
+                    </div>
                     <form id="add-student-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                         <div>
                             <label for="student-name" class="text-sm font-medium">Nama Lengkap</label>
@@ -182,17 +202,12 @@
                         </div>
                         <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600 h-fit">Tambah Siswa</button>
                     </form>
-                    <div class="mt-4 border-t pt-4">
-                        <label for="csv-upload" class="bg-indigo-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-600 cursor-pointer">
-                            Unggah Template CSV
-                        </label>
-                        <input type="file" id="csv-upload" class="hidden" accept=".csv">
-                        <p class="text-xs text-gray-500 mt-2">Format CSV: Kolom A: No, Kolom B: Nama Lengkap, Kolom C: Kelas. Data dibaca dari baris kedua.</p>
-                    </div>
                 </div>
 
                 <div class="bg-white p-4 rounded-xl shadow-md">
-                    <h3 class="text-lg font-bold mb-4">Daftar Semua Siswa</h3>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold">Daftar Semua Siswa</h3>
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm text-left">
                             <thead class="bg-gray-100">
@@ -236,7 +251,7 @@
                 </div>
             </div>
 
-            <!-- **BARU**: Halaman Jadwal (Placeholder) -->
+            <!-- Halaman Jadwal (Placeholder) -->
             <div id="page-jadwal" class="page-content hidden">
                 <div class="bg-white p-6 rounded-xl shadow-md text-center">
                     <h3 class="text-xl font-bold mb-2">Halaman Jadwal</h3>
@@ -244,16 +259,31 @@
                 </div>
             </div>
 
-            <!-- **BARU**: Halaman Hasil Rekap (Placeholder) -->
+            <!-- Halaman Hasil Rekap -->
             <div id="page-hasil-rekap" class="page-content hidden">
-                <div class="bg-white p-6 rounded-xl shadow-md text-center">
-                    <h3 class="text-xl font-bold mb-2">Halaman Hasil Rekap</h3>
-                    <p class="text-gray-600">Fitur ini sedang dalam pengembangan.</p>
+                <div class="bg-white p-4 rounded-xl shadow-md mb-6">
+                    <h3 class="text-lg font-bold mb-4">Rekapitulasi Presensi & Nilai</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label for="rekap-filter-mapel" class="text-sm font-medium">Mata Pelajaran</label>
+                            <select id="rekap-filter-mapel" class="w-full mt-1 p-2 border rounded-lg bg-gray-50"></select>
+                        </div>
+                        <div>
+                            <label for="rekap-filter-kelas" class="text-sm font-medium">Kelas</label>
+                            <select id="rekap-filter-kelas" class="w-full mt-1 p-2 border rounded-lg bg-gray-50"></select>
+                        </div>
+                        <div class="flex items-end">
+                            <button id="terapkan-rekap-btn" class="w-full bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-600">Terapkan</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="rekap-table-container" class="bg-white p-4 rounded-xl shadow-md overflow-x-auto">
+                    <!-- Tabel rekap akan muncul di sini -->
                 </div>
             </div>
         </main>
 
-        <!-- **BARU**: Bottom Navigation Bar -->
+        <!-- Bottom Navigation Bar -->
         <div class="fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_5px_rgba(0,0,0,0.1)] z-40">
             <nav class="container mx-auto flex justify-around">
                 <button data-page="presensi" class="nav-link active flex flex-col items-center text-gray-500 hover:text-blue-600 p-2 transition-colors">
@@ -350,12 +380,19 @@
         const studentClassInput = document.getElementById('student-class');
         const allStudentsTable = document.getElementById('all-students-table');
         const csvUploadInput = document.getElementById('csv-upload');
+        const downloadTemplateBtn = document.getElementById('download-template-btn');
 
         // Kelola Mapel Page Elements
         const addMapelForm = document.getElementById('add-mapel-form');
         const mapelNameInput = document.getElementById('mapel-name');
         const mapelClassSelect = document.getElementById('mapel-class');
         const mapelListContainer = document.getElementById('mapel-list-container');
+        
+        // Rekap Page Elements
+        const rekapFilterMapel = document.getElementById('rekap-filter-mapel');
+        const rekapFilterKelas = document.getElementById('rekap-filter-kelas');
+        const terapkanRekapBtn = document.getElementById('terapkan-rekap-btn');
+        const rekapTableContainer = document.getElementById('rekap-table-container');
 
         // Modal Elements
         const modal = document.getElementById('modal');
@@ -392,12 +429,14 @@
         };
 
         // --- AUTHENTICATION ---
-        onAuthStateChanged(auth, user => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
+                showLoader();
                 loginPage.classList.add('hidden');
                 mainApp.classList.remove('hidden');
                 userEmailDisplay.textContent = user.email;
-                initializeAppFunctions();
+                await initializeAppFunctions();
+                hideLoader();
             } else {
                 loginPage.classList.remove('hidden');
                 mainApp.classList.add('hidden');
@@ -432,12 +471,33 @@
 
                 navLinks.forEach(nav => nav.classList.remove('active'));
                 link.classList.add('active');
+
+                // **DIUBAH**: Panggil refresh rekap saat tab rekap diklik
+                if (link.dataset.page === 'hasil-rekap') {
+                    handleTerapkanRekap();
+                }
             });
         });
 
         // --- INITIALIZE APP DATA ---
-        function initializeAppFunctions() {
+        async function initializeAppFunctions() {
             filterTanggal.value = new Date().toISOString().split('T')[0];
+            
+            // Ambil data awal sekali saja untuk mempercepat loading
+            const studentPromise = get(ref(db, 'siswa/'));
+            const mapelPromise = get(ref(db, 'mapel/'));
+
+            const [studentSnapshot, mapelSnapshot] = await Promise.all([studentPromise, mapelPromise]);
+            allStudents = studentSnapshot.val() || {};
+            allMapel = mapelSnapshot.val() || {};
+
+            // Render UI awal
+            renderStudentsTable();
+            updateClassFilters();
+            renderMapelList();
+            updateMapelFilter();
+
+            // Setup listener untuk update real-time setelahnya
             listenToStudents();
             listenToMapel();
             setupEventListeners();
@@ -481,12 +541,18 @@
             sortedStudents.forEach((student, index) => {
                 const row = `
                     <tr class="border-b hover:bg-gray-50">
-                        <td class="p-3">${index + 1}</td>
+                        <td class="p-3 text-center">${index + 1}</td>
                         <td class="p-3 font-medium">${student.nama}</td>
                         <td class="p-3">${student.kelas}</td>
                         <td class="p-3 text-center">
-                            <button onclick="window.showEditStudentModal('${student.id}')" class="text-blue-600 hover:text-blue-800 mr-2">Edit</button>
-                            <button onclick="window.showDeleteStudentModal('${student.id}', '${student.nama}')" class="text-red-600 hover:text-red-800">Hapus</button>
+                            <div class="flex justify-center items-center space-x-2">
+                                <button onclick="window.showEditStudentModal('${student.id}')" class="p-2 rounded-full hover:bg-blue-100 text-blue-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                </button>
+                                <button onclick="window.showDeleteStudentModal('${student.id}', '${student.nama}')" class="p-2 rounded-full hover:bg-red-100 text-red-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -508,9 +574,13 @@
                             <p class="font-semibold">${mapel.nama}</p>
                             <p class="text-sm text-gray-500">Kelas: ${mapel.kelas}</p>
                         </div>
-                        <div>
-                            <button onclick="window.showEditMapelModal('${id}')" class="text-blue-600 hover:text-blue-800 mr-2">Edit</button>
-                            <button onclick="window.showDeleteMapelModal('${id}', '${mapel.nama}')" class="text-red-600 hover:text-red-800">Hapus</button>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="window.showEditMapelModal('${id}')" class="p-2 rounded-full hover:bg-blue-100 text-blue-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+                            <button onclick="window.showDeleteMapelModal('${id}', '${mapel.nama}')" class="p-2 rounded-full hover:bg-red-100 text-red-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
                         </div>
                     </div>
                 `;
@@ -524,31 +594,29 @@
             
             const sortedClasses = Array.from(availableClasses).sort();
             
-            filterKelas.innerHTML = '<option value="">Pilih Kelas</option>';
-            mapelClassSelect.innerHTML = '<option value="">Pilih Kelas</option>';
-            
-            sortedClasses.forEach(kelas => {
-                filterKelas.innerHTML += `<option value="${kelas}">${kelas}</option>`;
-                mapelClassSelect.innerHTML += `<option value="${kelas}">${kelas}</option>`;
-            });
+            const classOptionsHtml = '<option value="">Pilih Kelas</option>' + sortedClasses.map(kelas => `<option value="${kelas}">${kelas}</option>`).join('');
+            filterKelas.innerHTML = classOptionsHtml;
+            mapelClassSelect.innerHTML = classOptionsHtml;
+            rekapFilterKelas.innerHTML = classOptionsHtml;
         }
         
         function updateMapelFilter() {
-            filterMapel.innerHTML = '<option value="">Pilih Mapel</option>';
-            Object.entries(allMapel).forEach(([id, mapel]) => {
-                filterMapel.innerHTML += `<option value="${id}">${mapel.nama} (${mapel.kelas})</option>`;
-            });
+            const mapelOptionsHtml = '<option value="">Pilih Mapel</option>' + Object.entries(allMapel).map(([id, mapel]) => `<option value="${id}">${mapel.nama} (${mapel.kelas})</option>`).join('');
+            filterMapel.innerHTML = mapelOptionsHtml;
+            rekapFilterMapel.innerHTML = mapelOptionsHtml;
         }
 
         // --- EVENT LISTENERS SETUP ---
         function setupEventListeners() {
             addStudentForm.addEventListener('submit', handleAddStudent);
             csvUploadInput.addEventListener('change', handleCsvUpload);
+            downloadTemplateBtn.addEventListener('click', handleDownloadTemplate);
             addMapelForm.addEventListener('submit', handleAddMapel);
             toggleModeBtn.addEventListener('click', handleToggleMode);
             terapkanBtn.addEventListener('click', handleTerapkanFilter);
             kegiatanInput.addEventListener('change', handleSaveKegiatan);
             saveAllBtn.addEventListener('click', handleSaveAllData);
+            terapkanRekapBtn.addEventListener('click', handleTerapkanRekap);
             kegiatanHistoryToggleMore.addEventListener('click', () => {
                 const isPartial = kegiatanHistoryToggleMore.dataset.state === 'partial';
                 kegiatanHistoryToggleMore.dataset.state = isPartial ? 'full' : 'partial';
@@ -582,6 +650,7 @@
                 .then(() => {
                     showToast("Siswa berhasil ditambahkan.");
                     addStudentForm.reset();
+                    refreshRekapTableIfNeeded();
                 })
                 .catch(err => showToast(`Error: ${err.message}`, true))
                 .finally(hideLoader);
@@ -615,6 +684,7 @@
                         update(ref(db, 'siswa'), dataToUpload)
                             .then(() => {
                                 showToast(`${Object.keys(dataToUpload).length} siswa berhasil diunggah.`);
+                                refreshRekapTableIfNeeded();
                             })
                             .catch(err => showToast(`Error: ${err.message}`, true))
                             .finally(hideLoader);
@@ -631,6 +701,23 @@
             });
         }
         
+        function handleDownloadTemplate() {
+            const header = 'No;Nama Lengkap;Kelas';
+            const exampleRow = '1;Budi Santoso;7A';
+            const csvContent = `${header}\n${exampleRow}`;
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", "template_siswa.csv");
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
         function handleAddMapel(e) {
             e.preventDefault();
             const nama = mapelNameInput.value.trim();
@@ -786,6 +873,7 @@
             try {
                 await update(ref(db), updates);
                 showToast("Semua perubahan berhasil disimpan.");
+                refreshRekapTableIfNeeded();
             } catch (err) {
                 showToast(`Error saat menyimpan: ${err.message}`, true);
             } finally {
@@ -1003,6 +1091,7 @@
                 .then(() => {
                     showToast("Data siswa berhasil diperbarui.");
                     window.closeModal();
+                    refreshRekapTableIfNeeded();
                 })
                 .catch(err => showToast(`Error: ${err.message}`, true))
                 .finally(hideLoader);
@@ -1026,6 +1115,7 @@
                 .then(() => {
                     showToast("Siswa berhasil dihapus.");
                     window.closeModal();
+                    refreshRekapTableIfNeeded();
                 })
                 .catch(err => showToast(`Error: ${err.message}`, true))
                 .finally(hideLoader);
@@ -1159,6 +1249,95 @@
                 kegiatanHistoryToggleMore.innerHTML = isPartial ? 'Selengkapnya &darr;' : 'Sebagian &uarr;';
             } else {
                 kegiatanHistoryToggleMore.classList.add('hidden');
+            }
+        }
+
+        async function handleTerapkanRekap() {
+            const mapelId = rekapFilterMapel.value;
+            const kelas = rekapFilterKelas.value;
+
+            if (!mapelId || !kelas) {
+                rekapTableContainer.innerHTML = '<p class="text-center text-gray-500">Silakan pilih Mata Pelajaran dan Kelas untuk melihat rekap.</p>';
+                return;
+            }
+            showLoader();
+            rekapTableContainer.innerHTML = '<p class="text-center text-gray-500">Memuat data rekap...</p>';
+            
+            const presensiRef = ref(db, `presensi/${kelas}/${mapelId}`);
+            const nilaiRef = ref(db, `nilai/${kelas}/${mapelId}`);
+            
+            const [presensiSnapshot, nilaiSnapshot] = await Promise.all([
+                get(presensiRef),
+                get(nilaiRef)
+            ]);
+            const presensiData = presensiSnapshot.val() || {};
+            const nilaiData = nilaiSnapshot.val() || {};
+            renderRekapTable(presensiData, nilaiData, kelas);
+            hideLoader();
+        }
+
+        function renderRekapTable(presensiData, nilaiData, kelas) {
+            const studentsInClass = Object.values(allStudents).filter(s => s.kelas === kelas);
+            if (studentsInClass.length === 0) {
+                 rekapTableContainer.innerHTML = '<p class="text-center text-gray-500">Tidak ada siswa di kelas ini.</p>';
+                 return;
+            }
+            
+            const allDates = new Set([...Object.keys(presensiData), ...Object.keys(nilaiData)]);
+            const sortedDates = Array.from(allDates).sort();
+
+            if (sortedDates.length === 0) {
+                 rekapTableContainer.innerHTML = '<p class="text-center text-gray-500">Tidak ada data presensi atau nilai untuk mapel dan kelas ini.</p>';
+                 return;
+            }
+
+            let tableHTML = `<table class="w-full text-xs text-left whitespace-nowrap"><thead class="bg-gray-100"><tr>
+                <th class="p-2 border text-center w-10">No</th>
+                <th class="p-2 border text-center">Nama Lengkap</th>`;
+            
+            sortedDates.forEach(date => {
+                const [y, m, d] = date.split('-');
+                tableHTML += `<th class="vertical-th border">${d}/${m}/${y.slice(-2)}</th>`;
+            });
+            tableHTML += `</tr></thead><tbody>`;
+
+            const statusSymbols = { Hadir: '•', Sakit: 'S', Izin: 'I', Alpa: 'A' };
+            const statusColors = { S: 'text-orange-600', I: 'text-green-600', A: 'text-red-600' };
+
+            Object.entries(allStudents).filter(([id, student]) => student.kelas === kelas)
+                .sort(([, a], [, b]) => a.nama.localeCompare(b.nama))
+                .forEach(([studentId, student], index) => {
+                    tableHTML += `<tr class="border-b"><td class="p-2 border text-center">${index + 1}</td><td class="p-2 border font-medium">${student.nama}</td>`;
+                    sortedDates.forEach(date => {
+                        const status = presensiData[date]?.[studentId]?.status;
+                        const nilai = nilaiData[date]?.[studentId]?.nilai;
+                        
+                        let cellContent = '-';
+                        if (status || nilai) {
+                            const symbol = status ? statusSymbols[status] || '?' : '•';
+                            const colorClass = status ? statusColors[status] || '' : '';
+                            const nilaiHtml = nilai ? `<br><span class="font-bold">${nilai}</span>` : '';
+                            cellContent = `<span class="${colorClass}">${symbol}</span>${nilaiHtml}`;
+                        }
+                        tableHTML += `<td class="p-2 border text-center">${cellContent}</td>`;
+                    });
+                    tableHTML += `</tr>`;
+                });
+
+            tableHTML += `</tbody></table>`;
+            rekapTableContainer.innerHTML = tableHTML;
+        }
+        
+        // **BARU**: Fungsi untuk me-refresh tabel rekap jika sedang ditampilkan
+        function refreshRekapTableIfNeeded() {
+            const rekapPage = document.getElementById('page-hasil-rekap');
+            const mapelId = rekapFilterMapel.value;
+            const kelas = rekapFilterKelas.value;
+
+            // Hanya refresh jika halaman rekap aktif dan filter sudah terisi
+            if (!rekapPage.classList.contains('hidden') && mapelId && kelas) {
+                console.log("Refreshing rekap table due to data change...");
+                handleTerapkanRekap();
             }
         }
 
