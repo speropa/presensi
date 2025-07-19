@@ -121,14 +121,12 @@
             <div id="page-presensi" class="page-content">
                 <div class="bg-white p-4 rounded-xl shadow-md mb-6">
                     <h3 class="text-lg font-bold mb-4">Filter Presensi & Nilai</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label for="filter-mapel" class="text-sm font-medium">Mata Pelajaran</label>
-                            <select id="filter-mapel" class="w-full mt-1 p-2 border rounded-lg bg-gray-50"></select>
-                        </div>
-                        <div>
-                            <label for="filter-kelas" class="text-sm font-medium">Kelas</label>
-                            <select id="filter-kelas" class="w-full mt-1 p-2 border rounded-lg bg-gray-50"></select>
+                            <select id="filter-mapel" class="w-full mt-1 p-2 border rounded-lg bg-gray-50">
+                                <option value="">Memuat Mapel...</option>
+                            </select>
                         </div>
                         <div>
                             <label for="filter-tanggal" class="text-sm font-medium">Tanggal</label>
@@ -162,6 +160,12 @@
                                 Selengkapnya &darr;
                             </button>
                         </div>
+                    </div>
+
+                    <!-- Search input for Presensi Page -->
+                    <div class="bg-white p-4 rounded-xl shadow-md mb-6" id="presensi-search-container">
+                        <label for="search-presensi-student" class="block text-sm font-medium text-gray-700 mb-1">Cari Siswa:</label>
+                        <input type="text" id="search-presensi-student" placeholder="Cari berdasarkan nama..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                     </div>
 
                     <div id="student-list-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -209,8 +213,9 @@
                 </div>
 
                 <div class="bg-white p-4 rounded-xl shadow-md">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold">Daftar Semua Siswa</h3>
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                        <h3 class="text-lg font-bold mb-2 sm:mb-0">Daftar Semua Siswa</h3>
+                        <input type="text" id="search-all-students" placeholder="Cari siswa..." class="w-full sm:w-auto px-3 py-2 border rounded-lg bg-gray-50">
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm text-left">
@@ -241,7 +246,9 @@
                         </div>
                          <div>
                             <label for="mapel-class" class="text-sm font-medium">Untuk Kelas</label>
-                            <select id="mapel-class" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50"></select>
+                            <select id="mapel-class" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50">
+                                <option value="">Memuat Kelas...</option>
+                            </select>
                         </div>
                         <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600 h-fit">Tambah Mapel</button>
                     </form>
@@ -267,14 +274,12 @@
             <div id="page-hasil-rekap" class="page-content hidden">
                 <div class="bg-white p-4 rounded-xl shadow-md mb-6">
                     <h3 class="text-lg font-bold mb-4">Rekapitulasi Presensi & Nilai</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label for="rekap-filter-mapel" class="text-sm font-medium">Mata Pelajaran</label>
-                            <select id="rekap-filter-mapel" class="w-full mt-1 p-2 border rounded-lg bg-gray-50"></select>
-                        </div>
-                        <div>
-                            <label for="rekap-filter-kelas" class="text-sm font-medium">Kelas</label>
-                            <select id="rekap-filter-kelas" class="w-full mt-1 p-2 border rounded-lg bg-gray-50"></select>
+                            <select id="rekap-filter-mapel" class="w-full mt-1 p-2 border rounded-lg bg-gray-50">
+                                <option value="">Memuat Mapel...</option>
+                            </select>
                         </div>
                         <div class="flex items-end">
                             <button id="terapkan-rekap-btn" class="w-full bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-600">Terapkan</button>
@@ -282,7 +287,14 @@
                     </div>
                 </div>
                 <div id="rekap-table-container" class="bg-white p-4 rounded-xl shadow-md overflow-x-auto">
-                    <!-- Tabel rekap akan muncul di sini -->
+                    <!-- Search input for Rekap Page -->
+                    <div id="rekap-search-container" class="mb-4 hidden">
+                        <label for="search-rekap-student" class="block text-sm font-medium text-gray-700 mb-1">Cari Siswa:</label>
+                        <input type="text" id="search-rekap-student" placeholder="Cari berdasarkan nama..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div id="rekap-dynamic-table-content">
+                        <!-- Tabel rekap akan muncul di sini -->
+                    </div>
                 </div>
             </div>
         </main>
@@ -351,7 +363,11 @@
         let allMapel = {};
         let availableClasses = new Set();
         let hasUnsavedChanges = false;
-        
+        let pendingAction = null; // To store the action after modal confirmation (e.g., 'applyFilter', 'changePage', 'logout')
+        let pendingPage = null; // To store the target page for navigation
+        let currentPresensiStudentsData = []; // Store currently displayed students for presensi page search
+        let currentRekapData = { presensi: {}, nilai: {}, kelas: '' }; // Store rekap data for rekap page search
+
         // --- UI ELEMENTS ---
         const loadingSpinner = document.getElementById('loading-spinner');
         const loginPage = document.getElementById('login-page');
@@ -359,13 +375,11 @@
         const loginForm = document.getElementById('login-form');
         const loginError = document.getElementById('login-error');
         const logoutBtn = document.getElementById('logout-btn');
-        const userEmailDisplay = document.getElementById('user-email');
         const navLinks = document.querySelectorAll('.nav-link');
         const pages = document.querySelectorAll('.page-content');
         
         // Presensi Page Elements
         const filterMapel = document.getElementById('filter-mapel');
-        const filterKelas = document.getElementById('filter-kelas');
         const filterTanggal = document.getElementById('filter-tanggal');
         const terapkanBtn = document.getElementById('terapkan-filter-btn');
         const toggleModeBtn = document.getElementById('toggle-mode-btn');
@@ -377,6 +391,8 @@
         const saveAllBtn = document.getElementById('save-all-btn');
         const kegiatanHistoryList = document.getElementById('kegiatan-history-list');
         const kegiatanHistoryToggleMore = document.getElementById('kegiatan-history-toggle-more');
+        const presensiSearchContainer = document.getElementById('presensi-search-container');
+        const searchPresensiStudentInput = document.getElementById('search-presensi-student');
 
 
         // Kelola Siswa Page Elements
@@ -386,6 +402,7 @@
         const allStudentsTable = document.getElementById('all-students-table');
         const csvUploadInput = document.getElementById('csv-upload');
         const downloadTemplateBtn = document.getElementById('download-template-btn');
+        const searchAllStudentsInput = document.getElementById('search-all-students');
 
         // Kelola Mapel Page Elements
         const addMapelForm = document.getElementById('add-mapel-form');
@@ -395,13 +412,11 @@
         
         // Rekap Page Elements
         const rekapFilterMapel = document.getElementById('rekap-filter-mapel');
-        const rekapFilterKelas = document.getElementById('rekap-filter-kelas');
         const terapkanRekapBtn = document.getElementById('terapkan-rekap-btn');
         const rekapTableContainer = document.getElementById('rekap-table-container');
-
-        // Modal Elements
-        const modal = document.getElementById('modal');
-        const modalContent = document.getElementById('modal-content');
+        const rekapSearchContainer = document.getElementById('rekap-search-container');
+        const searchRekapStudentInput = document.getElementById('search-rekap-student');
+        const rekapDynamicTableContent = document.getElementById('rekap-dynamic-table-content');
 
         // --- HELPER FUNCTIONS ---
         const showLoader = () => loadingSpinner.classList.remove('hidden');
@@ -433,13 +448,177 @@
             }, 300);
         };
 
+        // Function to show unsaved changes confirmation modal
+        const showUnsavedChangesModal = (action, targetPage = null) => {
+            pendingAction = action;
+            pendingPage = targetPage;
+            const content = `
+                <h3 class="text-lg font-bold mb-2">Perubahan Belum Disimpan</h3>
+                <p class="text-gray-600 mb-6">Ada perubahan presensi atau nilai yang belum disimpan. Apakah Anda ingin menyimpannya?</p>
+                <div class="flex justify-end space-x-2">
+                    <button onclick="window.handleUnsavedChangesAction('cancel')" class="bg-gray-200 px-4 py-2 rounded-lg">Batal</button>
+                    <button onclick="window.handleUnsavedChangesAction('discard')" class="bg-red-500 text-white px-4 py-2 rounded-lg">Buang</button>
+                    <button onclick="window.handleUnsavedChangesAction('save')" class="bg-blue-500 text-white px-4 py-2 rounded-lg">Simpan</button>
+                </div>
+            `;
+            openModal(content);
+        };
+
+        // Handle actions after unsaved changes modal
+        window.handleUnsavedChangesAction = async (action) => {
+            window.closeModal();
+            if (action === 'save') {
+                await handleSaveAllData(); // This will set hasUnsavedChanges to false
+            } else if (action === 'discard') {
+                hasUnsavedChanges = false;
+            }
+
+            if (pendingAction === 'applyFilter') {
+                handleTerapkanFilter(true); // Pass true to skip unsaved changes check
+            } else if (pendingAction === 'changePage' && pendingPage) {
+                switchPage(pendingPage, true); // Pass true to skip unsaved changes check
+            } else if (pendingAction === 'logout') {
+                signOut(auth);
+            }
+            pendingAction = null;
+            pendingPage = null;
+        };
+
+        // Helper function to render student cards based on filtered data for presensi page
+        function renderFilteredPresensiStudents(filteredStudents) {
+            studentListContainer.innerHTML = '';
+            if (filteredStudents.length === 0) {
+                studentListContainer.innerHTML = `<p class="col-span-full text-center text-gray-500">Tidak ada siswa yang cocok dengan pencarian Anda.</p>`;
+                return;
+            }
+            filteredStudents.forEach((student, index) => {
+                const card = createStudentCard(student, index, student); // Pass full student data including presensi/nilai
+                studentListContainer.innerHTML += card;
+            });
+             filteredStudents.forEach(student => {
+                 attachHistoryListeners(student.id); // Re-attach listeners for newly rendered cards
+            });
+        }
+
+        function filterPresensiStudents() {
+            const query = searchPresensiStudentInput.value.toLowerCase();
+            const filtered = currentPresensiStudentsData.filter(student => 
+                student.nama.toLowerCase().includes(query)
+            );
+            renderFilteredPresensiStudents(filtered);
+        }
+
+        function filterAllStudentsTable() {
+            const query = searchAllStudentsInput.value.toLowerCase();
+            const fullStudents = JSON.parse(allStudentsTable.dataset.fullStudents || '[]');
+            const filteredStudents = fullStudents.filter(student => 
+                student.nama.toLowerCase().includes(query) || student.kelas.toLowerCase().includes(query)
+            );
+
+            let tableRowsHtml = '';
+            if (filteredStudents.length === 0) {
+                tableRowsHtml = `<tr><td colspan="4" class="text-center p-4 text-gray-500">Tidak ada siswa yang cocok dengan pencarian Anda.</td></tr>`;
+            } else {
+                filteredStudents.forEach((student, index) => {
+                    tableRowsHtml += `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="p-3 text-center">${index + 1}</td>
+                            <td class="p-3 font-medium">${student.nama}</td>
+                            <td class="p-3">${student.kelas}</td>
+                            <td class="p-3 text-center">
+                                <div class="flex justify-center items-center space-x-2">
+                                    <button onclick="window.showEditStudentModal('${student.id}')" class="p-2 rounded-full hover:bg-blue-100 text-blue-600">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                    </button>
+                                    <button onclick="window.showDeleteStudentModal('${student.id}', '${student.nama}')" class="p-2 rounded-full hover:bg-red-100 text-red-600">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            allStudentsTable.innerHTML = tableRowsHtml;
+        }
+
+        function filterRekapTable() {
+            const query = searchRekapStudentInput.value.toLowerCase();
+            const { presensi: presensiData, nilai: nilaiData, kelas } = currentRekapData; // Use stored data
+            
+            if (!presensiData && !nilaiData) { // If no data loaded yet
+                rekapDynamicTableContent.innerHTML = '<p class="text-center text-gray-500">Tidak ada data rekap untuk ditampilkan.</p>';
+                return;
+            }
+
+            const studentsInClass = Object.values(allStudents).filter(s => s.kelas === kelas);
+            if (studentsInClass.length === 0) {
+                 rekapDynamicTableContent.innerHTML = '<p class="text-center text-gray-500">Tidak ada siswa di kelas ini.</p>';
+                 return;
+            }
+            
+            const allDates = new Set([...Object.keys(presensiData), ...Object.keys(nilaiData)]);
+            const sortedDates = Array.from(allDates).sort();
+
+            if (sortedDates.length === 0) {
+                 rekapDynamicTableContent.innerHTML = '<p class="text-center text-gray-500">Tidak ada data presensi atau nilai untuk mapel dan kelas ini.</p>';
+                 return;
+            }
+
+            let tableHTML = `<table class="w-full text-xs text-left whitespace-nowrap"><thead class="bg-gray-100"><tr>
+                <th class="p-2 border text-center w-10">No</th>
+                <th class="p-2 border text-center">Nama Lengkap</th>`;
+            
+            sortedDates.forEach(date => {
+                const [y, m, d] = date.split('-');
+                tableHTML += `<th class="vertical-th border">${d}/${m}/${y.slice(-2)}</th>`;
+            });
+            tableHTML += `</tr></thead><tbody>`;
+
+            const statusSymbols = { Hadir: '•', Sakit: 'S', Izin: 'I', Alpa: 'A' };
+            const statusColors = { S: 'text-orange-600', I: 'text-green-600', A: 'text-red-600' };
+
+            let filteredCount = 0;
+            Object.entries(allStudents).filter(([id, student]) => student.kelas === kelas)
+                .sort(([, a], [, b]) => a.nama.localeCompare(b.nama))
+                .forEach(([studentId, student]) => {
+                    if (student.nama.toLowerCase().includes(query)) { // Filter by student name
+                        tableHTML += `<tr class="border-b"><td class="p-2 border text-center">${filteredCount + 1}</td><td class="p-2 border font-medium">${student.nama}</td>`;
+                        sortedDates.forEach(date => {
+                            const status = presensiData[date]?.[studentId]?.status;
+                            const nilai = nilaiData[date]?.[studentId]?.nilai;
+                            
+                            let cellContent = '-';
+                            if (status || nilai) {
+                                const symbol = status ? statusSymbols[status] || '?' : '•';
+                                const colorClass = status ? statusColors[status] || '' : '';
+                                const nilaiHtml = nilai ? `<br><span class="font-bold">${nilai}</span>` : '';
+                                cellContent = `<span class="${colorClass}">${symbol}</span>${nilaiHtml}`;
+                            }
+                            tableHTML += `<td class="p-2 border text-center">${cellContent}</td>`;
+                        });
+                        tableHTML += `</tr>`;
+                        filteredCount++;
+                    }
+                });
+
+            tableHTML += `</tbody></table>`;
+            rekapDynamicTableContent.innerHTML = tableHTML;
+
+            if (filteredCount === 0 && query !== '') { // Only show "no results" if there's a query
+                rekapDynamicTableContent.innerHTML = `<p class="text-center text-gray-500">Tidak ada siswa yang cocok dengan pencarian Anda.</p>`;
+            }
+        }
+
+
         // --- AUTHENTICATION ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 showLoader();
                 loginPage.classList.add('hidden');
                 mainApp.classList.remove('hidden');
-                await initializeAppFunctions();
+                filterTanggal.value = new Date().toISOString().split('T')[0];
+                setupEventListeners(); // Ensure event listeners are set up after UI is ready
                 hideLoader();
             } else {
                 loginPage.classList.remove('hidden');
@@ -461,69 +640,63 @@
         });
 
         logoutBtn.addEventListener('click', () => {
-            signOut(auth);
+            if (hasUnsavedChanges) {
+                showUnsavedChangesModal('logout');
+            } else {
+                signOut(auth);
+            }
         });
 
         // --- NAVIGATION ---
+        function switchPage(pageId, force = false) {
+            // Only show warning if currently on presensi page AND has unsaved changes
+            const isOnPresensiPage = !document.getElementById('page-presensi').classList.contains('hidden');
+            if (!force && hasUnsavedChanges && isOnPresensiPage) {
+                showUnsavedChangesModal('changePage', pageId);
+                return;
+            }
+
+            pages.forEach(page => page.classList.add('hidden'));
+            document.getElementById(`page-${pageId}`).classList.remove('hidden');
+
+            navLinks.forEach(nav => nav.classList.remove('active'));
+            document.querySelector(`.nav-link[data-page="${pageId}"]`).classList.add('active');
+
+            // Clear search inputs and hide search containers on page change
+            searchPresensiStudentInput.value = '';
+            presensiSearchContainer.classList.add('hidden');
+            searchAllStudentsInput.value = '';
+            searchRekapStudentInput.value = '';
+            rekapSearchContainer.classList.add('hidden');
+            rekapDynamicTableContent.innerHTML = ''; // Clear rekap table content
+
+            // Call refresh rekap when rekap tab is clicked
+            if (pageId === 'hasil-rekap') {
+                handleTerapkanRekap();
+            }
+        }
+
         navLinks.forEach(link => {
             link.addEventListener('click', () => {
-                const pageId = `page-${link.dataset.page}`;
-                
-                pages.forEach(page => page.classList.add('hidden'));
-                document.getElementById(pageId).classList.remove('hidden');
-
-                navLinks.forEach(nav => nav.classList.remove('active'));
-                link.classList.add('active');
-
-                // **DIUBAH**: Panggil refresh rekap saat tab rekap diklik
-                if (link.dataset.page === 'hasil-rekap') {
-                    handleTerapkanRekap();
-                }
+                switchPage(link.dataset.page);
             });
         });
 
-        // --- INITIALIZE APP DATA ---
-        async function initializeAppFunctions() {
-            filterTanggal.value = new Date().toISOString().split('T')[0];
-            
-            // Ambil data awal sekali saja untuk mempercepat loading
-            const studentPromise = get(ref(db, 'siswa/'));
-            const mapelPromise = get(ref(db, 'mapel/'));
+        // --- INITIALIZE APP DATA (runs immediately on script load) ---
+        // Use onValue for initial load and real-time updates for students
+        onValue(ref(db, 'siswa/'), (snapshot) => {
+            allStudents = snapshot.val() || {};
+            renderStudentsTable(); 
+            updateClassFilters(); // This is still needed for mapelClassSelect
+            filterPresensiStudents(); // Re-apply filter if on presensi page
+        });
 
-            const [studentSnapshot, mapelSnapshot] = await Promise.all([studentPromise, mapelPromise]);
-            allStudents = studentSnapshot.val() || {};
-            allMapel = mapelSnapshot.val() || {};
-
-            // Render UI awal
-            renderStudentsTable();
-            updateClassFilters();
+        // Use onValue for initial load and real-time updates for mapel
+        onValue(ref(db, 'mapel/'), (snapshot) => {
+            allMapel = snapshot.val() || {};
             renderMapelList();
             updateMapelFilter();
-
-            // Setup listener untuk update real-time setelahnya
-            listenToStudents();
-            listenToMapel();
-            setupEventListeners();
-        }
-
-        // --- DATA LISTENERS (REALTIME) ---
-        function listenToStudents() {
-            const studentsRef = ref(db, 'siswa/');
-            onValue(studentsRef, (snapshot) => {
-                allStudents = snapshot.val() || {};
-                renderStudentsTable();
-                updateClassFilters();
-            });
-        }
-
-        function listenToMapel() {
-            const mapelRef = ref(db, 'mapel/');
-            onValue(mapelRef, (snapshot) => {
-                allMapel = snapshot.val() || {};
-                renderMapelList();
-                updateMapelFilter();
-            });
-        }
+        });
 
         // --- RENDER FUNCTIONS ---
         function renderStudentsTable() {
@@ -533,6 +706,7 @@
                 return;
             }
 
+            // Store the full sorted list for filtering
             const sortedStudents = Object.entries(allStudents)
                 .map(([id, data]) => ({ id, ...data }))
                 .sort((a, b) => {
@@ -540,27 +714,9 @@
                     if (a.kelas > b.kelas) return 1;
                     return a.nama.localeCompare(b.nama);
                 });
-
-            sortedStudents.forEach((student, index) => {
-                const row = `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="p-3 text-center">${index + 1}</td>
-                        <td class="p-3 font-medium">${student.nama}</td>
-                        <td class="p-3">${student.kelas}</td>
-                        <td class="p-3 text-center">
-                            <div class="flex justify-center items-center space-x-2">
-                                <button onclick="window.showEditStudentModal('${student.id}')" class="p-2 rounded-full hover:bg-blue-100 text-blue-600">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                </button>
-                                <button onclick="window.showDeleteStudentModal('${student.id}', '${student.nama}')" class="p-2 rounded-full hover:bg-red-100 text-red-600">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-                allStudentsTable.innerHTML += row;
-            });
+            
+            allStudentsTable.dataset.fullStudents = JSON.stringify(sortedStudents);
+            filterAllStudentsTable(); // Apply filter immediately after rendering
         }
         
         function renderMapelList() {
@@ -598,13 +754,20 @@
             const sortedClasses = Array.from(availableClasses).sort();
             
             const classOptionsHtml = '<option value="">Pilih Kelas</option>' + sortedClasses.map(kelas => `<option value="${kelas}">${kelas}</option>`).join('');
-            filterKelas.innerHTML = classOptionsHtml;
-            mapelClassSelect.innerHTML = classOptionsHtml;
-            rekapFilterKelas.innerHTML = classOptionsHtml;
+            mapelClassSelect.innerHTML = classOptionsHtml; // Still needed for adding/editing mapel
         }
         
         function updateMapelFilter() {
-            const mapelOptionsHtml = '<option value="">Pilih Mapel</option>' + Object.entries(allMapel).map(([id, mapel]) => `<option value="${id}">${mapel.nama} (${mapel.kelas})</option>`).join('');
+            // Sort mapel by name and then by class for consistent display
+            const sortedMapel = Object.entries(allMapel)
+                .map(([id, data]) => ({ id, ...data }))
+                .sort((a, b) => {
+                    const nameCompare = a.nama.localeCompare(b.nama);
+                    if (nameCompare !== 0) return nameCompare;
+                    return a.kelas.localeCompare(b.kelas);
+                });
+
+            const mapelOptionsHtml = '<option value="">Pilih Mapel</option>' + sortedMapel.map(mapel => `<option value="${mapel.id}">${mapel.nama} (${mapel.kelas})</option>`).join('');
             filterMapel.innerHTML = mapelOptionsHtml;
             rekapFilterMapel.innerHTML = mapelOptionsHtml;
         }
@@ -616,7 +779,7 @@
             downloadTemplateBtn.addEventListener('click', handleDownloadTemplate);
             addMapelForm.addEventListener('submit', handleAddMapel);
             toggleModeBtn.addEventListener('click', handleToggleMode);
-            terapkanBtn.addEventListener('click', handleTerapkanFilter);
+            terapkanBtn.addEventListener('click', () => handleTerapkanFilter(false)); // Pass false to indicate normal call
             kegiatanInput.addEventListener('change', handleSaveKegiatan);
             saveAllBtn.addEventListener('click', handleSaveAllData);
             terapkanRekapBtn.addEventListener('click', handleTerapkanRekap);
@@ -635,6 +798,11 @@
                     }
                 }
             });
+
+            // Search input event listeners
+            searchPresensiStudentInput.addEventListener('input', filterPresensiStudents);
+            searchAllStudentsInput.addEventListener('input', filterAllStudentsTable);
+            searchRekapStudentInput.addEventListener('input', filterRekapTable);
         }
 
         // --- HANDLER FUNCTIONS ---
@@ -752,20 +920,32 @@
                 modeLabel.textContent = 'Mode: Presensi';
             }
             if (!contentArea.classList.contains('hidden')) {
-                handleTerapkanFilter();
+                // If content area is visible, re-render with new mode
+                handleTerapkanFilter(false); // Re-apply filter to update student cards
             }
         }
 
-        async function handleTerapkanFilter() {
-            const mapelId = filterMapel.value;
-            const kelas = filterKelas.value;
-            const tanggal = filterTanggal.value;
-
-            if (!mapelId || !kelas || !tanggal) {
-                showToast("Harap lengkapi semua filter.", true);
+        async function handleTerapkanFilter(force = false) {
+            if (!force && hasUnsavedChanges) {
+                showUnsavedChangesModal('applyFilter');
                 return;
             }
-            
+
+            const mapelId = filterMapel.value;
+            const tanggal = filterTanggal.value;
+
+            if (!mapelId || !tanggal) {
+                showToast("Harap lengkapi Mata Pelajaran dan Tanggal.", true);
+                return;
+            }
+
+            const selectedMapel = allMapel[mapelId];
+            if (!selectedMapel) {
+                showToast("Mata pelajaran tidak ditemukan.", true);
+                return;
+            }
+            const kelas = selectedMapel.kelas; // Get class from selected mapel
+
             showLoader();
             contentArea.classList.remove('hidden');
             studentListContainer.innerHTML = '<p class="col-span-full text-center text-gray-500">Memuat data siswa...</p>';
@@ -785,6 +965,7 @@
             if (studentsInClass.length === 0) {
                 studentListContainer.innerHTML = `<p class="col-span-full text-center text-gray-500">Tidak ada siswa di kelas ${kelas}.</p>`;
                 hideLoader();
+                presensiSearchContainer.classList.add('hidden'); // Hide search if no students
                 return;
             }
             
@@ -799,25 +980,31 @@
             const existingPresensi = presensiSnapshot.val() || {};
             const existingNilai = nilaiSnapshot.val() || {};
             
-            studentListContainer.innerHTML = '';
-            studentsInClass.forEach((student, index) => {
+            // Store data for filtering later
+            currentPresensiStudentsData = studentsInClass.map(student => {
                 const studentPresensi = existingPresensi[student.id] || {};
                 const studentNilai = existingNilai[student.id] || {};
-                const studentData = { ...studentPresensi, ...studentNilai };
-                const card = createStudentCard(student, index, studentData);
-                studentListContainer.innerHTML += card;
+                return { ...student, ...studentPresensi, ...studentNilai };
             });
-            
+
+            presensiSearchContainer.classList.remove('hidden'); // Show search bar
+            searchPresensiStudentInput.value = ''; // Clear previous search
+            filterPresensiStudents(); // Render and filter immediately
+
             studentsInClass.forEach(student => {
                  attachHistoryListeners(student.id);
             });
 
+            hasUnsavedChanges = false; // Reset flag after loading new data
             hideLoader();
         }
         
         function handleSaveKegiatan() {
             const mapelId = filterMapel.value;
-            const kelas = filterKelas.value;
+            const selectedMapel = allMapel[mapelId];
+            if (!selectedMapel) return; // Should not happen if filter is applied
+            const kelas = selectedMapel.kelas;
+
             const tanggal = filterTanggal.value;
             const deskripsi = kegiatanInput.value.trim();
 
@@ -835,7 +1022,13 @@
 
         async function handleSaveAllData() {
             const mapelId = filterMapel.value;
-            const kelas = filterKelas.value;
+            const selectedMapel = allMapel[mapelId];
+            if (!selectedMapel) {
+                showToast("Mata pelajaran tidak ditemukan untuk menyimpan data.", true);
+                return;
+            }
+            const kelas = selectedMapel.kelas;
+
             const tanggal = filterTanggal.value;
 
             if (!mapelId || !kelas || !tanggal) {
@@ -876,6 +1069,7 @@
             try {
                 await update(ref(db), updates);
                 showToast("Semua perubahan berhasil disimpan.");
+                hasUnsavedChanges = false; // Reset flag after successful save
                 refreshRekapTableIfNeeded();
             } catch (err) {
                 showToast(`Error saat menyimpan: ${err.message}`, true);
@@ -900,7 +1094,7 @@
                 inputSection = `
                 <label class="text-sm font-medium">Presensi:</label>
                 <div class="relative mt-1">
-                    <button id="dropdown-button-${id}" data-selected-value="${initialStatus}" onclick="window.toggleDropdown(this)" class="custom-dropdown-button w-full p-2 rounded-lg text-left font-medium cursor-pointer transition-colors ${initialColor} flex justify-between items-center">
+                    <button id="dropdown-button-${id}" data-selected-value="${initialStatus}" onclick="window.toggleDropdown(this, '${id}')" class="custom-dropdown-button w-full p-2 rounded-lg text-left font-medium cursor-pointer transition-colors ${initialColor} flex justify-between items-center">
                         <span>${initialStatus}</span>
                         <svg class="w-4 h-4 pointer-events-none" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
                     </button>
@@ -916,7 +1110,7 @@
                 const initialNilai = studentData.nilai || '';
                 inputSection = `
                 <label class="text-sm font-medium">Nilai:</label>
-                <input type="number" id="nilai-input-${id}" value="${initialNilai}" placeholder="0-100" class="w-full mt-1 p-2 border rounded-lg bg-gray-50">
+                <input type="number" id="nilai-input-${id}" value="${initialNilai}" placeholder="0-100" class="w-full mt-1 p-2 border rounded-lg bg-gray-50" oninput="window.markChanges()">
                 `;
             }
             
@@ -946,6 +1140,9 @@
         
         async function attachHistoryListeners(studentId) {
             const mapelId = filterMapel.value;
+            const selectedMapel = allMapel[mapelId];
+            if (!selectedMapel) return;
+            const kelas = selectedMapel.kelas;
             
             const presensiRef = ref(db, `presensi`);
             const nilaiRef = ref(db, `nilai`);
@@ -960,25 +1157,21 @@
             const mergedHistory = {};
 
             // Proses Presensi
-            for (const kelas in allPresensi) {
-                if (allPresensi[kelas][mapelId]) {
-                    for (const tanggal in allPresensi[kelas][mapelId]) {
-                        if (allPresensi[kelas][mapelId][tanggal][studentId]) {
-                            if (!mergedHistory[tanggal]) mergedHistory[tanggal] = {};
-                            mergedHistory[tanggal].status = allPresensi[kelas][mapelId][tanggal][studentId].status;
-                        }
+            if (allPresensi[kelas] && allPresensi[kelas][mapelId]) {
+                for (const tanggal in allPresensi[kelas][mapelId]) {
+                    if (allPresensi[kelas][mapelId][tanggal][studentId]) {
+                        if (!mergedHistory[tanggal]) mergedHistory[tanggal] = {};
+                        mergedHistory[tanggal].status = allPresensi[kelas][mapelId][tanggal][studentId].status;
                     }
                 }
             }
 
             // Proses Nilai
-            for (const kelas in allNilai) {
-                if (allNilai[kelas][mapelId]) {
-                    for (const tanggal in allNilai[kelas][mapelId]) {
-                        if (allNilai[kelas][mapelId][tanggal][studentId]) {
-                            if (!mergedHistory[tanggal]) mergedHistory[tanggal] = {};
-                            mergedHistory[tanggal].nilai = allNilai[kelas][mapelId][tanggal][studentId].nilai;
-                        }
+            if (allNilai[kelas] && allNilai[kelas][mapelId]) {
+                for (const tanggal in allNilai[kelas][mapelId]) {
+                    if (allNilai[kelas][mapelId][tanggal][studentId]) {
+                        if (!mergedHistory[tanggal]) mergedHistory[tanggal] = {};
+                        mergedHistory[tanggal].nilai = allNilai[kelas][mapelId][tanggal][studentId].nilai;
                     }
                 }
             }
@@ -1030,7 +1223,11 @@
 
         // --- GLOBAL WINDOW FUNCTIONS (for inline onclick) ---
         
-        window.toggleDropdown = (button) => {
+        window.markChanges = () => {
+            hasUnsavedChanges = true;
+        };
+
+        window.toggleDropdown = (button, studentId) => {
             const options = button.nextElementSibling;
             document.querySelectorAll('.custom-dropdown-options').forEach(opt => {
                 if (opt !== options) {
@@ -1060,10 +1257,16 @@
             button.className = `custom-dropdown-button w-full p-2 rounded-lg text-left font-medium cursor-pointer transition-colors flex justify-between items-center ${statusColors[value]}`;
 
             optionsContainer.classList.add('hidden');
+            hasUnsavedChanges = true; // Mark changes when attendance is selected
         };
 
         window.showEditStudentModal = (studentId) => {
             const student = allStudents[studentId];
+            let classOptions = '';
+            Array.from(availableClasses).sort().forEach(k => {
+                classOptions += `<option value="${k}" ${k === student.kelas ? 'selected' : ''}>${k}</option>`;
+            });
+
             const content = `
                 <h3 class="text-lg font-bold mb-4">Edit Siswa</h3>
                 <div class="mb-4">
@@ -1072,7 +1275,7 @@
                 </div>
                 <div class="mb-6">
                     <label class="block text-sm font-medium">Kelas</label>
-                    <input type="text" id="edit-student-class" value="${student.kelas}" class="w-full mt-1 p-2 border rounded-lg">
+                    <select id="edit-student-class" class="w-full mt-1 p-2 border rounded-lg">${classOptions}</select>
                 </div>
                 <div class="flex justify-end space-x-2">
                     <button onclick="window.closeModal()" class="bg-gray-200 px-4 py-2 rounded-lg">Batal</button>
@@ -1257,14 +1460,23 @@
 
         async function handleTerapkanRekap() {
             const mapelId = rekapFilterMapel.value;
-            const kelas = rekapFilterKelas.value;
-
-            if (!mapelId || !kelas) {
-                rekapTableContainer.innerHTML = '<p class="text-center text-gray-500">Silakan pilih Mata Pelajaran dan Kelas untuk melihat rekap.</p>';
+            
+            if (!mapelId) {
+                rekapDynamicTableContent.innerHTML = '<p class="text-center text-gray-500">Silakan pilih Mata Pelajaran untuk melihat rekap.</p>';
+                rekapSearchContainer.classList.add('hidden'); // Hide search if no mapel selected
                 return;
             }
+
+            const selectedMapel = allMapel[mapelId];
+            if (!selectedMapel) {
+                showToast("Mata pelajaran tidak ditemukan.", true);
+                rekapSearchContainer.classList.add('hidden'); // Hide search if mapel not found
+                return;
+            }
+            const kelas = selectedMapel.kelas; // Get class from selected mapel
+
             showLoader();
-            rekapTableContainer.innerHTML = '<p class="text-center text-gray-500">Memuat data rekap...</p>';
+            rekapDynamicTableContent.innerHTML = '<p class="text-center text-gray-500">Memuat data rekap...</p>';
             
             const presensiRef = ref(db, `presensi/${kelas}/${mapelId}`);
             const nilaiRef = ref(db, `nilai/${kelas}/${mapelId}`);
@@ -1275,74 +1487,32 @@
             ]);
             const presensiData = presensiSnapshot.val() || {};
             const nilaiData = nilaiSnapshot.val() || {};
-            renderRekapTable(presensiData, nilaiData, kelas);
+
+            currentRekapData = { presensi: presensiData, nilai: nilaiData, kelas: kelas }; // Store for filtering
+            
+            rekapSearchContainer.classList.remove('hidden'); // Show search bar
+            searchRekapStudentInput.value = ''; // Clear previous search
+            filterRekapTable(); // Apply filter (which will render the table)
             hideLoader();
         }
 
-        function renderRekapTable(presensiData, nilaiData, kelas) {
-            const studentsInClass = Object.values(allStudents).filter(s => s.kelas === kelas);
-            if (studentsInClass.length === 0) {
-                 rekapTableContainer.innerHTML = '<p class="text-center text-gray-500">Tidak ada siswa di kelas ini.</p>';
-                 return;
-            }
-            
-            const allDates = new Set([...Object.keys(presensiData), ...Object.keys(nilaiData)]);
-            const sortedDates = Array.from(allDates).sort();
-
-            if (sortedDates.length === 0) {
-                 rekapTableContainer.innerHTML = '<p class="text-center text-gray-500">Tidak ada data presensi atau nilai untuk mapel dan kelas ini.</p>';
-                 return;
-            }
-
-            let tableHTML = `<table class="w-full text-xs text-left whitespace-nowrap"><thead class="bg-gray-100"><tr>
-                <th class="p-2 border text-center w-10">No</th>
-                <th class="p-2 border text-center">Nama Lengkap</th>`;
-            
-            sortedDates.forEach(date => {
-                const [y, m, d] = date.split('-');
-                tableHTML += `<th class="vertical-th border">${d}/${m}/${y.slice(-2)}</th>`;
-            });
-            tableHTML += `</tr></thead><tbody>`;
-
-            const statusSymbols = { Hadir: '•', Sakit: 'S', Izin: 'I', Alpa: 'A' };
-            const statusColors = { S: 'text-orange-600', I: 'text-green-600', A: 'text-red-600' };
-
-            Object.entries(allStudents).filter(([id, student]) => student.kelas === kelas)
-                .sort(([, a], [, b]) => a.nama.localeCompare(b.nama))
-                .forEach(([studentId, student], index) => {
-                    tableHTML += `<tr class="border-b"><td class="p-2 border text-center">${index + 1}</td><td class="p-2 border font-medium">${student.nama}</td>`;
-                    sortedDates.forEach(date => {
-                        const status = presensiData[date]?.[studentId]?.status;
-                        const nilai = nilaiData[date]?.[studentId]?.nilai;
-                        
-                        let cellContent = '-';
-                        if (status || nilai) {
-                            const symbol = status ? statusSymbols[status] || '?' : '•';
-                            const colorClass = status ? statusColors[status] || '' : '';
-                            const nilaiHtml = nilai ? `<br><span class="font-bold">${nilai}</span>` : '';
-                            cellContent = `<span class="${colorClass}">${symbol}</span>${nilaiHtml}`;
-                        }
-                        tableHTML += `<td class="p-2 border text-center">${cellContent}</td>`;
-                    });
-                    tableHTML += `</tr>`;
-                });
-
-            tableHTML += `</tbody></table>`;
-            rekapTableContainer.innerHTML = tableHTML;
-        }
         
-        // **BARU**: Fungsi untuk me-refresh tabel rekap jika sedang ditampilkan
+        // Fungsi untuk me-refresh tabel rekap jika sedang ditampilkan
         function refreshRekapTableIfNeeded() {
             const rekapPage = document.getElementById('page-hasil-rekap');
             const mapelId = rekapFilterMapel.value;
-            const kelas = rekapFilterKelas.value;
 
             // Hanya refresh jika halaman rekap aktif dan filter sudah terisi
-            if (!rekapPage.classList.contains('hidden') && mapelId && kelas) {
+            if (!rekapPage.classList.contains('hidden') && mapelId) {
                 console.log("Refreshing rekap table due to data change...");
                 handleTerapkanRekap();
             }
         }
+
+        // Set initial date value on load
+        filterTanggal.value = new Date().toISOString().split('T')[0];
+        // Setup event listeners once the DOM is ready
+        setupEventListeners();
 
     </script>
 </body>
