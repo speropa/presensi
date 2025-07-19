@@ -64,6 +64,11 @@
             padding-bottom: 8px;
             padding-top: 8px;
         }
+        /* Styling for disabled button */
+        button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body class="antialiased text-gray-800">
@@ -74,7 +79,7 @@
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed top-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg hidden fade-in">
+    <div id="toast" class="fixed top-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg hidden fade-in z-50">
         <p id="toast-message"></p>
     </div>
 
@@ -101,11 +106,10 @@
     <!-- Main Application -->
     <div id="app" class="hidden">
         <!-- Header / Navbar -->
-        <header class="bg-white shadow-md sticky top-0 z-40">
+        <header class="bg-white shadow-md">
             <div class="container mx-auto px-4 py-3 flex justify-between items-center">
                 <h1 class="text-xl font-bold text-blue-600">SMP Negeri 2 Pajangan</h1>
                 <div class="flex items-center space-x-4">
-                     <p id="user-email" class="text-sm text-gray-600 hidden md:block"></p>
                      <button id="logout-btn" class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-red-600 transition">Keluar</button>
                 </div>
             </div>
@@ -133,7 +137,7 @@
                     </div>
                     
                     <div class="flex justify-between items-center mt-4">
-                        <button id="terapkan-filter-btn" class="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-600">Terapkan</button>
+                        <button id="terapkan-filter-btn" class="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors">Terapkan</button>
                         <div class="flex items-center space-x-2">
                              <span id="mode-label" class="text-sm font-medium text-gray-600">Mode: Presensi</span>
                              <button id="toggle-mode-btn" class="relative inline-flex items-center h-6 rounded-full w-11 transition-colors bg-gray-200 focus:outline-none">
@@ -346,6 +350,7 @@
         let allStudents = {};
         let allMapel = {};
         let availableClasses = new Set();
+        let hasUnsavedChanges = false;
         
         // --- UI ELEMENTS ---
         const loadingSpinner = document.getElementById('loading-spinner');
@@ -406,7 +411,7 @@
             const toast = document.getElementById('toast');
             const toastMessage = document.getElementById('toast-message');
             toastMessage.textContent = message;
-            toast.className = `fixed top-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg fade-in ${isError ? 'bg-red-500' : 'bg-green-500'}`;
+            toast.className = `fixed top-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg fade-in z-50 ${isError ? 'bg-red-500' : 'bg-green-500'}`;
             toast.classList.remove('hidden');
             setTimeout(() => {
                 toast.classList.add('fade-out');
@@ -434,13 +439,11 @@
                 showLoader();
                 loginPage.classList.add('hidden');
                 mainApp.classList.remove('hidden');
-                userEmailDisplay.textContent = user.email;
                 await initializeAppFunctions();
                 hideLoader();
             } else {
                 loginPage.classList.remove('hidden');
                 mainApp.classList.add('hidden');
-                userEmailDisplay.textContent = '';
             }
         });
 
