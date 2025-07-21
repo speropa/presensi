@@ -799,7 +799,6 @@
         // --- AUTHENTICATION ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // If session is already verified, restore it
                 if (sessionStorage.getItem('isPinVerified') && sessionStorage.getItem('currentUserKey')) {
                     currentUserKey = sessionStorage.getItem('currentUserKey');
                     console.log("Restored session for userKey:", currentUserKey);
@@ -812,22 +811,20 @@
                     await fetchGithubToken();
                     setupEventListeners();
                     initializeDataListeners();
+                    hideLoader();
                 } else {
-                    // Otherwise, show PIN screen to identify the user
                     showPinVerificationModal();
+                    hideLoader();
                 }
             } else {
-                // No Firebase auth session, show the main login page
                 try {
                     showLoader();
-                    // This is your auto-login attempt. If it fails, the catch block will show the manual login.
                     await signInWithEmailAndPassword(auth, 'mdsr@gmail.com', '12345678');
                 } catch (error) {
                     console.error("Auto-login failed, showing manual login:", error.code);
                     loginPage.classList.remove('hidden');
                     mainApp.classList.add('hidden');
                     pinVerificationModal.classList.add('hidden');
-                } finally {
                     hideLoader();
                 }
             }
@@ -849,7 +846,6 @@
 
             try {
                 await signInWithEmailAndPassword(auth, email, password);
-                // onAuthStateChanged will handle the rest
                 loginError.classList.add('hidden');
                 passwordInput.value = '';
 
@@ -904,7 +900,6 @@
             });
         }
 
-        // MODIFIED: This function now identifies the user based on the PIN.
         async function checkPin() {
             const enteredPin = pinInputField.value;
             showLoader();
