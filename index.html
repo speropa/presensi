@@ -441,6 +441,12 @@
         <div id="modal-content" class="bg-white rounded-xl shadow-lg p-6 w-full max-w-md fade-in"></div>
     </div>
 
+    <!-- MODIFIED: Added Fullscreen Image Viewer Modal -->
+    <div id="image-viewer-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[70] hidden p-4 fade-in">
+        <button id="close-image-viewer-btn" class="absolute top-4 right-4 text-white text-5xl font-bold hover:text-gray-300 transition-colors">&times;</button>
+        <img id="fullscreen-image" src="" class="max-w-full max-h-full object-contain">
+    </div>
+
 
     <script type="module">
         // Import the functions you need from the SDKs you need
@@ -547,6 +553,10 @@
         const jadwalImage = document.getElementById('jadwal-image');
         const jadwalPlaceholder = document.getElementById('jadwal-placeholder');
         const deleteJadwalBtn = document.getElementById('delete-jadwal-btn');
+        const imageViewerModal = document.getElementById('image-viewer-modal');
+        const closeImageViewerBtn = document.getElementById('close-image-viewer-btn');
+        const fullscreenImage = document.getElementById('fullscreen-image');
+
 
         // Rekap Page Elements
         const rekapFilterMapel = document.getElementById('rekap-filter-mapel');
@@ -1039,14 +1049,17 @@
             onValue(ref(db, `users_data/${currentUserKey}/jadwal`), (snapshot) => {
                 const jadwalData = snapshot.val();
                 if (jadwalData && jadwalData.imageUrl) {
-                    jadwalImage.src = `${jadwalData.imageUrl}?t=${new Date().getTime()}`;
+                    // MODIFIED: Removed cache-busting parameter to allow caching
+                    jadwalImage.src = jadwalData.imageUrl;
                     jadwalImage.classList.remove('hidden');
+                    jadwalImage.classList.add('cursor-pointer');
                     jadwalPlaceholder.classList.add('hidden');
                     jadwalUploadLabel.classList.add('hidden');
                     deleteJadwalBtn.classList.remove('hidden');
                 } else {
                     jadwalImage.src = '';
                     jadwalImage.classList.add('hidden');
+                    jadwalImage.classList.remove('cursor-pointer');
                     jadwalPlaceholder.classList.remove('hidden');
                     jadwalUploadLabel.classList.remove('hidden');
                     deleteJadwalBtn.classList.add('hidden');
@@ -1170,6 +1183,26 @@
             searchPresensiStudentInput.addEventListener('input', filterPresensiStudents);
             searchAllStudentsInput.addEventListener('input', filterAllStudentsTable);
             searchRekapStudentInput.addEventListener('input', filterRekapTable);
+
+            // MODIFIED: Added listeners for the new image viewer modal
+            jadwalImage.addEventListener('click', () => {
+                if (jadwalImage.src && !jadwalImage.src.includes('placeholder')) {
+                    fullscreenImage.src = jadwalImage.src;
+                    imageViewerModal.classList.remove('hidden');
+                }
+            });
+
+            closeImageViewerBtn.addEventListener('click', () => {
+                imageViewerModal.classList.add('hidden');
+                fullscreenImage.src = ''; 
+            });
+
+            imageViewerModal.addEventListener('click', (e) => {
+                if (e.target === imageViewerModal) {
+                    imageViewerModal.classList.add('hidden');
+                    fullscreenImage.src = '';
+                }
+            });
         }
 
         // --- HANDLER FUNCTIONS ---
