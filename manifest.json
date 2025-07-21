@@ -1,0 +1,21 @@
+{
+  "name": "Presensi Online Guru",
+  "short_name": "Presensi",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f0f2f5",
+  "theme_color": "#ffffff",
+  "description": "Aplikasi presensi online untuk guru dengan fitur offline.",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/speropa/presensi/main/ikon%20presensi.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/speropa/presensi/main/ikon%20presensi.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
