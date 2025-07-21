@@ -106,8 +106,8 @@
     <!-- Main Application -->
     <div id="app" class="hidden">
         <!-- Header / Navbar -->
-        <header class="bg-white shadow-md">
-            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+        <header class="w-full"> <!-- Removed bg-white shadow-md from here -->
+            <div class="container mx-auto px-4 py-3 flex justify-between items-center bg-white shadow-md rounded-b-xl"> <!-- Added bg-white shadow-md here -->
                 <h1 class="text-xl font-bold text-blue-600">SMP Negeri 2 Pajangan</h1>
                 <div class="flex items-center space-x-4">
                      <button id="logout-btn" class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-red-600 transition">Keluar</button>
@@ -120,7 +120,13 @@
             <!-- Presensi Page -->
             <div id="page-presensi" class="page-content">
                 <div class="bg-white p-4 rounded-xl shadow-md mb-6">
-                    <h3 class="text-lg font-bold mb-4">Filter Presensi & Nilai</h3>
+                    <div class="flex justify-between items-center mb-4"> <!-- Flex container for title and delete button -->
+                        <h3 class="text-lg font-bold">Filter Presensi & Nilai</h3>
+                        <button id="delete-daily-data-btn" class="bg-red-500 text-white px-3 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors flex items-center space-x-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            <span class="hidden sm:inline">Hapus Data Hari Ini</span>
+                        </button>
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label for="filter-mapel" class="text-sm font-medium">Mata Pelajaran</label>
@@ -196,6 +202,10 @@
                             <button id="download-template-btn" class="bg-gray-600 text-white font-medium py-2 px-3 rounded-lg hover:bg-gray-700 flex items-center space-x-2">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                                 <span class="hidden sm:inline">Unduh</span>
+                            </button>
+                            <button id="delete-all-students-btn" class="bg-red-500 text-white font-medium py-2 px-3 rounded-lg hover:bg-red-600 flex items-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                <span class="hidden sm:inline">Hapus Semua</span>
                             </button>
                         </div>
                     </div>
@@ -282,11 +292,29 @@
                             </select>
                         </div>
                         <div class="flex items-end">
-                            <button id="terapkan-rekap-btn" class="w-full bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-600">Terapkan</button>
+                            <button id="terapkan-rekap-btn" class="w-full bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors">Terapkan</button>
                         </div>
                     </div>
                 </div>
                 <div id="rekap-table-container" class="bg-white p-4 rounded-xl shadow-md overflow-x-auto">
+                    <div class="flex justify-between items-center mb-4"> <!-- New flex container for title and print button -->
+                        <h3 class="text-lg font-bold">Data Rekapitulasi</h3> <!-- Added a title for this section -->
+                        <div class="relative inline-block text-left">
+                            <button id="rekap-download-dropdown-btn" class="bg-gray-600 text-white font-medium py-2 px-3 rounded-lg hover:bg-gray-700 flex items-center space-x-2 hidden">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                <span class="hidden sm:inline">Unduh Rekap</span>
+                                <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                            <div id="rekap-download-options" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="rekap-download-dropdown-btn" tabindex="-1">
+                                <div class="py-1" role="none">
+                                    <button id="download-csv-btn" class="text-gray-700 block px-4 py-2 text-sm w-full text-left hover:bg-gray-100" role="menuitem" tabindex="-1">Unduh sebagai CSV</button>
+                                    <button id="print-rekap-btn" class="text-gray-700 block px-4 py-2 text-sm w-full text-left hover:bg-gray-100" role="menuitem" tabindex="-1">Cetak (PDF)</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Search input for Rekap Page -->
                     <div id="rekap-search-container" class="mb-4 hidden">
                         <label for="search-rekap-student" class="block text-sm font-medium text-gray-700 mb-1">Cari Siswa:</label>
@@ -338,7 +366,7 @@
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
         import { getDatabase, ref, set, get, onValue, push, remove, update } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
 
         // Your web app's Firebase configuration
@@ -349,7 +377,7 @@
             projectId: "presensi-online-fe404",
             storageBucket: "presensi-online-fe404.firebasestorage.app",
             messagingSenderId: "608665441560",
-            appId: "1:608665441560:web:90fea4bb859289e048ba6d"
+            appId: "1:608665441560:web:90fea4bb8596289e048ba6d"
         };
 
         // Initialize Firebase
@@ -382,6 +410,7 @@
         const filterMapel = document.getElementById('filter-mapel');
         const filterTanggal = document.getElementById('filter-tanggal');
         const terapkanBtn = document.getElementById('terapkan-filter-btn');
+        const deleteDailyDataBtn = document.getElementById('delete-daily-data-btn'); // New element
         const toggleModeBtn = document.getElementById('toggle-mode-btn');
         const toggleModeSwitch = document.getElementById('toggle-mode-switch');
         const modeLabel = document.getElementById('mode-label');
@@ -402,6 +431,7 @@
         const allStudentsTable = document.getElementById('all-students-table');
         const csvUploadInput = document.getElementById('csv-upload');
         const downloadTemplateBtn = document.getElementById('download-template-btn');
+        const deleteAllStudentsBtn = document.getElementById('delete-all-students-btn'); // New element
         const searchAllStudentsInput = document.getElementById('search-all-students');
 
         // Kelola Mapel Page Elements
@@ -414,9 +444,18 @@
         const rekapFilterMapel = document.getElementById('rekap-filter-mapel');
         const terapkanRekapBtn = document.getElementById('terapkan-rekap-btn');
         const rekapTableContainer = document.getElementById('rekap-table-container');
+        const rekapDownloadDropdownBtn = document.getElementById('rekap-download-dropdown-btn'); // New element
+        const rekapDownloadOptions = document.getElementById('rekap-download-options'); // New element
+        const downloadCsvBtn = document.getElementById('download-csv-btn'); // New element
+        const printRekapBtn = document.getElementById('print-rekap-btn'); // Existing, now part of dropdown
         const rekapSearchContainer = document.getElementById('rekap-search-container');
         const searchRekapStudentInput = document.getElementById('search-rekap-student');
         const rekapDynamicTableContent = document.getElementById('rekap-dynamic-table-content');
+
+        // Modal Elements
+        const modal = document.getElementById('modal');
+        const modalContent = document.getElementById('modal-content');
+
 
         // --- HELPER FUNCTIONS ---
         const showLoader = () => loadingSpinner.classList.remove('hidden');
@@ -448,6 +487,20 @@
             }, 300);
         };
 
+        // NEW: Function to show a more prominent alert modal
+        const showAlertModal = (title, message, isError = false) => {
+            const titleColorClass = isError ? 'text-red-600' : 'text-gray-800';
+            const content = `
+                <h3 class="text-lg font-bold mb-2 ${titleColorClass}">${title}</h3>
+                <p class="text-gray-700 mb-6">${message}</p>
+                <div class="flex justify-end">
+                    <button onclick="window.closeModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg">Oke</button>
+                </div>
+            `;
+            openModal(content);
+        };
+
+
         // Function to show unsaved changes confirmation modal
         const showUnsavedChangesModal = (action, targetPage = null) => {
             pendingAction = action;
@@ -457,7 +510,6 @@
                 <p class="text-gray-600 mb-6">Ada perubahan presensi atau nilai yang belum disimpan. Apakah Anda ingin menyimpannya?</p>
                 <div class="flex justify-end space-x-2">
                     <button onclick="window.handleUnsavedChangesAction('cancel')" class="bg-gray-200 px-4 py-2 rounded-lg">Batal</button>
-                    <button onclick="window.handleUnsavedChangesAction('discard')" class="bg-red-500 text-white px-4 py-2 rounded-lg">Buang</button>
                     <button onclick="window.handleUnsavedChangesAction('save')" class="bg-blue-500 text-white px-4 py-2 rounded-lg">Simpan</button>
                 </div>
             `;
@@ -469,16 +521,17 @@
             window.closeModal();
             if (action === 'save') {
                 await handleSaveAllData(); // This will set hasUnsavedChanges to false
-            } else if (action === 'discard') {
-                hasUnsavedChanges = false;
-            }
-
-            if (pendingAction === 'applyFilter') {
-                handleTerapkanFilter(true); // Pass true to skip unsaved changes check
-            } else if (pendingAction === 'changePage' && pendingPage) {
-                switchPage(pendingPage, true); // Pass true to skip unsaved changes check
-            } else if (pendingAction === 'logout') {
-                signOut(auth);
+                // Proceed with pending action after saving
+                if (pendingAction === 'applyFilter') {
+                    handleTerapkanFilter(true); // Pass true to skip unsaved changes check
+                } else if (pendingAction === 'changePage' && pendingPage) {
+                    switchPage(pendingPage, true); // Pass true to skip unsaved changes check
+                } else if (pendingAction === 'logout') {
+                    signOut(auth);
+                }
+            } else if (action === 'cancel') {
+                // Do nothing, just close the modal. hasUnsavedChanges remains true.
+                // The pendingAction and pendingPage are cleared to prevent unintended execution later.
             }
             pendingAction = null;
             pendingPage = null;
@@ -509,6 +562,7 @@
         }
 
         function filterAllStudentsTable() {
+            allStudentsTable.innerHTML = ''; // Clear table before filtering
             const query = searchAllStudentsInput.value.toLowerCase();
             const fullStudents = JSON.parse(allStudentsTable.dataset.fullStudents || '[]');
             const filteredStudents = fullStudents.filter(student => 
@@ -626,17 +680,20 @@
             }
         });
 
-        loginForm.addEventListener('submit', (e) => {
+        loginForm.addEventListener('submit', async (e) => { // Added async
             e.preventDefault();
             showLoader();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            signInWithEmailAndPassword(auth, email, password)
-                .catch(error => {
-                    loginError.textContent = "Email atau password salah.";
-                    loginError.classList.remove('hidden');
-                })
-                .finally(hideLoader);
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                loginError.textContent = "Email atau password salah.";
+                loginError.classList.remove('hidden');
+                showAlertModal("Login Gagal", "Email atau password yang Anda masukkan salah. Silakan coba lagi.", true); // Use alert modal
+            } finally {
+                hideLoader();
+            }
         });
 
         logoutBtn.addEventListener('click', () => {
@@ -664,11 +721,12 @@
 
             // Clear search inputs and hide search containers on page change
             searchPresensiStudentInput.value = '';
-            presensiSearchContainer.classList.add('hidden');
+            // presensiSearchContainer.classList.add('hidden'); // This line was causing the issue
             searchAllStudentsInput.value = '';
             searchRekapStudentInput.value = '';
             rekapSearchContainer.classList.add('hidden');
             rekapDynamicTableContent.innerHTML = ''; // Clear rekap table content
+            rekapDownloadDropdownBtn.classList.add('hidden'); // Hide download dropdown on page change
 
             // Call refresh rekap when rekap tab is clicked
             if (pageId === 'hasil-rekap') {
@@ -737,7 +795,7 @@
                             <button onclick="window.showEditMapelModal('${id}')" class="p-2 rounded-full hover:bg-blue-100 text-blue-600">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             </button>
-                            <button onclick="window.showDeleteMapelModal('${id}', '${mapel.nama}')" class="p-2 rounded-full hover:bg-red-100 text-red-600">
+                            <button onclick="window.showDeleteMapelModal('${id}', '${mapel.nama}', '${mapel.kelas}')" class="p-2 rounded-full hover:bg-red-100 text-red-600">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
                         </div>
@@ -777,19 +835,25 @@
             addStudentForm.addEventListener('submit', handleAddStudent);
             csvUploadInput.addEventListener('change', handleCsvUpload);
             downloadTemplateBtn.addEventListener('click', handleDownloadTemplate);
+            deleteAllStudentsBtn.addEventListener('click', showDeleteAllStudentsConfirmationModal); // New event listener
             addMapelForm.addEventListener('submit', handleAddMapel);
             toggleModeBtn.addEventListener('click', handleToggleMode);
             terapkanBtn.addEventListener('click', () => handleTerapkanFilter(false)); // Pass false to indicate normal call
+            deleteDailyDataBtn.addEventListener('click', showDeleteDailyDataConfirmationModal); // New event listener for delete daily data
             kegiatanInput.addEventListener('change', handleSaveKegiatan);
             saveAllBtn.addEventListener('click', handleSaveAllData);
             terapkanRekapBtn.addEventListener('click', handleTerapkanRekap);
-            kegiatanHistoryToggleMore.addEventListener('click', () => {
-                const isPartial = kegiatanHistoryToggleMore.dataset.state === 'partial';
-                kegiatanHistoryToggleMore.dataset.state = isPartial ? 'full' : 'partial';
-                renderKegiatanHistory(JSON.parse(kegiatanHistoryList.dataset.fullhistory || '[]'));
-            });
             
+            // New event listeners for Rekap download dropdown
+            rekapDownloadDropdownBtn.addEventListener('click', toggleRekapDownloadDropdown);
+            downloadCsvBtn.addEventListener('click', handleDownloadCSV);
+            printRekapBtn.addEventListener('click', handlePrintRekap); // This is now the "Cetak (PDF)" option
+            
+            // Close dropdown if clicked outside
             document.addEventListener('click', (event) => {
+                if (!rekapDownloadDropdownBtn.contains(event.target) && !rekapDownloadOptions.contains(event.target)) {
+                    rekapDownloadOptions.classList.add('hidden');
+                }
                 const openDropdownOptions = document.querySelector('.custom-dropdown-options:not(.hidden)');
                 if (openDropdownOptions) {
                     const correspondingButton = openDropdownOptions.previousElementSibling;
@@ -799,6 +863,13 @@
                 }
             });
 
+
+            kegiatanHistoryToggleMore.addEventListener('click', () => {
+                const isPartial = kegiatanHistoryToggleMore.dataset.state === 'partial';
+                kegiatanHistoryToggleMore.dataset.state = isPartial ? 'full' : 'partial';
+                renderKegiatanHistory(JSON.parse(kegiatanHistoryList.dataset.fullhistory || '[]'));
+            });
+            
             // Search input event listeners
             searchPresensiStudentInput.addEventListener('input', filterPresensiStudents);
             searchAllStudentsInput.addEventListener('input', filterAllStudentsTable);
@@ -809,8 +880,8 @@
         
         function handleAddStudent(e) {
             e.preventDefault();
-            const nama = studentNameInput.value.trim();
-            const kelas = studentClassInput.value.trim().toUpperCase();
+            const nama = studentNameInput.value.trim().toUpperCase(); // Convert to uppercase
+            const kelas = studentClassInput.value.trim().toUpperCase(); // Convert to uppercase
             if (!nama || !kelas) {
                 showToast("Nama dan kelas tidak boleh kosong.", true);
                 return;
@@ -823,7 +894,7 @@
                     addStudentForm.reset();
                     refreshRekapTableIfNeeded();
                 })
-                .catch(err => showToast(`Error: ${err.message}`, true))
+                .catch(err => showAlertModal("Error Penambahan Siswa", `Gagal menambahkan siswa: ${err.message}`, true)) // Use alert modal
                 .finally(hideLoader);
         }
 
@@ -841,8 +912,8 @@
                     for (let i = 1; i < results.data.length; i++) {
                         const row = results.data[i];
                         if (Array.isArray(row) && row.length > 2) {
-                            const nama = row[1]?.trim();
-                            const kelas = row[2]?.trim().toUpperCase();
+                            const nama = row[1]?.trim().toUpperCase(); // Convert to uppercase
+                            const kelas = row[2]?.trim().toUpperCase(); // Convert to uppercase
 
                             if (nama && kelas) {
                                 const newKey = push(ref(db, 'siswa')).key;
@@ -852,21 +923,21 @@
                     }
 
                     if (Object.keys(dataToUpload).length > 0) {
-                        update(ref(db, 'siswa'), dataToUpload)
+                        update(ref(db), { 'siswa': dataToUpload }) // Use update for multiple children at once
                             .then(() => {
                                 showToast(`${Object.keys(dataToUpload).length} siswa berhasil diunggah.`);
                                 refreshRekapTableIfNeeded();
                             })
-                            .catch(err => showToast(`Error: ${err.message}`, true))
+                            .catch(err => showAlertModal("Error Unggah CSV", `Gagal mengunggah siswa dari CSV: ${err.message}`, true)) // Use alert modal
                             .finally(hideLoader);
                     } else {
-                        showToast("Tidak ada data valid untuk diunggah. Periksa format CSV Anda.", true);
+                        showAlertModal("Unggah CSV Gagal", "Tidak ada data valid untuk diunggah. Periksa format CSV Anda.", true); // Use alert modal
                         hideLoader();
                     }
                     csvUploadInput.value = '';
                 },
                 error: (err) => {
-                    showToast(`Error membaca file CSV: ${err.message}`, true);
+                    showAlertModal("Error Membaca CSV", `Error membaca file CSV: ${err.message}`, true); // Use alert modal
                     hideLoader();
                 }
             });
@@ -891,8 +962,8 @@
 
         function handleAddMapel(e) {
             e.preventDefault();
-            const nama = mapelNameInput.value.trim();
-            const kelas = mapelClassSelect.value;
+            const nama = mapelNameInput.value.trim().toUpperCase(); // Convert to uppercase
+            const kelas = mapelClassSelect.value.toUpperCase(); // Convert to uppercase
             if (!nama || !kelas) {
                 showToast("Nama mapel dan kelas harus dipilih.", true);
                 return;
@@ -904,7 +975,7 @@
                     showToast("Mata pelajaran berhasil ditambahkan.");
                     addMapelForm.reset();
                 })
-                .catch(err => showToast(`Error: ${err.message}`, true))
+                .catch(err => showAlertModal("Error Penambahan Mapel", `Gagal menambahkan mata pelajaran: ${err.message}`, true)) // Use alert modal
                 .finally(hideLoader);
         }
 
@@ -941,7 +1012,7 @@
 
             const selectedMapel = allMapel[mapelId];
             if (!selectedMapel) {
-                showToast("Mata pelajaran tidak ditemukan.", true);
+                showAlertModal("Mata Pelajaran Tidak Ditemukan", "Mata pelajaran yang dipilih tidak ditemukan dalam database.", true); // Use alert modal
                 return;
             }
             const kelas = selectedMapel.kelas; // Get class from selected mapel
@@ -991,10 +1062,6 @@
             searchPresensiStudentInput.value = ''; // Clear previous search
             filterPresensiStudents(); // Render and filter immediately
 
-            studentsInClass.forEach(student => {
-                 attachHistoryListeners(student.id);
-            });
-
             hasUnsavedChanges = false; // Reset flag after loading new data
             hideLoader();
         }
@@ -1017,14 +1084,14 @@
                     kegiatanInput.classList.add('border-green-500');
                     setTimeout(() => kegiatanInput.classList.remove('border-green-500'), 1500);
                 })
-                .catch(err => showToast(`Gagal menyimpan kegiatan: ${err.message}`, true));
+                .catch(err => showAlertModal("Error Menyimpan Kegiatan", `Gagal menyimpan kegiatan: ${err.message}`, true)); // Use alert modal
         }
 
         async function handleSaveAllData() {
             const mapelId = filterMapel.value;
             const selectedMapel = allMapel[mapelId];
             if (!selectedMapel) {
-                showToast("Mata pelajaran tidak ditemukan untuk menyimpan data.", true);
+                showAlertModal("Error Penyimpanan", "Mata pelajaran tidak ditemukan untuk menyimpan data.", true); // Use alert modal
                 return;
             }
             const kelas = selectedMapel.kelas;
@@ -1032,12 +1099,13 @@
             const tanggal = filterTanggal.value;
 
             if (!mapelId || !kelas || !tanggal) {
-                showToast("Filter tidak lengkap untuk menyimpan data.", true);
+                showAlertModal("Error Penyimpanan", "Filter tidak lengkap untuk menyimpan data. Harap pilih mapel dan tanggal.", true); // Use alert modal
                 return;
             }
 
             showLoader();
             const updates = {};
+            let hasInvalidGrade = false; // Flag for grade validation
             const studentCards = document.querySelectorAll('#student-list-container > div[data-studentid]');
 
             studentCards.forEach(card => {
@@ -1052,13 +1120,27 @@
                     }
                 } else { // Mode nilai
                     const nilaiInput = document.getElementById(`nilai-input-${studentId}`);
-                    if (nilaiInput && nilaiInput.value) {
-                         const nilai = nilaiInput.value;
-                         const path = `nilai/${kelas}/${mapelId}/${tanggal}/${studentId}`;
-                         updates[path] = { nilai };
+                    if (nilaiInput) {
+                        const nilai = parseFloat(nilaiInput.value); // Use parseFloat for numeric validation
+                        if (isNaN(nilai) || nilai < 0 || nilai > 100) {
+                            hasInvalidGrade = true;
+                            // Optionally, highlight the invalid input field
+                            nilaiInput.classList.add('border-red-500');
+                            return; // Skip this student for now, or handle error per student
+                        } else {
+                            nilaiInput.classList.remove('border-red-500');
+                        }
+                        const path = `nilai/${kelas}/${mapelId}/${tanggal}/${studentId}`;
+                        updates[path] = { nilai };
                     }
                 }
             });
+
+            if (hasInvalidGrade) {
+                showAlertModal("Validasi Nilai Gagal", "Beberapa nilai yang dimasukkan tidak valid. Pastikan nilai adalah angka antara 0-100.", true); // Use alert modal
+                hideLoader();
+                return;
+            }
 
             if (Object.keys(updates).length === 0) {
                 showToast("Tidak ada data untuk disimpan.", true);
@@ -1071,8 +1153,15 @@
                 showToast("Semua perubahan berhasil disimpan.");
                 hasUnsavedChanges = false; // Reset flag after successful save
                 refreshRekapTableIfNeeded();
+
+                // FIX: Ensure presensi search container remains visible after saving
+                // Only if the content area (where presensi students are displayed) is currently visible
+                if (!contentArea.classList.contains('hidden')) {
+                    presensiSearchContainer.classList.remove('hidden');
+                }
+
             } catch (err) {
-                showToast(`Error saat menyimpan: ${err.message}`, true);
+                showAlertModal("Error Penyimpanan", `Terjadi kesalahan saat menyimpan perubahan: ${err.message}`, true); // Use alert modal
             } finally {
                 hideLoader();
             }
@@ -1100,9 +1189,9 @@
                     </button>
                     <div id="dropdown-options-${id}" class="custom-dropdown-options hidden absolute z-10 w-full mt-1 bg-white rounded-lg shadow-lg border">
                         <div onclick="window.selectOption(this, '${id}')" data-value="Hadir" class="px-4 py-2 cursor-pointer hover:bg-gray-100">Hadir</div>
-                        <div onclick="window.selectOption(this, '${id}')" data-value="Sakit" class="px-4 py-2 cursor-pointer bg-orange-100 text-orange-800 hover:bg-orange-200 font-medium">Sakit</div>
-                        <div onclick="window.selectOption(this, '${id}')" data-value="Izin" class="px-4 py-2 cursor-pointer bg-green-100 text-green-800 hover:bg-green-200 font-medium">Izin</div>
-                        <div onclick="window.selectOption(this, '${id}')" data-value="Alpa" class="px-4 py-2 cursor-pointer bg-red-100 text-red-800 hover:bg-red-200 font-medium">Alpa</div>
+                        <div onclick="window.selectOption(this, '${id}')" data-value="Sakit" class="px-4 py-2 cursor-pointer bg-orange-100 text-orange-800 font-medium">Sakit</div>
+                        <div onclick="window.selectOption(this, '${id}')" data-value="Izin" class="px-4 py-2 cursor-pointer bg-green-100 text-green-800 font-medium">Izin</div>
+                        <div onclick="window.selectOption(this, '${id}')" data-value="Alpa" class="px-4 py-2 cursor-pointer bg-red-100 text-red-800 font-medium">Alpa</div>
                     </div>
                 </div>
                 `;
@@ -1110,7 +1199,7 @@
                 const initialNilai = studentData.nilai || '';
                 inputSection = `
                 <label class="text-sm font-medium">Nilai:</label>
-                <input type="number" id="nilai-input-${id}" value="${initialNilai}" placeholder="0-100" class="w-full mt-1 p-2 border rounded-lg bg-gray-50" oninput="window.markChanges()">
+                <input type="number" id="nilai-input-${id}" value="${initialNilai}" placeholder="0-100" min="0" max="100" class="w-full mt-1 p-2 border rounded-lg bg-gray-50" oninput="window.markChanges()">
                 `;
             }
             
@@ -1286,8 +1375,8 @@
         };
         
         window.handleEditStudent = (studentId) => {
-            const newName = document.getElementById('edit-student-name').value.trim();
-            const newClass = document.getElementById('edit-student-class').value.trim().toUpperCase();
+            const newName = document.getElementById('edit-student-name').value.trim().toUpperCase(); // Convert to uppercase
+            const newClass = document.getElementById('edit-student-class').value.trim().toUpperCase(); // Convert to uppercase
             if (!newName || !newClass) {
                 showToast("Nama dan kelas tidak boleh kosong.", true);
                 return;
@@ -1299,32 +1388,63 @@
                     window.closeModal();
                     refreshRekapTableIfNeeded();
                 })
-                .catch(err => showToast(`Error: ${err.message}`, true))
+                .catch(err => showAlertModal("Error Edit Siswa", `Gagal memperbarui data siswa: ${err.message}`, true)) // Use alert modal
                 .finally(hideLoader);
         };
         
         window.showDeleteStudentModal = (studentId, studentName) => {
              const content = `
-                <h3 class="text-lg font-bold mb-2">Hapus Siswa</h3>
-                <p class="text-gray-600 mb-6">Apakah Anda yakin ingin menghapus data siswa <b>${studentName}</b>? Tindakan ini tidak dapat dibatalkan.</p>
+                <h3 class="text-lg font-bold mb-2 text-red-600">Hapus Siswa?</h3>
+                <p class="text-gray-700 mb-6">Tindakan ini akan menghapus data siswa <b>${studentName}</b> termasuk presensi, nilai, dan kegiatan pembelajaran yang sudah tersimpan secara permanen!</p>
                 <div class="flex justify-end space-x-2">
                     <button onclick="window.closeModal()" class="bg-gray-200 px-4 py-2 rounded-lg">Batal</button>
-                    <button onclick="window.handleDeleteStudent('${studentId}')" class="bg-red-500 text-white px-4 py-2 rounded-lg">Hapus</button>
+                    <button onclick="window.handleDeleteStudent('${studentId}')" class="bg-red-600 text-white px-4 py-2 rounded-lg">Hapus</button>
                 </div>
             `;
             openModal(content);
         };
         
-        window.handleDeleteStudent = (studentId) => {
+        window.handleDeleteStudent = async (studentId) => {
             showLoader();
-            remove(ref(db, `siswa/${studentId}`))
-                .then(() => {
-                    showToast("Siswa berhasil dihapus.");
-                    window.closeModal();
-                    refreshRekapTableIfNeeded();
-                })
-                .catch(err => showToast(`Error: ${err.message}`, true))
-                .finally(hideLoader);
+            try {
+                const updates = {};
+                // 1. Mark student for deletion
+                updates[`siswa/${studentId}`] = null;
+
+                // 2. Mark related presensi and nilai for deletion
+                // Fetch all presensi and nilai data to find entries related to this student
+                const [presensiSnapshot, nilaiSnapshot] = await Promise.all([
+                    get(ref(db, 'presensi')),
+                    get(ref(db, 'nilai'))
+                ]);
+                
+                const allPresensi = presensiSnapshot.val() || {};
+                for (const kelas in allPresensi) {
+                    for (const mapelId in allPresensi[kelas]) {
+                        if (allPresensi[kelas][mapelId][studentId]) { // Check if student exists under this mapelId
+                            updates[`presensi/${kelas}/${mapelId}/${studentId}`] = null; // Delete specific student entry
+                        }
+                    }
+                }
+
+                const allNilai = nilaiSnapshot.val() || {};
+                for (const kelas in allNilai) {
+                    for (const mapelId in allNilai[kelas]) {
+                        if (allNilai[kelas][mapelId][studentId]) { // Check if student exists under this mapelId
+                            updates[`nilai/${kelas}/${mapelId}/${studentId}`] = null; // Delete specific student entry
+                        }
+                    }
+                }
+
+                await update(ref(db), updates); // Execute all deletions in one go
+                showToast("Siswa dan data terkait berhasil dihapus.");
+                window.closeModal();
+                refreshRekapTableIfNeeded();
+            } catch (err) {
+                showAlertModal("Error Hapus Siswa", `Gagal menghapus siswa: ${err.message}`, true); // Use alert modal
+            } finally {
+                hideLoader();
+            }
         };
         
         window.showEditMapelModal = (mapelId) => {
@@ -1353,8 +1473,8 @@
         };
 
         window.handleEditMapel = (mapelId) => {
-            const newName = document.getElementById('edit-mapel-name').value.trim();
-            const newClass = document.getElementById('edit-mapel-class').value;
+            const newName = document.getElementById('edit-mapel-name').value.trim().toUpperCase(); // Convert to uppercase
+            const newClass = document.getElementById('edit-mapel-class').value.toUpperCase(); // Convert to uppercase
              if (!newName || !newClass) {
                 showToast("Nama dan kelas tidak boleh kosong.", true);
                 return;
@@ -1365,31 +1485,44 @@
                     showToast("Data mapel berhasil diperbarui.");
                     window.closeModal();
                 })
-                .catch(err => showToast(`Error: ${err.message}`, true))
+                .catch(err => showAlertModal("Error Edit Mapel", `Gagal memperbarui data mata pelajaran: ${err.message}`, true)) // Use alert modal
                 .finally(hideLoader);
         };
 
-        window.showDeleteMapelModal = (mapelId, mapelName) => {
+        window.showDeleteMapelModal = (mapelId, mapelName, mapelClass) => { // Added mapelClass parameter
             const content = `
-                <h3 class="text-lg font-bold mb-2">Hapus Mapel</h3>
-                <p class="text-gray-600 mb-6">Apakah Anda yakin ingin menghapus <b>${mapelName}</b>?</p>
+                <h3 class="text-lg font-bold mb-2 text-red-600">Hapus Mapel?</h3>
+                <p class="text-gray-700 mb-6">Tindakan ini akan menghapus data mapel <b>${mapelName} (${mapelClass})</b> termasuk presensi, nilai, dan kegiatan pembelajaran yang sudah tersimpan secara permanen!</p>
                 <div class="flex justify-end space-x-2">
                     <button onclick="window.closeModal()" class="bg-gray-200 px-4 py-2 rounded-lg">Batal</button>
-                    <button onclick="window.handleDeleteMapel('${mapelId}')" class="bg-red-500 text-white px-4 py-2 rounded-lg">Hapus</button>
+                    <button onclick="window.handleDeleteMapel('${mapelId}', '${mapelClass}')" class="bg-red-600 text-white px-4 py-2 rounded-lg">Hapus</button>
                 </div>
             `;
             openModal(content);
         };
 
-        window.handleDeleteMapel = (mapelId) => {
+        window.handleDeleteMapel = async (mapelId, mapelClassToDelete) => { // Added mapelClassToDelete parameter
             showLoader();
-            remove(ref(db, `mapel/${mapelId}`))
-                .then(() => {
-                    showToast("Mapel berhasil dihapus.");
-                    window.closeModal();
-                })
-                .catch(err => showToast(`Error: ${err.message}`, true))
-                .finally(hideLoader);
+            try {
+                const updates = {};
+                // 1. Mark mapel for deletion
+                updates[`mapel/${mapelId}`] = null;
+
+                // 2. Mark related presensi, nilai, and kegiatan for deletion for the SPECIFIC class
+                // No need to fetch all data, directly target the path
+                updates[`presensi/${mapelClassToDelete}/${mapelId}`] = null;
+                updates[`nilai/${mapelClassToDelete}/${mapelId}`] = null;
+                updates[`kegiatan/${mapelClassToDelete}/${mapelId}`] = null;
+                
+                await update(ref(db), updates);
+                showToast("Mata pelajaran dan data terkait berhasil dihapus.");
+                window.closeModal();
+                refreshRekapTableIfNeeded();
+            } catch (err) {
+                showAlertModal("Error Hapus Mapel", `Gagal menghapus mata pelajaran: ${err.message}`, true); // Use alert modal
+            } finally {
+                hideLoader();
+            }
         };
         
         window.toggleHistory = (studentId) => {
@@ -1464,13 +1597,15 @@
             if (!mapelId) {
                 rekapDynamicTableContent.innerHTML = '<p class="text-center text-gray-500">Silakan pilih Mata Pelajaran untuk melihat rekap.</p>';
                 rekapSearchContainer.classList.add('hidden'); // Hide search if no mapel selected
+                rekapDownloadDropdownBtn.classList.add('hidden'); // Hide download button if no mapel selected
                 return;
             }
 
             const selectedMapel = allMapel[mapelId];
             if (!selectedMapel) {
-                showToast("Mata pelajaran tidak ditemukan.", true);
+                showAlertModal("Mata Pelajaran Tidak Ditemukan", "Mata pelajaran yang dipilih tidak ditemukan dalam database.", true); // Use alert modal
                 rekapSearchContainer.classList.add('hidden'); // Hide search if mapel not found
+                rekapDownloadDropdownBtn.classList.add('hidden'); // Hide download button if mapel not found
                 return;
             }
             const kelas = selectedMapel.kelas; // Get class from selected mapel
@@ -1491,9 +1626,120 @@
             currentRekapData = { presensi: presensiData, nilai: nilaiData, kelas: kelas }; // Store for filtering
             
             rekapSearchContainer.classList.remove('hidden'); // Show search bar
+            rekapDownloadDropdownBtn.classList.remove('hidden'); // Show download button
             searchRekapStudentInput.value = ''; // Clear previous search
             filterRekapTable(); // Apply filter (which will render the table)
             hideLoader();
+        }
+
+        // New function for toggling rekap download dropdown
+        function toggleRekapDownloadDropdown() {
+            rekapDownloadOptions.classList.toggle('hidden');
+        }
+
+        // New function for downloading rekap table as CSV
+        function handleDownloadCSV() {
+            rekapDownloadOptions.classList.add('hidden'); // Hide dropdown after selection
+
+            const table = rekapDynamicTableContent.querySelector('table');
+            if (!table) {
+                showToast("Tidak ada data rekap untuk diunduh.", true);
+                return;
+            }
+
+            let csv = [];
+            const rows = table.querySelectorAll('tr');
+
+            // Get headers
+            const headerRow = rows[0];
+            const headers = [];
+            headerRow.querySelectorAll('th').forEach(th => {
+                // For vertical headers, get the text content directly
+                if (th.classList.contains('vertical-th')) {
+                    // Extract date from vertical-th, e.g., "01/07/24"
+                    headers.push(th.textContent.trim());
+                } else {
+                    headers.push(th.textContent.trim());
+                }
+            });
+            csv.push(headers.join(';')); // Use semicolon as delimiter
+
+            // Get data rows
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const rowData = [];
+                row.querySelectorAll('td').forEach(td => {
+                    let cellText = td.textContent.trim();
+                    // Replace <br> with a space or hyphen for CSV readability
+                    cellText = cellText.replace(/\s*\n\s*/g, ' - ').replace(/•\s*-\s*/g, '• '); // Handle combined status/nilai
+                    // Enclose in double quotes if text contains semicolon or double quotes
+                    if (cellText.includes(';') || cellText.includes('"')) {
+                        cellText = `"${cellText.replace(/"/g, '""')}"`;
+                    }
+                    rowData.push(cellText);
+                });
+                csv.push(rowData.join(';'));
+            }
+
+            const csvString = csv.join('\n');
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const selectedMapel = allMapel[rekapFilterMapel.value];
+            const fileName = selectedMapel ? `rekap_presensi_nilai_${selectedMapel.nama.replace(/\s/g, '_')}_${selectedMapel.kelas}.csv` : 'rekap_presensi_nilai.csv';
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast("Data rekap berhasil diunduh sebagai CSV.");
+        }
+
+
+        // Function for printing rekap table (now "Cetak (PDF)" option)
+        function handlePrintRekap() {
+            rekapDownloadOptions.classList.add('hidden'); // Hide dropdown after selection
+
+            const tableContent = rekapDynamicTableContent.innerHTML;
+            if (!tableContent || tableContent.includes('Tidak ada data rekap')) {
+                showToast("Tidak ada data rekap untuk dicetak.", true);
+                return;
+            }
+
+            const printWindow = window.open('', '', 'height=600,width=800');
+            printWindow.document.write('<html><head><title>Cetak Rekap Presensi & Nilai</title>');
+            // Include necessary styles for printing
+            printWindow.document.write('<link href="https://cdn.tailwindcss.com" rel="stylesheet">');
+            printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">');
+            printWindow.document.write('<style>');
+            printWindow.document.write(`
+                body { font-family: 'Inter', sans-serif; margin: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { border: 1px solid #e2e8f0; padding: 8px; text-align: left; }
+                th { background-color: #f1f5f9; }
+                .vertical-th {
+                    writing-mode: vertical-rl;
+                    transform: rotate(180deg);
+                    white-space: nowrap;
+                    padding-bottom: 8px;
+                    padding-top: 8px;
+                }
+                @media print {
+                    body { -webkit-print-color-adjust: exact; }
+                    th { background-color: #f1f5f9 !important; } /* Ensure background prints */
+                    .text-orange-600 { color: #dd6b20 !important; }
+                    .text-green-600 { color: #38a169 !important; }
+                    .text-red-600 { color: #e53e3e !important; }
+                }
+            `);
+            printWindow.document.write('</style></head><body>');
+            printWindow.document.write('<h1 class="text-2xl font-bold mb-4">Rekapitulasi Presensi & Nilai</h1>');
+            printWindow.document.write(tableContent);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
         }
 
         
@@ -1508,6 +1754,147 @@
                 handleTerapkanRekap();
             }
         }
+
+        // --- NEW: Delete All Students Functionality ---
+        function showDeleteAllStudentsConfirmationModal() {
+            const content = `
+                <h3 class="text-lg font-bold mb-2 text-red-600">Hapus Semua Data?</h3>
+                <p class="text-gray-700 mb-4">Tindakan ini akan **menghapus semua data siswa termasuk presensi, nilai, dan kegiatan pembelajaran yang sudah tersimpan secara permanen!**</p>
+                <p class="text-gray-700 mb-6">Untuk melanjutkan, masukkan password login Anda:</p>
+                <div class="mb-4">
+                    <label for="confirm-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="confirm-password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500" required>
+                    <p id="confirm-password-error" class="text-red-500 text-sm mt-2 hidden">Password salah.</p>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button onclick="window.closeModal()" class="bg-gray-200 px-4 py-2 rounded-lg">Batal</button>
+                    <button id="confirm-delete-all-btn" class="bg-red-600 text-white px-4 py-2 rounded-lg">Hapus Semua</button>
+                </div>
+            `;
+            openModal(content);
+
+            // Attach event listener to the new confirm button in the modal
+            document.getElementById('confirm-delete-all-btn').addEventListener('click', handleDeleteAllStudents);
+        }
+
+        async function handleDeleteAllStudents() {
+            const passwordInput = document.getElementById('confirm-password');
+            const password = passwordInput.value;
+            const passwordError = document.getElementById('confirm-password-error');
+
+            if (!password) {
+                passwordError.textContent = "Password tidak boleh kosong.";
+                passwordError.classList.remove('hidden');
+                return;
+            } else {
+                passwordError.classList.add('hidden');
+            }
+
+            showLoader();
+            const user = auth.currentUser;
+            if (!user) {
+                showAlertModal("Autentikasi Gagal", "Anda tidak terautentikasi. Silakan login kembali.", true); // Use alert modal
+                hideLoader();
+                window.closeModal();
+                return;
+            }
+
+            try {
+                // Re-authenticate user
+                const credential = EmailAuthProvider.credential(user.email, password);
+                await reauthenticateWithCredential(user, credential);
+
+                // If re-authentication successful, proceed with deletion
+                const updates = {
+                    'siswa': null,
+                    'presensi': null,
+                    'nilai': null,
+                    'kegiatan': null,
+                    'mapel': null // Also delete mapel data when deleting all
+                };
+                await update(ref(db), updates);
+                
+                showToast("Semua data siswa, presensi, nilai, mapel, dan kegiatan berhasil dihapus.");
+                window.closeModal();
+                // Clear local data and re-render tables
+                allStudents = {};
+                allMapel = {}; // Clear mapel data too
+                availableClasses.clear(); // Clear available classes
+                currentPresensiStudentsData = [];
+                currentRekapData = { presensi: {}, nilai: {}, kelas: '' };
+                renderStudentsTable(); // Re-render empty student table
+                renderMapelList(); // Re-render empty mapel list
+                updateMapelFilter(); // Update mapel dropdowns
+                updateClassFilters(); // Update class dropdowns
+                studentListContainer.innerHTML = ''; // Clear presensi student list
+                rekapDynamicTableContent.innerHTML = ''; // Clear rekap table
+                presensiSearchContainer.classList.add('hidden'); // Hide search bars
+                rekapSearchContainer.classList.add('hidden');
+                contentArea.classList.add('hidden'); // Hide presensi content area
+                kegiatanInput.value = ''; // Clear activity input
+                kegiatanHistoryList.innerHTML = ''; // Clear activity history
+
+            } catch (error) {
+                console.error("Error deleting all data or re-authenticating:", error);
+                if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    passwordError.textContent = "Password salah.";
+                    passwordError.classList.remove('hidden');
+                } else {
+                    showAlertModal("Error Hapus Semua Data", `Gagal menghapus data: ${error.message}`, true); // Use alert modal
+                }
+            } finally {
+                hideLoader();
+            }
+        }
+
+        // --- NEW: Delete Daily Data Functionality ---
+        function showDeleteDailyDataConfirmationModal() {
+            const mapelId = filterMapel.value;
+            const tanggal = filterTanggal.value;
+
+            if (!mapelId || !tanggal) {
+                showToast("Harap pilih Mata Pelajaran dan Tanggal terlebih dahulu.", true);
+                return;
+            }
+
+            const selectedMapel = allMapel[mapelId];
+            if (!selectedMapel) {
+                showAlertModal("Mata Pelajaran Tidak Ditemukan", "Mata pelajaran yang dipilih tidak ditemukan.", true); // Use alert modal
+                return;
+            }
+            const kelas = selectedMapel.kelas;
+
+            const content = `
+                <h3 class="text-lg font-bold mb-2 text-red-600">Hapus Data Hari Ini?</h3>
+                <p class="text-gray-700 mb-6">Tindakan ini akan menghapus semua data presensi, nilai, dan kegiatan pembelajaran untuk <b>${selectedMapel.nama} (${kelas})</b> pada tanggal <b>${formatDateToIndonesian(tanggal)}</b> secara permanen!</p>
+                <div class="flex justify-end space-x-2">
+                    <button onclick="window.closeModal()" class="bg-gray-200 px-4 py-2 rounded-lg">Batal</button>
+                    <button onclick="window.handleDeleteDailyData('${kelas}', '${mapelId}', '${tanggal}')" class="bg-red-600 text-white px-4 py-2 rounded-lg">Hapus</button>
+                </div>
+            `;
+            openModal(content);
+        }
+
+        async function handleDeleteDailyData(kelas, mapelId, tanggal) {
+            showLoader();
+            try {
+                const updates = {};
+                updates[`presensi/${kelas}/${mapelId}/${tanggal}`] = null;
+                updates[`nilai/${kelas}/${mapelId}/${tanggal}`] = null;
+                updates[`kegiatan/${kelas}/${mapelId}/${tanggal}`] = null;
+
+                await update(ref(db), updates);
+                showToast("Data presensi, nilai, dan kegiatan hari ini berhasil dihapus.");
+                window.closeModal();
+                // Re-apply filter to clear displayed data after deletion
+                handleTerapkanFilter(true); 
+            } catch (err) {
+                showAlertModal("Error Hapus Data Harian", `Gagal menghapus data hari ini: ${err.message}`, true); // Use alert modal
+            } finally {
+                hideLoader();
+            }
+        }
+
 
         // Set initial date value on load
         filterTanggal.value = new Date().toISOString().split('T')[0];
