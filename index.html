@@ -154,6 +154,9 @@
     </div>
 
     <div id="app" class="hidden">
+        <div id="offline-indicator" class="bg-yellow-500 text-center text-white p-2 text-sm hidden fixed top-0 w-full z-[90]">
+            Anda sedang offline. Perubahan akan disinkronkan saat kembali online.
+        </div>
         <header class="w-full">
             <div class="container mx-auto px-4 py-3 flex justify-between items-center bg-white shadow-md rounded-b-xl">
                 <h1 id="user-display-name" class="text-xl font-bold text-gray-700">Memuat...</h1>
@@ -499,6 +502,7 @@
         const navLinks = document.querySelectorAll('.nav-link');
         const pages = document.querySelectorAll('.page-content');
         const userDisplayName = document.getElementById('user-display-name');
+        const offlineIndicator = document.getElementById('offline-indicator');
         
         // Login Page Specific Elements
         const emailInput = document.getElementById('email');
@@ -1203,6 +1207,14 @@
                     fullscreenImage.src = '';
                 }
             });
+
+            // MODIFIED: Added listeners for offline/online status
+            window.addEventListener('online', handleOnlineStatus);
+            window.addEventListener('offline', handleOfflineStatus);
+            // Initial check
+            if (!navigator.onLine) {
+                handleOfflineStatus();
+            }
         }
 
         // --- HANDLER FUNCTIONS ---
@@ -1408,7 +1420,6 @@
                 return;
             }
             const kelas = selectedMapel.kelas;
-
             const tanggal = filterTanggal.value;
 
             if (!mapelId || !kelas || !tanggal) {
@@ -1426,17 +1437,25 @@
                 
                 if (currentMode === 'presensi') {
                     const dropdownButton = document.getElementById(`dropdown-button-${studentId}`);
+                    const catatanCheckbox = document.getElementById(`catatan-checkbox-${studentId}`);
+                    const catatanInput = document.getElementById(`catatan-input-${studentId}`);
+                    
                     if (dropdownButton) {
                         const status = dropdownButton.dataset.selectedValue;
+                        const catatan = (catatanCheckbox && catatanCheckbox.checked && catatanInput) ? catatanInput.value.trim() : null;
+                        
                         const path = `users_data/${currentUserKey}/presensi/${kelas}/${mapelId}/${tanggal}/${studentId}`;
                         updates[path] = { status };
+                        if (catatan) {
+                            updates[path].catatan = catatan;
+                        }
                     }
                 } else { 
                     const nilaiInput = document.getElementById(`nilai-input-${studentId}`);
                     if (nilaiInput) {
                         const nilaiValue = nilaiInput.value.trim();
+                        const path = `users_data/${currentUserKey}/nilai/${kelas}/${mapelId}/${tanggal}/${studentId}`;
                         if (nilaiValue === '') {
-                            const path = `users_data/${currentUserKey}/nilai/${kelas}/${mapelId}/${tanggal}/${studentId}`;
                             updates[path] = null; 
                         } else {
                             const nilai = parseFloat(nilaiValue);
@@ -1446,7 +1465,6 @@
                                 return;
                             } else {
                                 nilaiInput.classList.remove('border-red-500');
-                                const path = `users_data/${currentUserKey}/nilai/${kelas}/${mapelId}/${tanggal}/${studentId}`;
                                 updates[path] = { nilai };
                             }
                         }
@@ -1466,19 +1484,25 @@
                 return;
             }
 
-            try {
-                await update(ref(db), updates);
-                showToast("Semua perubahan berhasil disimpan.");
-                hasUnsavedChanges = false; 
-                refreshRekapTableIfNeeded();
-
-                if (!contentArea.classList.contains('hidden')) {
-                    presensiSearchContainer.classList.remove('hidden');
+            // MODIFIED: Offline/Online Save Logic
+            if (navigator.onLine) {
+                try {
+                    await update(ref(db), updates);
+                    showToast("Semua perubahan berhasil disimpan.");
+                    hasUnsavedChanges = false; 
+                    refreshRekapTableIfNeeded();
+                } catch (err) {
+                    showAlertModal("Error Penyimpanan", `Terjadi kesalahan saat menyimpan perubahan: ${err.message}`, true); 
+                } finally {
+                    hideLoader();
                 }
-
-            } catch (err) {
-                showAlertModal("Error Penyimpanan", `Terjadi kesalahan saat menyimpan perubahan: ${err.message}`, true); 
-            } finally {
+            } else {
+                // Save to local storage if offline
+                const pendingUpdates = JSON.parse(localStorage.getItem('pending-updates') || '{}');
+                Object.assign(pendingUpdates, updates); // Merge with existing pending updates
+                localStorage.setItem('pending-updates', JSON.stringify(pendingUpdates));
+                showToast("Anda offline. Perubahan disimpan secara lokal.");
+                hasUnsavedChanges = false;
                 hideLoader();
             }
         }
@@ -1486,6 +1510,7 @@
         function createStudentCard(student, index, studentData) {
             const { id, nama } = student;
             let inputSection;
+            const hasCatatan = studentData.catatan && studentData.catatan.length > 0;
 
             if (currentMode === 'presensi') {
                 const initialStatus = studentData.status || 'Hadir';
@@ -1510,6 +1535,13 @@
                         <div onclick="window.selectOption(this, '${id}')" data-value="Alpa" class="px-4 py-2 cursor-pointer bg-red-100 text-red-800 font-medium">Alpa</div>
                     </div>
                 </div>
+                <div class="mt-2 text-xs">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" id="catatan-checkbox-${id}" class="form-checkbox h-4 w-4 text-blue-600" onchange="window.toggleCatatan(this, '${id}')" ${hasCatatan ? 'checked' : ''}>
+                        <span class="ml-2 text-gray-600">tambahkan catatan?</span>
+                    </label>
+                </div>
+                <textarea id="catatan-input-${id}" oninput="window.markChanges()" class="w-full mt-1 p-2 border rounded-lg bg-gray-50 text-sm ${hasCatatan ? '' : 'hidden'}" placeholder="Catatan perilaku...">${studentData.catatan || ''}</textarea>
                 `;
             } else { 
                 const initialNilai = (studentData.nilai || studentData.nilai === 0) ? studentData.nilai : '';
@@ -1565,7 +1597,7 @@
                 for (const tanggal in allPresensi[kelas][mapelId]) {
                     if (allPresensi[kelas][mapelId][tanggal][studentId]) {
                         if (!mergedHistory[tanggal]) mergedHistory[tanggal] = {};
-                        mergedHistory[tanggal].status = allPresensi[kelas][mapelId][tanggal][studentId].status;
+                        mergedHistory[tanggal] = { ...allPresensi[kelas][mapelId][tanggal][studentId] };
                     }
                 }
             }
@@ -1614,7 +1646,8 @@
                 const formattedDate = formatDateToIndonesian(item.tanggal);
                 const status = item.data.status || 'Hadir';
                 const nilai = (item.data.nilai || item.data.nilai === 0) ? `- ${item.data.nilai}` : '';
-                container.innerHTML += `<div class="flex justify-between"><p>${formattedDate}</p><p class="font-semibold text-right">${status} ${nilai}</p></div>`;
+                const catatan = item.data.catatan ? `<br><i class="text-gray-500">"${item.data.catatan}"</i>` : '';
+                container.innerHTML += `<div class="flex justify-between"><p>${formattedDate}</p><p class="font-semibold text-right">${status} ${nilai}${catatan}</p></div>`;
             });
             
             if(historyData.length > 2) {
@@ -2336,6 +2369,85 @@
                 hideLoader();
             }
         }
+
+        // --- OFFLINE MODE FUNCTIONS ---
+        async function syncOfflineData() {
+            const pendingUpdates = JSON.parse(localStorage.getItem('pending-updates') || '{}');
+            if (Object.keys(pendingUpdates).length === 0) {
+                console.log("No pending updates to sync.");
+                return;
+            }
+
+            showToast("Menyinkronkan data offline...");
+            showLoader();
+            try {
+                await update(ref(db), pendingUpdates);
+                localStorage.removeItem('pending-updates');
+                showToast("Sinkronisasi data berhasil.");
+            } catch (error) {
+                console.error("Failed to sync offline data:", error);
+                showToast("Gagal menyinkronkan data. Mencoba lagi nanti.", true);
+            } finally {
+                hideLoader();
+            }
+        }
+
+        function handleOnlineStatus() {
+            offlineIndicator.classList.add('hidden');
+            syncOfflineData();
+        }
+
+        function handleOfflineStatus() {
+            offlineIndicator.classList.remove('hidden');
+            showToast("Koneksi terputus. Anda sekarang dalam mode offline.", true);
+        }
+        
+        // --- GLOBAL WINDOW FUNCTIONS (for inline onclick) ---
+        
+        window.markChanges = () => {
+            hasUnsavedChanges = true;
+        };
+
+        window.toggleDropdown = (button, studentId) => {
+            const options = button.nextElementSibling;
+            document.querySelectorAll('.custom-dropdown-options').forEach(opt => {
+                if (opt !== options) {
+                    opt.classList.add('hidden');
+                }
+            });
+            options.classList.toggle('hidden');
+        };
+
+        window.selectOption = (option, studentId) => {
+            const value = option.dataset.value;
+            const button = document.getElementById(`dropdown-button-${studentId}`);
+            const optionsContainer = option.parentElement;
+
+            const statusColors = {
+                Hadir: 'bg-gray-200 text-gray-800',
+                Sakit: 'bg-orange-500 text-white',
+                Izin: 'bg-green-500 text-white',
+                Alpa: 'bg-red-500 text-white'
+            };
+
+            button.dataset.selectedValue = value;
+            
+            const buttonSpan = button.querySelector('span');
+            if(buttonSpan) buttonSpan.textContent = value;
+            
+            button.className = `custom-dropdown-button w-full p-2 rounded-lg text-left font-medium cursor-pointer transition-colors flex justify-between items-center ${statusColors[value]}`;
+
+            optionsContainer.classList.add('hidden');
+            hasUnsavedChanges = true; 
+        };
+
+        window.toggleCatatan = (checkbox, studentId) => {
+            const textarea = document.getElementById(`catatan-input-${studentId}`);
+            if (textarea) {
+                textarea.classList.toggle('hidden', !checkbox.checked);
+            }
+            window.markChanges();
+        };
 
 
         filterTanggal.value = new Date().toISOString().split('T')[0];
