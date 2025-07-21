@@ -1,5 +1,5 @@
-// Nama cache untuk aplikasi
-const CACHE_NAME = 'presensi-guru-cache-v1';
+// Nama cache untuk aplikasi (versi dinaikkan untuk memicu pembaruan)
+const CACHE_NAME = 'presensi-guru-cache-v2';
 
 // Daftar URL aset penting yang akan disimpan di cache
 const urlsToCache = [
@@ -17,51 +17,17 @@ const urlsToCache = [
 
 // Event 'install': Dipanggil saat service worker pertama kali diinstal
 self.addEventListener('install', event => {
-    // Menunggu hingga semua aset penting berhasil di-cache
+    self.skipWaiting(); // Memaksa service worker baru untuk aktif lebih cepat
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => {
-                console.log('Cache dibuka');
+                console.log('Cache dibuka dan aset statis disimpan');
                 return cache.addAll(urlsToCache);
             })
     );
 });
 
-// Event 'fetch': Dipanggil setiap kali aplikasi meminta sumber daya (file, gambar, dll.)
-self.addEventListener('fetch', event => {
-    event.respondWith(
-        caches.match(event.request)
-            .then(response => {
-                // Jika sumber daya ditemukan di cache, kembalikan dari cache
-                if (response) {
-                    return response;
-                }
-                
-                // Jika tidak ada di cache, ambil dari jaringan
-                return fetch(event.request).then(
-                    (response) => {
-                        // Periksa apakah respons valid
-                        if(!response || response.status !== 200 || (response.type !== 'basic' && response.type !== 'cors')) {
-                            return response;
-                        }
-
-                        // Gandakan respons karena kita perlu menyimpannya di cache dan mengirimkannya ke browser
-                        const responseToCache = response.clone();
-
-                        caches.open(CACHE_NAME)
-                            .then(cache => {
-                                // Simpan respons yang baru diambil ke dalam cache
-                                cache.put(event.request, responseToCache);
-                            });
-
-                        return response;
-                    }
-                );
-            })
-    );
-});
-
-// Event 'activate': Dipanggil saat service worker diaktifkan (misalnya setelah update)
+// Event 'activate': Dipanggil saat service worker diaktifkan
 self.addEventListener('activate', event => {
     const cacheWhitelist = [CACHE_NAME]; // Hanya cache dengan nama ini yang akan dipertahankan
     event.waitUntil(
@@ -70,10 +36,58 @@ self.addEventListener('activate', event => {
                 // Hapus semua cache lama yang tidak ada dalam whitelist
                 cacheNames.map(cacheName => {
                     if (cacheWhitelist.indexOf(cacheName) === -1) {
+                        console.log('Menghapus cache lama:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
             );
         })
+    );
+});
+
+// Event 'fetch': Dipanggil setiap kali aplikasi meminta sumber daya
+self.addEventListener('fetch', event => {
+    const { request } = event;
+    const url = new URL(request.url);
+
+    // Abaikan permintaan ke Firebase Realtime Database, selalu ambil dari jaringan.
+    if (url.hostname.includes('firebasedatabase.app')) {
+        event.respondWith(fetch(request));
+        return;
+    }
+
+    // Untuk halaman HTML, gunakan strategi "Network First, then Cache".
+    if (request.headers.get('Accept').includes('text/html')) {
+        event.respondWith(
+            fetch(request)
+                .then(response => {
+                    // Jika berhasil, simpan versi baru ke cache.
+                    const responseToCache = response.clone();
+                    caches.open(CACHE_NAME).then(cache => {
+                        cache.put(request, responseToCache);
+                    });
+                    return response;
+                })
+                .catch(() => {
+                    // Jika jaringan gagal, ambil dari cache.
+                    return caches.match(request);
+                })
+        );
+        return;
+    }
+
+    // Untuk aset statis lainnya, gunakan strategi "Cache First, then Network".
+    event.respondWith(
+        caches.match(request)
+            .then(response => {
+                // Kembalikan dari cache jika ada, jika tidak, ambil dari jaringan.
+                return response || fetch(request).then(fetchResponse => {
+                    const responseToCache = fetchResponse.clone();
+                    caches.open(CACHE_NAME).then(cache => {
+                        cache.put(request, responseToCache);
+                    });
+                    return fetchResponse;
+                });
+            })
     );
 });
