@@ -165,7 +165,12 @@
         <header class="w-full">
             <div class="container mx-auto px-4 py-3 flex justify-between items-center bg-white shadow-md rounded-b-xl">
                 <h1 id="user-display-name" class="text-xl font-bold text-gray-700">Memuat...</h1>
-                <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2">
+                     <!-- MODIFIED: Added Install PWA Button -->
+                     <button id="install-pwa-btn" class="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-blue-600 transition hidden flex items-center space-x-2">
+                        <i class="fa-solid fa-download"></i>
+                        <span>Install</span>
+                     </button>
                      <button id="logout-btn" class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-red-600 transition">Keluar</button>
                 </div>
             </div>
@@ -496,6 +501,7 @@
         let currentUserKey = null; 
         let currentUserName = null;
         let githubToken = null;
+        let deferredPrompt; // For PWA install prompt
 
         // --- UI ELEMENTS ---
         const loadingSpinner = document.getElementById('loading-spinner');
@@ -508,6 +514,7 @@
         const pages = document.querySelectorAll('.page-content');
         const userDisplayName = document.getElementById('user-display-name');
         const offlineIndicator = document.getElementById('offline-indicator');
+        const installPwaBtn = document.getElementById('install-pwa-btn');
         
         // Login Page Specific Elements
         const emailInput = document.getElementById('email');
@@ -1053,7 +1060,6 @@
             onValue(ref(db, `users_data/${currentUserKey}/jadwal`), (snapshot) => {
                 const jadwalData = snapshot.val();
                 if (jadwalData && jadwalData.imageUrl) {
-                    // MODIFIED: Removed cache-busting parameter to allow caching
                     jadwalImage.src = jadwalData.imageUrl;
                     jadwalImage.classList.remove('hidden');
                     jadwalImage.classList.add('cursor-pointer');
@@ -2449,15 +2455,44 @@
             window.markChanges();
         };
 
+        // --- PWA INSTALL PROMPT LOGIC ---
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Mencegah Chrome 67 dan sebelumnya menampilkan prompt secara otomatis
+            e.preventDefault();
+            // Simpan event agar bisa dipicu nanti.
+            deferredPrompt = e;
+            // Tampilkan tombol install kustom kita
+            installPwaBtn.classList.remove('hidden');
+            console.log('`beforeinstallprompt` event was fired.');
+        });
+
+        installPwaBtn.addEventListener('click', async () => {
+            // Sembunyikan tombol kita karena prompt akan ditampilkan
+            installPwaBtn.classList.add('hidden');
+            // Tampilkan prompt install
+            deferredPrompt.prompt();
+            // Tunggu pengguna merespons prompt
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response to the install prompt: ${outcome}`);
+            // Kita tidak perlu lagi event ini, buang saja
+            deferredPrompt = null;
+        });
+
+        window.addEventListener('appinstalled', () => {
+            // Sembunyikan tombol install jika aplikasi berhasil diinstal
+            installPwaBtn.classList.add('hidden');
+            deferredPrompt = null;
+            console.log('PWA was installed');
+            showToast("Aplikasi berhasil diinstal!");
+        });
+
+
         // --- PWA SERVICE WORKER REGISTRATION ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
                     .then(registration => {
                         console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                        if (registration.installing) {
-                            showToast("Aplikasi siap digunakan offline.");
-                        }
                     }).catch(err => {
                         console.log('ServiceWorker registration failed: ', err);
                     });
