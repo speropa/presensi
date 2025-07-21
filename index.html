@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Presensi Online Guru</title>
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#ffffff"/>
+    <link rel="apple-touch-icon" href="https://placehold.co/180x180/2563eb/ffffff?text=Presensi">
+    <link rel="manifest" href="manifest.json">
     
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -2449,6 +2454,120 @@
             window.markChanges();
         };
 
+        // --- PWA SERVICE WORKER REGISTRATION ---
+        function createAndRegisterServiceWorker() {
+            const swContent = `
+                const CACHE_NAME = 'presensi-guru-cache-v1';
+                const urlsToCache = [
+                    './',
+                    'https://cdn.tailwindcss.com',
+                    'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
+                    'https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js',
+                    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
+                    'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js',
+                    'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js',
+                    'https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js'
+                ];
+
+                self.addEventListener('install', event => {
+                    event.waitUntil(
+                        caches.open(CACHE_NAME)
+                            .then(cache => {
+                                console.log('Opened cache');
+                                return cache.addAll(urlsToCache);
+                            })
+                    );
+                });
+
+                self.addEventListener('fetch', event => {
+                    event.respondWith(
+                        caches.match(event.request)
+                            .then(response => {
+                                if (response) {
+                                    return response; // Return from cache
+                                }
+                                return fetch(event.request).then(
+                                    (response) => {
+                                        // Check if we received a valid response
+                                        if(!response || response.status !== 200 || response.type !== 'basic' && response.type !== 'cors') {
+                                            return response;
+                                        }
+
+                                        const responseToCache = response.clone();
+                                        caches.open(CACHE_NAME)
+                                            .then(cache => {
+                                                cache.put(event.request, responseToCache);
+                                            });
+                                        return response;
+                                    }
+                                );
+                            })
+                    );
+                });
+
+                self.addEventListener('activate', event => {
+                    const cacheWhitelist = [CACHE_NAME];
+                    event.waitUntil(
+                        caches.keys().then(cacheNames => {
+                            return Promise.all(
+                                cacheNames.map(cacheName => {
+                                    if (cacheWhitelist.indexOf(cacheName) === -1) {
+                                        return caches.delete(cacheName);
+                                    }
+                                })
+                            );
+                        })
+                    );
+                });
+            `;
+            const swBlob = new Blob([swContent], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(swBlob);
+
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register(swUrl)
+                        .then(registration => {
+                            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                            // Check if this is the first time the service worker is installed.
+                            if (registration.installing) {
+                                showToast("Aplikasi siap digunakan offline.");
+                            }
+                        }).catch(err => {
+                            console.log('ServiceWorker registration failed: ', err);
+                        });
+                });
+            }
+        }
+
+        function createAndInjectManifest() {
+             const manifestContent = {
+                "name": "Presensi Online Guru",
+                "short_name": "Presensi",
+                "start_url": ".",
+                "display": "standalone",
+                "background_color": "#f0f2f5",
+                "theme_color": "#ffffff",
+                "description": "Aplikasi presensi online untuk guru dengan fitur offline.",
+                "icons": [
+                    {
+                        "src": "https://placehold.co/192x192/2563eb/ffffff?text=P",
+                        "sizes": "192x192",
+                        "type": "image/png"
+                    },
+                    {
+                        "src": "https://placehold.co/512x512/2563eb/ffffff?text=Presensi",
+                        "sizes": "512x512",
+                        "type": "image/png"
+                    }
+                ]
+            };
+            const manifestBlob = new Blob([JSON.stringify(manifestContent)], { type: 'application/json' });
+            const manifestUrl = URL.createObjectURL(manifestBlob);
+            document.querySelector('link[rel="manifest"]').setAttribute('href', manifestUrl);
+        }
+
+        createAndInjectManifest();
+        createAndRegisterServiceWorker();
 
         filterTanggal.value = new Date().toISOString().split('T')[0];
 
