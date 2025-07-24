@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Presensi Online Guru</title>
 
-    <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#ffffff"/>
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/speropa/presensi/main/ikon%20presensi.jpg">
     <link rel="manifest" href="manifest.json">
@@ -73,6 +72,7 @@
         /* Styling for active nav link */
         .nav-link.active {
             color: #2563eb; /* blue-600 */
+            transform: scale(1.1);
         }
         /* Styling for vertical table headers */
         .vertical-th {
@@ -128,6 +128,24 @@
              background-color: transparent;
              border: none;
         }
+        
+        /* --- DASHBOARD STYLES --- */
+        .dashboard-card {
+            background-color: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: transform 0.2s ease-in-out;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-2px);
+        }
+        .highlight-card {
+            border-left: 5px solid #2563eb; /* blue-600 */
+        }
+        .next-class-card {
+            border-left: 5px solid #f97316; /* orange-500 */
+        }
     </style>
 </head>
 <body class="antialiased text-gray-800">
@@ -177,8 +195,41 @@
         </header>
 
         <main class="container mx-auto p-4 pb-24">
-            <div id="page-presensi" class="page-content">
-                <div class="bg-white p-4 rounded-xl shadow-md mb-6">
+            <div id="page-dashboard" class="page-content">
+                <div id="dashboard-container" class="mb-6">
+                    <div class="mb-4">
+                        <h2 id="dashboard-greeting" class="text-2xl font-bold text-gray-800">Selamat Datang!</h2>
+                        <p id="dashboard-date" class="text-gray-500"></p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                        <div class="dashboard-card flex items-center space-x-4">
+                            <div class="bg-blue-100 p-3 rounded-full">
+                                <i class="fa-solid fa-users text-xl text-blue-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm">Total Siswa</p>
+                                <p id="total-siswa-summary" class="text-2xl font-bold">0</p>
+                            </div>
+                        </div>
+                        <div class="dashboard-card flex items-center space-x-4">
+                            <div class="bg-green-100 p-3 rounded-full">
+                                <i class="fa-solid fa-book text-xl text-green-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm">Total Mapel</p>
+                                <p id="total-mapel-summary" class="text-2xl font-bold">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="dashboard-jadwal-cerdas">
+                        </div>
+                </div>
+            </div>
+
+            <div id="page-presensi" class="page-content hidden">
+                <div class="bg-white p-4 rounded-xl shadow-md mb-6" id="filter-container">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-bold">Filter Presensi & Nilai</h3>
                         <button id="delete-daily-data-btn" class="bg-red-500 text-white px-3 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors flex items-center space-x-2">
@@ -323,39 +374,93 @@
                     <div id="mapel-list-container" class="space-y-3"></div>
                 </div>
             </div>
-
+            
             <div id="page-jadwal" class="page-content hidden">
-                <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md">
-                    <div class="flex justify-between items-center mb-4">
+                <div class="bg-white p-4 rounded-xl shadow-md mb-6">
+                    <div class="flex justify-between items-center">
                         <h3 class="text-xl font-bold">Jadwal Pelajaran</h3>
-                        <div class="flex items-center space-x-2">
-                            <label id="jadwal-upload-label" for="jadwal-upload" class="bg-blue-500 text-white font-medium py-2 px-4 rounded-lg hover:bg-blue-600 cursor-pointer flex items-center space-x-2 transition-colors">
-                                <i class="fa-solid fa-upload"></i>
-                                <span class="hidden sm:inline">Unggah</span>
-                            </label>
-                            <input type="file" id="jadwal-upload" class="hidden" accept="image/*">
-                            <button id="delete-jadwal-btn" class="bg-red-500 text-white font-medium py-2 px-4 rounded-lg hover:bg-red-600 flex items-center space-x-2 transition-colors hidden">
-                                <i class="fa-solid fa-trash"></i>
-                                <span class="hidden sm:inline">Hapus</span>
+                        <div class="flex items-center space-x-3">
+                            <span id="jadwal-mode-label" class="text-sm font-medium text-gray-600">Mode: Gambar</span>
+                            <button id="toggle-jadwal-mode-btn" class="relative inline-flex items-center h-6 rounded-full w-11 transition-colors bg-blue-600 focus:outline-none">
+                                <span id="toggle-jadwal-mode-switch" class="inline-block w-4 h-4 transform bg-white rounded-full transition-transform translate-x-5"></span>
                             </button>
                         </div>
                     </div>
-                    <div id="jadwal-image-container" class="mt-4 border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[60vh] flex items-center justify-center bg-gray-50">
-                         <div id="jadwal-placeholder" class="text-center text-gray-500">
-                            <i class="fa-solid fa-image text-5xl mb-4"></i>
-                            <p>Belum ada jadwal yang diunggah.</p>
-                            <p class="text-sm">Silakan unggah gambar jadwal Anda.</p>
+                </div>
+
+                <div id="jadwal-view-gambar" class="hidden">
+                     <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold">Jadwal (Gambar)</h3>
+                            <div class="flex items-center space-x-2">
+                                <label id="jadwal-upload-label" for="jadwal-upload" class="bg-blue-500 text-white font-medium py-2 px-4 rounded-lg hover:bg-blue-600 cursor-pointer flex items-center space-x-2 transition-colors">
+                                    <i class="fa-solid fa-upload"></i>
+                                    <span class="hidden sm:inline">Unggah</span>
+                                </label>
+                                <input type="file" id="jadwal-upload" class="hidden" accept="image/*">
+                                <button id="delete-jadwal-btn" class="bg-red-500 text-white font-medium py-2 px-4 rounded-lg hover:bg-red-600 flex items-center space-x-2 transition-colors hidden">
+                                    <i class="fa-solid fa-trash"></i>
+                                    <span class="hidden sm:inline">Hapus</span>
+                                </button>
+                            </div>
                         </div>
-                        <img id="jadwal-image" src="" alt="Jadwal Pelajaran" class="max-w-full max-h-[70vh] rounded-lg hidden object-contain"/>
+                        <div id="jadwal-image-container" class="mt-4 border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[60vh] flex items-center justify-center bg-gray-50">
+                             <div id="jadwal-placeholder" class="text-center text-gray-500">
+                                <i class="fa-solid fa-image text-5xl mb-4"></i>
+                                <p>Belum ada jadwal yang diunggah.</p>
+                                <p class="text-sm">Silakan unggah gambar jadwal Anda.</p>
+                            </div>
+                            <img id="jadwal-image" src="" alt="Jadwal Pelajaran" class="max-w-full max-h-[70vh] rounded-lg hidden object-contain"/>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="jadwal-view-dinamis">
+                    <div class="bg-white p-4 rounded-xl shadow-md mb-6">
+                        <h3 class="text-lg font-bold mb-4">Buat Jadwal Pelajaran</h3>
+                        <form id="add-jadwal-form" class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                            <div>
+                                <label for="jadwal-hari" class="text-sm font-medium">Hari</label>
+                                <select id="jadwal-hari" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50">
+                                    <option value="senin">Senin</option>
+                                    <option value="selasa">Selasa</option>
+                                    <option value="rabu">Rabu</option>
+                                    <option value="kamis">Kamis</option>
+                                    <option value="jumat">Jumat</option>
+                                    <option value="sabtu">Sabtu</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label for="jadwal-jam-mulai" class="text-sm font-medium">Mulai</label>
+                                    <input type="time" id="jadwal-jam-mulai" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50">
+                                </div>
+                                 <div>
+                                    <label for="jadwal-jam-selesai" class="text-sm font-medium">Selesai</label>
+                                    <input type="time" id="jadwal-jam-selesai" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50">
+                                </div>
+                            </div>
+                            <div>
+                                 <label for="jadwal-mapel" class="text-sm font-medium">Mata Pelajaran</label>
+                                 <select id="jadwal-mapel" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50">
+                                     <option value="">Pilih Mapel...</option>
+                                 </select>
+                            </div>
+                            <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600 h-fit w-full">Tambah Jadwal</button>
+                        </form>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-xl shadow-md">
+                        <h3 class="text-lg font-bold mb-4">Jadwal Tersimpan</h3>
+                        <div id="jadwal-terstruktur-container" class="space-y-6">
+                            </div>
                     </div>
                 </div>
             </div>
 
-
             <div id="page-hasil-rekap" class="page-content hidden">
                 <div class="bg-white p-4 rounded-xl shadow-md mb-6">
                     <h3 class="text-lg font-bold mb-4">Rekapitulasi Presensi & Nilai</h3>
-                    <!-- MODIFIED: Rekap Filter layout changed -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                         <div>
                             <label for="rekap-filter-mapel" class="text-sm font-medium">Mata Pelajaran</label>
@@ -405,7 +510,11 @@
 
         <div class="fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_5px_rgba(0,0,0,0.1)] z-40">
             <nav class="container mx-auto flex justify-around">
-                <button data-page="presensi" class="nav-link active flex flex-col items-center text-gray-500 hover:text-blue-600 p-2 transition-colors">
+                <button data-page="dashboard" class="nav-link active flex flex-col items-center text-gray-500 hover:text-blue-600 p-2 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span class="text-xs font-medium">Dasbor</span>
+                </button>
+                <button data-page="presensi" class="nav-link flex flex-col items-center text-gray-500 hover:text-blue-600 p-2 transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
                     <span class="text-xs font-medium">Presensi</span>
                 </button>
@@ -429,7 +538,6 @@
         </div>
     </div>
 
-    <!-- Plain White PIN Verification Modal -->
     <div id="pin-verification-modal" class="fixed inset-0 bg-gray-100 flex flex-col items-center justify-center z-50 hidden p-8">
         <div class="w-full max-w-xs text-center flex-grow flex flex-col justify-center">
             <h3 class="text-2xl font-semibold text-gray-800 mb-4">Masukkan PIN</h3>
@@ -504,6 +612,7 @@
         let currentMode = 'presensi';
         let allStudents = {};
         let allMapel = {};
+        let allJadwalTerstruktur = {};
         let availableClasses = new Set();
         let hasUnsavedChanges = false;
         let pendingAction = null; 
@@ -516,6 +625,8 @@
         let githubToken = null;
         let deferredPrompt; 
         let allLoginData = null; 
+        let scheduledNotifications = new Set(); 
+        let currentJadwalMode = 'dinamis';
 
         // --- UI ELEMENTS ---
         const loadingSpinner = document.getElementById('loading-spinner');
@@ -539,7 +650,6 @@
         const pinKeypadModal = document.getElementById('pin-keypad-modal');
         const pinError = document.getElementById('pin-error');
 
-        // MODIFIED: Get new filter elements
         const filterMapel = document.getElementById('filter-mapel');
         const filterKelas = document.getElementById('filter-kelas');
         const filterTanggal = document.getElementById('filter-tanggal');
@@ -593,6 +703,25 @@
         const rekapSearchContainer = document.getElementById('rekap-search-container');
         const searchRekapStudentInput = document.getElementById('search-rekap-student');
         const rekapDynamicTableContent = document.getElementById('rekap-dynamic-table-content');
+
+        const addJadwalForm = document.getElementById('add-jadwal-form');
+        const jadwalHariSelect = document.getElementById('jadwal-hari');
+        const jadwalJamMulaiInput = document.getElementById('jadwal-jam-mulai');
+        const jadwalJamSelesaiInput = document.getElementById('jadwal-jam-selesai');
+        const jadwalMapelSelect = document.getElementById('jadwal-mapel');
+        const jadwalTerstrukturContainer = document.getElementById('jadwal-terstruktur-container');
+
+        const toggleJadwalModeBtn = document.getElementById('toggle-jadwal-mode-btn');
+        const toggleJadwalModeSwitch = document.getElementById('toggle-jadwal-mode-switch');
+        const jadwalModeLabel = document.getElementById('jadwal-mode-label');
+        const jadwalViewGambar = document.getElementById('jadwal-view-gambar');
+        const jadwalViewDinamis = document.getElementById('jadwal-view-dinamis');
+
+        const dashboardGreeting = document.getElementById('dashboard-greeting');
+        const dashboardDate = document.getElementById('dashboard-date');
+        const totalSiswaSummary = document.getElementById('total-siswa-summary');
+        const totalMapelSummary = document.getElementById('total-mapel-summary');
+        const dashboardJadwalCerdas = document.getElementById('dashboard-jadwal-cerdas');
 
         const modal = document.getElementById('modal');
         const modalContent = document.getElementById('modal-content');
@@ -966,6 +1095,7 @@
                 await fetchGithubToken();
                 setupEventListeners();
                 initializeDataListeners();
+                requestNotificationPermission();
                 
             } catch (error) {
                  console.error("Error during post-login setup:", error);
@@ -1045,13 +1175,6 @@
             navLinks.forEach(nav => nav.classList.remove('active'));
             document.querySelector(`.nav-link[data-page="${pageId}"]`).classList.add('active');
 
-            searchPresensiStudentInput.value = '';
-            searchAllStudentsInput.value = '';
-            searchRekapStudentInput.value = '';
-            rekapSearchContainer.classList.add('hidden');
-            rekapDynamicTableContent.innerHTML = ''; 
-            rekapDownloadDropdownBtn.classList.add('hidden'); 
-
             if (pageId === 'hasil-rekap') {
                 handleTerapkanRekap();
             }
@@ -1074,15 +1197,24 @@
                 allStudents = snapshot.val() || {};
                 renderStudentsTable(); 
                 updateClassFilters(); 
-                filterPresensiStudents(); 
+                displayDashboard();
             });
 
             onValue(ref(db, `users_data/${currentUserKey}/mapel/`), (snapshot) => { 
                 allMapel = snapshot.val() || {};
                 renderMapelList();
-                updateMapelFilter(); // MODIFIED: This function is now different
+                updateMapelFilter();
+                updateJadwalMapelFilter();
+                displayDashboard();
             });
             
+            onValue(ref(db, `users_data/${currentUserKey}/jadwal_terstruktur`), (snapshot) => {
+                allJadwalTerstruktur = snapshot.val() || {};
+                renderJadwalTerstruktur();
+                displayDashboard();
+                scheduleTodayNotifications();
+            });
+
             onValue(ref(db, `users_data/${currentUserKey}/jadwal`), (snapshot) => {
                 const jadwalData = snapshot.val();
                 if (jadwalData && jadwalData.imageUrl) {
@@ -1161,7 +1293,6 @@
             mapelClassSelect.innerHTML = classOptionsHtml; 
         }
         
-        // --- MODIFIED: New filter logic ---
         function updateMapelFilter() {
             const uniqueMapelNames = new Set();
             Object.values(allMapel).forEach(mapel => uniqueMapelNames.add(mapel.nama));
@@ -1173,9 +1304,20 @@
             filterMapel.innerHTML = mapelOptionsHtml;
             rekapFilterMapel.innerHTML = mapelOptionsHtml;
 
-            // Reset and disable class filters
             updateClassFilter('presensi');
             updateClassFilter('rekap');
+        }
+
+        function updateJadwalMapelFilter() {
+            const mapelOptions = Object.entries(allMapel)
+                .map(([id, mapel]) => ({ id, nama: mapel.nama, kelas: mapel.kelas }))
+                .sort((a, b) => a.nama.localeCompare(b.nama) || a.kelas.localeCompare(b.kelas));
+
+            let optionsHtml = '<option value="">Pilih Mapel & Kelas...</option>';
+            mapelOptions.forEach(mapel => {
+                optionsHtml += `<option value="${mapel.id}">${mapel.nama} - ${mapel.kelas}</option>`;
+            });
+            jadwalMapelSelect.innerHTML = optionsHtml;
         }
 
         function updateClassFilter(pagePrefix) {
@@ -1216,7 +1358,6 @@
             saveAllBtn.addEventListener('click', handleSaveAllData);
             terapkanRekapBtn.addEventListener('click', handleTerapkanRekap);
             
-            // MODIFIED: Add event listeners for new filters
             filterMapel.addEventListener('change', () => updateClassFilter('presensi'));
             rekapFilterMapel.addEventListener('change', () => updateClassFilter('rekap'));
 
@@ -1226,6 +1367,10 @@
             rekapDownloadDropdownBtn.addEventListener('click', toggleRekapDownloadDropdown);
             downloadCsvBtn.addEventListener('click', handleDownloadCSV);
             printRekapBtn.addEventListener('click', handlePrintRekap); 
+            
+            addJadwalForm.addEventListener('submit', handleAddJadwal);
+            
+            toggleJadwalModeBtn.addEventListener('click', handleToggleJadwalMode);
             
             document.addEventListener('click', (event) => {
                 if (!rekapDownloadDropdownBtn.contains(event.target) && !rekapDownloadOptions.contains(event.target)) {
@@ -1389,7 +1534,6 @@
                 return;
             }
 
-            // MODIFIED: Get values from new filters
             const selectedMapelName = filterMapel.value;
             const kelas = filterKelas.value;
             const tanggal = filterTanggal.value;
@@ -1399,7 +1543,6 @@
                 return;
             }
 
-            // Find the mapelId based on name and class
             let mapelId = null;
             for (const id in allMapel) {
                 if (allMapel[id].nama === selectedMapelName && allMapel[id].kelas === kelas) {
@@ -1724,7 +1867,7 @@
         function formatDateToIndonesian(dateString) {
             const [year, month, day] = dateString.split('-');
             const date = new Date(year, month - 1, day);
-            const options = { weekday: 'long', day: 'numeric', month: 'numeric', year: 'numeric' };
+            const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
             return date.toLocaleDateString('id-ID', options);
         }
 
@@ -1752,7 +1895,7 @@
             };
 
             dataToShow.forEach(item => {
-                const formattedDate = formatDateToIndonesian(item.tanggal);
+                const formattedDate = formatDateToIndonesian(item.tanggal).split(', ')[1]; // Get only date part
                 const status = item.data.status;
                 const nilai = (item.data.nilai !== undefined && item.data.nilai !== null) ? item.data.nilai : null;
                 const catatan = item.data.catatan ? `<br><i class="text-gray-500">"${item.data.catatan}"</i>` : '';
@@ -2150,6 +2293,16 @@
                 updates[`users_data/${currentUserKey}/nilai/${mapelClassToDelete}/${mapelId}`] = null;
                 updates[`users_data/${currentUserKey}/kegiatan/${mapelClassToDelete}/${mapelId}`] = null;
                 
+                const scheduleUpdates = {};
+                for (const day in allJadwalTerstruktur) {
+                    for (const scheduleId in allJadwalTerstruktur[day]) {
+                        if (allJadwalTerstruktur[day][scheduleId].mapelId === mapelId) {
+                            scheduleUpdates[`users_data/${currentUserKey}/jadwal_terstruktur/${day}/${scheduleId}`] = null;
+                        }
+                    }
+                }
+                await update(ref(db), scheduleUpdates);
+                
                 await update(ref(db), updates);
                 showToast("Mata pelajaran dan data terkait berhasil dihapus.");
                 window.closeModal();
@@ -2434,7 +2587,8 @@
                     [`users_data/${currentUserKey}/presensi`]: null, 
                     [`users_data/${currentUserKey}/nilai`]: null, 
                     [`users_data/${currentUserKey}/kegiatan`]: null, 
-                    [`users_data/${currentUserKey}/mapel`]: null 
+                    [`users_data/${currentUserKey}/mapel`]: null,
+                    [`users_data/${currentUserKey}/jadwal_terstruktur`]: null
                 };
                 await update(ref(db), updates);
                 
@@ -2442,6 +2596,7 @@
                 window.closeModal();
                 allStudents = {};
                 allMapel = {}; 
+                allJadwalTerstruktur = {};
                 availableClasses.clear(); 
                 currentPresensiStudentsData = [];
                 currentRekapData = { presensi: {}, nilai: {}, kelas: '' };
@@ -2525,6 +2680,418 @@
                 hideLoader();
             }
         }
+        
+        // --- DYNAMIC SCHEDULE FUNCTIONS ---
+
+        function handleAddJadwal(e) {
+            e.preventDefault();
+            const hari = jadwalHariSelect.value;
+            const jam_mulai = jadwalJamMulaiInput.value;
+            const jam_selesai = jadwalJamSelesaiInput.value;
+            const mapelId = jadwalMapelSelect.value;
+
+            if (!hari || !jam_mulai || !jam_selesai || !mapelId) {
+                showToast("Harap lengkapi semua kolom jadwal.", true);
+                return;
+            }
+            
+            if (jam_mulai >= jam_selesai) {
+                showToast("Jam mulai harus sebelum jam selesai.", true);
+                return;
+            }
+
+            const newJadwalRef = push(ref(db, `users_data/${currentUserKey}/jadwal_terstruktur/${hari}`));
+            const mapelData = allMapel[mapelId];
+            
+            set(newJadwalRef, {
+                jam_mulai,
+                jam_selesai,
+                mapelId,
+                mapelNama: mapelData.nama,
+                kelas: mapelData.kelas
+            }).then(() => {
+                showToast("Jadwal berhasil ditambahkan.");
+                addJadwalForm.reset();
+            }).catch(err => {
+                showAlertModal("Error", `Gagal menambahkan jadwal: ${err.message}`, true);
+            });
+        }
+        
+        function renderJadwalTerstruktur() {
+            jadwalTerstrukturContainer.innerHTML = '';
+            const daysOrder = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
+            
+            daysOrder.forEach(day => {
+                const daySchedule = allJadwalTerstruktur[day];
+                if (daySchedule) {
+                    const dayName = day.charAt(0).toUpperCase() + day.slice(1);
+                    let dayHtml = `<div class="mb-4"><h4 class="text-md font-bold border-b pb-2 mb-2">${dayName}</h4><div class="space-y-2">`;
+                    
+                    const sortedSchedule = Object.entries(daySchedule)
+                        .map(([id, data]) => ({ id, ...data }))
+                        .sort((a, b) => a.jam_mulai.localeCompare(b.jam_mulai));
+
+                    sortedSchedule.forEach(item => {
+                        dayHtml += `
+                            <div class="bg-gray-50 p-3 rounded-lg flex justify-between items-center">
+                                <div class="font-medium">
+                                    <p>${item.jam_mulai} - ${item.jam_selesai}</p>
+                                    <p class="text-sm text-gray-600">${item.mapelNama} - ${item.kelas}</p>
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <button onclick="window.showEditJadwalModal('${day}', '${item.id}')" class="p-2 rounded-full hover:bg-blue-100 text-blue-600">
+                                        <i class="fa-solid fa-pencil"></i>
+                                    </button>
+                                    <button onclick="window.handleDeleteJadwalEntry('${day}', '${item.id}')" class="p-2 rounded-full hover:bg-red-100 text-red-600">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    dayHtml += `</div></div>`;
+                    jadwalTerstrukturContainer.innerHTML += dayHtml;
+                }
+            });
+            
+            if (jadwalTerstrukturContainer.innerHTML === '') {
+                jadwalTerstrukturContainer.innerHTML = '<p class="text-center text-gray-500 py-4">Belum ada jadwal yang dibuat. Silakan tambahkan jadwal baru.</p>';
+            }
+        }
+        
+        function showEditJadwalModal(day, scheduleId) {
+            const jadwalData = allJadwalTerstruktur[day][scheduleId];
+            
+            let dayOptions = '';
+            ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'].forEach(d => {
+                const dayName = d.charAt(0).toUpperCase() + d.slice(1);
+                dayOptions += `<option value="${d}" ${d === day ? 'selected' : ''}>${dayName}</option>`;
+            });
+
+            let mapelOptions = '';
+            Object.entries(allMapel)
+                .sort(([, a], [, b]) => a.nama.localeCompare(b.nama) || a.kelas.localeCompare(b.kelas))
+                .forEach(([id, mapel]) => {
+                    mapelOptions += `<option value="${id}" ${id === jadwalData.mapelId ? 'selected' : ''}>${mapel.nama} - ${mapel.kelas}</option>`;
+                });
+
+            const content = `
+                <h3 class="text-lg font-bold mb-4">Edit Jadwal</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label for="edit-jadwal-hari" class="text-sm font-medium">Hari</label>
+                        <select id="edit-jadwal-hari" class="w-full mt-1 p-2 border rounded-lg bg-gray-50">${dayOptions}</select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label for="edit-jadwal-jam-mulai" class="text-sm font-medium">Mulai</label>
+                            <input type="time" id="edit-jadwal-jam-mulai" value="${jadwalData.jam_mulai}" class="w-full mt-1 p-2 border rounded-lg bg-gray-50">
+                        </div>
+                        <div>
+                            <label for="edit-jadwal-jam-selesai" class="text-sm font-medium">Selesai</label>
+                            <input type="time" id="edit-jadwal-jam-selesai" value="${jadwalData.jam_selesai}" class="w-full mt-1 p-2 border rounded-lg bg-gray-50">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="edit-jadwal-mapel" class="text-sm font-medium">Mata Pelajaran</label>
+                        <select id="edit-jadwal-mapel" class="w-full mt-1 p-2 border rounded-lg bg-gray-50">${mapelOptions}</select>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-2 mt-6">
+                    <button onclick="window.closeModal()" class="bg-gray-200 px-4 py-2 rounded-lg">Batal</button>
+                    <button onclick="window.handleEditJadwal('${day}', '${scheduleId}')" class="bg-blue-500 text-white px-4 py-2 rounded-lg">Simpan Perubahan</button>
+                </div>
+            `;
+            openModal(content);
+        }
+
+        async function handleEditJadwal(originalDay, scheduleId) {
+            const newDay = document.getElementById('edit-jadwal-hari').value;
+            const newStartTime = document.getElementById('edit-jadwal-jam-mulai').value;
+            const newEndTime = document.getElementById('edit-jadwal-jam-selesai').value;
+            const newMapelId = document.getElementById('edit-jadwal-mapel').value;
+
+            if (!newDay || !newStartTime || !newEndTime || !newMapelId) {
+                showToast("Harap lengkapi semua kolom.", true);
+                return;
+            }
+            if (newStartTime >= newEndTime) {
+                showToast("Jam mulai harus sebelum jam selesai.", true);
+                return;
+            }
+
+            const mapelData = allMapel[newMapelId];
+            const updatedJadwalData = {
+                jam_mulai: newStartTime,
+                jam_selesai: newEndTime,
+                mapelId: newMapelId,
+                mapelNama: mapelData.nama,
+                kelas: mapelData.kelas
+            };
+
+            showLoader();
+            try {
+                if (originalDay === newDay) {
+                    const updateRef = ref(db, `users_data/${currentUserKey}/jadwal_terstruktur/${originalDay}/${scheduleId}`);
+                    await update(updateRef, updatedJadwalData);
+                } else {
+                    const oldRef = ref(db, `users_data/${currentUserKey}/jadwal_terstruktur/${originalDay}/${scheduleId}`);
+                    const newRef = ref(db, `users_data/${currentUserKey}/jadwal_terstruktur/${newDay}/${scheduleId}`);
+                    
+                    const updates = {};
+                    updates[oldRef.toString().substring(oldRef.root.toString().length)] = null;
+                    updates[newRef.toString().substring(newRef.root.toString().length)] = updatedJadwalData;
+                    
+                    await update(ref(db), updates);
+                }
+                showToast("Jadwal berhasil diperbarui.");
+                closeModal();
+            } catch(err) {
+                showAlertModal("Error", `Gagal memperbarui jadwal: ${err.message}`, true);
+            } finally {
+                hideLoader();
+            }
+        }
+
+
+        function handleDeleteJadwalEntry(day, scheduleId) {
+            const content = `
+                <h3 class="text-lg font-bold mb-2 text-red-600">Hapus Jadwal Ini?</h3>
+                <p class="text-gray-700 mb-6">Apakah Anda yakin ingin menghapus jadwal ini?</p>
+                <div class="flex justify-end space-x-2">
+                    <button onclick="window.closeModal()" class="bg-gray-200 px-4 py-2 rounded-lg">Batal</button>
+                    <button onclick="window.confirmDeleteJadwalEntry('${day}', '${scheduleId}')" class="bg-red-600 text-white px-4 py-2 rounded-lg">Hapus</button>
+                </div>
+            `;
+            openModal(content);
+        }
+
+        function confirmDeleteJadwalEntry(day, scheduleId) {
+            const jadwalRef = ref(db, `users_data/${currentUserKey}/jadwal_terstruktur/${day}/${scheduleId}`);
+            remove(jadwalRef).then(() => {
+                showToast("Jadwal berhasil dihapus.");
+                closeModal();
+            }).catch(err => {
+                showAlertModal("Error", `Gagal menghapus jadwal: ${err.message}`, true);
+            });
+        }
+        
+        function handleToggleJadwalMode() {
+            currentJadwalMode = currentJadwalMode === 'dinamis' ? 'gambar' : 'dinamis';
+            
+            if (currentJadwalMode === 'gambar') {
+                toggleJadwalModeSwitch.style.transform = 'translateX(0)';
+                toggleJadwalModeBtn.classList.replace('bg-blue-600', 'bg-gray-200');
+                jadwalModeLabel.textContent = 'Mode: Gambar';
+                jadwalViewDinamis.classList.add('hidden');
+                jadwalViewGambar.classList.remove('hidden');
+            } else {
+                toggleJadwalModeSwitch.style.transform = 'translateX(1.25rem)';
+                toggleJadwalModeBtn.classList.replace('bg-gray-200', 'bg-blue-600');
+                jadwalModeLabel.textContent = 'Mode: Buat Jadwal';
+                jadwalViewDinamis.classList.remove('hidden');
+                jadwalViewGambar.classList.add('hidden');
+            }
+        }
+
+        // --- DASHBOARD FUNCTIONS ---
+        async function displayDashboard() {
+            const now = new Date();
+            const hours = now.getHours();
+            let greeting = 'Selamat Datang!';
+            if (hours >= 5 && hours < 11) greeting = 'Selamat Pagi!';
+            else if (hours >= 11 && hours < 15) greeting = 'Selamat Siang!';
+            else if (hours >= 15 && hours < 19) greeting = 'Selamat Sore!';
+            else greeting = 'Selamat Malam!';
+
+            dashboardGreeting.textContent = greeting;
+            dashboardDate.textContent = formatDateToIndonesian(now.toISOString().split('T')[0]);
+
+            totalSiswaSummary.textContent = Object.keys(allStudents).length;
+            totalMapelSummary.textContent = Object.keys(allMapel).length;
+
+            await renderSmartScheduleDashboard();
+        }
+
+        async function renderSmartScheduleDashboard() {
+            dashboardJadwalCerdas.innerHTML = ''; 
+            const now = new Date();
+            const todayDateString = now.toISOString().split('T')[0];
+            const days = ['minggu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
+            const todayName = days[now.getDay()];
+            const todaySchedule = allJadwalTerstruktur[todayName] ? Object.values(allJadwalTerstruktur[todayName]).sort((a, b) => a.jam_mulai.localeCompare(b.jam_mulai)) : [];
+
+            if (todaySchedule.length === 0) {
+                dashboardJadwalCerdas.innerHTML = `
+                    <div class="dashboard-card text-center">
+                        <i class="fa-solid fa-calendar-times text-4xl text-gray-400 mb-3"></i>
+                        <h4 class="font-bold text-lg">Tidak Ada Jadwal Hari Ini</h4>
+                        <p class="text-gray-500 mb-4">Anda belum membuat jadwal terstruktur untuk hari ini. Silakan buat jadwal untuk menggunakan dasbor cerdas.</p>
+                        <button onclick="window.goToBuatJadwal()" class="bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition">
+                            Buat Jadwal Sekarang
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            const currentTime = now.toTimeString().slice(0, 5);
+            let currentClass = null;
+            let nextClass = null;
+
+           for (const item of todaySchedule) {
+                if (currentTime >= item.jam_mulai && currentTime < item.jam_selesai) {
+                    currentClass = item;
+                }
+                if (currentTime < item.jam_mulai && !nextClass) {
+                    nextClass = item;
+                }
+            }
+
+            let dashboardHTML = '';
+
+            if (currentClass) {
+                dashboardHTML += `
+                    <div class="dashboard-card highlight-card mb-4">
+                        <p class="text-sm font-bold text-blue-600 mb-1">SEDANG BERLANGSUNG</p>
+                        <div class="flex flex-col sm:flex-row justify-between sm:items-center">
+                            <div>
+                                <h4 class="text-2xl font-bold">${currentClass.mapelNama}</h4>
+                                <p class="text-lg text-gray-600">Kelas ${currentClass.kelas}</p>
+                                <p class="font-mono text-sm text-gray-500">${currentClass.jam_mulai} - ${currentClass.jam_selesai}</p>
+                            </div>
+                            <div class="mt-4 sm:mt-0">
+                                <button onclick="window.handlePresensiShortcut('${currentClass.mapelId}', '${currentClass.kelas}')" class="bg-blue-600 text-white font-bold py-3 px-5 rounded-lg hover:bg-blue-700 transition w-full sm:w-auto">
+                                    Lakukan Presensi
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                 dashboardHTML += `
+                    <div class="dashboard-card mb-4">
+                        <p class="text-sm font-bold text-gray-600 mb-1">SAAT INI</p>
+                        <h4 class="text-xl font-bold">Tidak ada kelas berlangsung.</h4>
+                        <p class="text-gray-500">Anda sedang dalam jam istirahat atau di luar jam mengajar.</p>
+                    </div>
+                `;
+            }
+
+            if (nextClass) {
+                 dashboardHTML += `
+                    <div class="dashboard-card next-class-card">
+                        <p class="text-sm font-bold text-orange-500 mb-1">SELANJUTNYA</p>
+                        <h4 class="text-xl font-bold">${nextClass.mapelNama}</h4>
+                        <p class="text-lg text-gray-600">Kelas ${nextClass.kelas}</p>
+                        <p class="font-mono text-sm text-gray-500">${nextClass.jam_mulai} - ${nextClass.jam_selesai}</p>
+                    </div>
+                `;
+            } else if (!currentClass) {
+                 dashboardHTML += `
+                    <div class="dashboard-card">
+                        <p class="text-sm font-bold text-green-600 mb-1">SELESAI</p>
+                        <h4 class="text-xl font-bold">Semua kelas hari ini telah selesai.</h4>
+                        <p class="text-gray-500">Terima kasih untuk hari ini!</p>
+                    </div>
+                `;
+            }
+            
+            dashboardJadwalCerdas.innerHTML = dashboardHTML;
+        }
+
+        function goToBuatJadwal() {
+            switchPage('jadwal');
+            if (currentJadwalMode !== 'dinamis') {
+                handleToggleJadwalMode();
+            }
+        }
+        
+        async function handlePresensiShortcut(mapelId, kelas) {
+            const mapelData = allMapel[mapelId];
+            if (!mapelData) {
+                showAlertModal("Error", "Data mata pelajaran tidak ditemukan.", true);
+                return;
+            }
+
+            switchPage('presensi');
+
+            filterMapel.value = mapelData.nama;
+            await updateClassFilter('presensi'); 
+            filterKelas.value = kelas;
+            filterTanggal.value = new Date().toISOString().split('T')[0];
+
+            await handleTerapkanFilter(true);
+
+            const filterContainer = document.getElementById('filter-container');
+            filterContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+
+
+        // --- NOTIFICATION FUNCTIONS ---
+
+        function requestNotificationPermission() {
+            if (!('Notification' in window)) {
+                console.log("Browser ini tidak mendukung notifikasi desktop.");
+                return;
+            }
+
+            if (Notification.permission === 'granted') {
+                console.log("Izin notifikasi sudah diberikan.");
+                return;
+            }
+
+            if (Notification.permission !== 'denied') {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        console.log('Izin notifikasi berhasil diberikan!');
+                        showToast("Notifikasi telah diaktifkan.");
+                    }
+                });
+            }
+        }
+
+        function scheduleTodayNotifications() {
+            if (Notification.permission !== 'granted' || !navigator.serviceWorker.ready) {
+                return;
+            }
+            
+            const now = new Date();
+            const days = ['minggu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
+            const todayName = days[now.getDay()];
+            const todaySchedule = allJadwalTerstruktur[todayName];
+
+            if (!todaySchedule) return;
+
+            Object.values(todaySchedule).forEach(item => {
+                const [hours, minutes] = item.jam_mulai.split(':');
+                const classTime = new Date();
+                classTime.setHours(hours, minutes, 0, 0);
+
+                const reminderTime = new Date(classTime.getTime() - 10 * 60 * 1000);
+                
+                if (reminderTime > now) {
+                    const notificationId = `${todayName}-${item.jam_mulai}`;
+                    
+                    if (!scheduledNotifications.has(notificationId)) {
+                        const title = 'Pengingat Kelas';
+                        const body = `Kelas ${item.mapelNama} di ${item.kelas} akan dimulai dalam 10 menit.`;
+                        const timestamp = reminderTime.getTime();
+                        
+                        navigator.serviceWorker.ready.then(registration => {
+                            registration.active.postMessage({
+                                type: 'SCHEDULE_NOTIFICATION',
+                                payload: { title, body, timestamp, tag: notificationId }
+                            });
+                            scheduledNotifications.add(notificationId);
+                            console.log(`Notifikasi untuk ${notificationId} telah dijadwalkan.`);
+                        });
+                    }
+                }
+            });
+        }
+
 
         // --- OFFLINE MODE FUNCTIONS ---
         async function syncOfflineData() {
@@ -2588,6 +3155,7 @@
                 navigator.serviceWorker.register('./sw.js')
                     .then(registration => {
                         console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                        setInterval(displayDashboard, 60000); // Refresh dashboard every minute
                     }).catch(err => {
                         console.log('ServiceWorker registration failed: ', err);
                     });
@@ -2611,8 +3179,17 @@
         window.toggleHistory = toggleHistory;
         window.updateCatatanValue = updateCatatanValue;
         window.updateNilaiValue = updateNilaiValue;
+        window.handleDeleteJadwalEntry = handleDeleteJadwalEntry;
+        window.confirmDeleteJadwalEntry = confirmDeleteJadwalEntry;
+        window.goToBuatJadwal = goToBuatJadwal;
+        window.handlePresensiShortcut = handlePresensiShortcut;
+        // NEW: Expose edit schedule functions
+        window.showEditJadwalModal = showEditJadwalModal;
+        window.handleEditJadwal = handleEditJadwal;
 
         filterTanggal.value = new Date().toISOString().split('T')[0];
+        handleToggleJadwalMode();
+        switchPage('dashboard');
 
     </script>
 </body>
