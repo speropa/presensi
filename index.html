@@ -324,80 +324,29 @@
                 </div>
             </div>
 
-            <!-- MODIFIED: Jadwal Page with new structure -->
             <div id="page-jadwal" class="page-content hidden">
                 <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 id="jadwal-title" class="text-xl font-bold">Jadwal Penuh (Gambar)</h3>
-                        <button id="toggle-jadwal-view-btn" class="bg-blue-500 text-white font-medium py-2 px-4 rounded-lg hover:bg-blue-600 flex items-center space-x-2 transition-colors">
-                            <i class="fa-solid fa-table-list"></i>
-                            <span class="hidden sm:inline">Atur Jadwal</span>
-                        </button>
-                    </div>
-
-                    <!-- Image View -->
-                    <div id="jadwal-gambar-view">
-                        <div class="flex justify-between items-center mb-4">
-                            <p class="text-sm text-gray-600">Tampilan jadwal yang diunggah.</p>
-                            <div class="flex items-center space-x-2">
-                                <label id="jadwal-upload-label" for="jadwal-upload" class="bg-gray-600 text-white font-medium py-2 px-3 rounded-lg hover:bg-gray-700 cursor-pointer flex items-center space-x-2 transition-colors">
-                                    <i class="fa-solid fa-upload"></i>
-                                    <span class="hidden sm:inline">Unggah</span>
-                                </label>
-                                <input type="file" id="jadwal-upload" class="hidden" accept="image/*">
-                                <button id="delete-jadwal-btn" class="bg-red-500 text-white font-medium py-2 px-3 rounded-lg hover:bg-red-600 flex items-center space-x-2 transition-colors hidden">
-                                    <i class="fa-solid fa-trash"></i>
-                                    <span class="hidden sm:inline">Hapus</span>
-                                </button>
-                            </div>
-                        </div>
-                        <div id="jadwal-image-container" class="mt-4 border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[60vh] flex items-center justify-center bg-gray-50">
-                             <div id="jadwal-placeholder" class="text-center text-gray-500">
-                                <i class="fa-solid fa-image text-5xl mb-4"></i>
-                                <p>Belum ada jadwal yang diunggah.</p>
-                                <p class="text-sm">Silakan unggah gambar jadwal Anda.</p>
-                            </div>
-                            <img id="jadwal-image" src="" alt="Jadwal Pelajaran" class="max-w-full max-h-[70vh] rounded-lg hidden object-contain"/>
+                        <h3 class="text-xl font-bold">Jadwal Pelajaran</h3>
+                        <div class="flex items-center space-x-2">
+                            <label id="jadwal-upload-label" for="jadwal-upload" class="bg-blue-500 text-white font-medium py-2 px-4 rounded-lg hover:bg-blue-600 cursor-pointer flex items-center space-x-2 transition-colors">
+                                <i class="fa-solid fa-upload"></i>
+                                <span class="hidden sm:inline">Unggah</span>
+                            </label>
+                            <input type="file" id="jadwal-upload" class="hidden" accept="image/*">
+                            <button id="delete-jadwal-btn" class="bg-red-500 text-white font-medium py-2 px-4 rounded-lg hover:bg-red-600 flex items-center space-x-2 transition-colors hidden">
+                                <i class="fa-solid fa-trash"></i>
+                                <span class="hidden sm:inline">Hapus</span>
+                            </button>
                         </div>
                     </div>
-
-                    <!-- Structured View -->
-                    <div id="jadwal-terstruktur-view" class="hidden">
-                        <div class="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-200">
-                            <h4 class="font-bold mb-3 text-gray-800">Tambah Jadwal Mengajar</h4>
-                            <form id="add-jadwal-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-                                <div>
-                                    <label for="jadwal-hari" class="text-sm font-medium">Hari</label>
-                                    <select id="jadwal-hari" required class="w-full mt-1 p-2 border rounded-lg bg-white">
-                                        <option value="Senin">Senin</option>
-                                        <option value="Selasa">Selasa</option>
-                                        <option value="Rabu">Rabu</option>
-                                        <option value="Kamis">Kamis</option>
-                                        <option value="Jumat">Jumat</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label for="jadwal-mapel" class="text-sm font-medium">Mapel</label>
-                                    <select id="jadwal-mapel" required class="w-full mt-1 p-2 border rounded-lg bg-white">
-                                        <option value="">Pilih Mapel...</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label for="jadwal-kelas" class="text-sm font-medium">Kelas</label>
-                                    <select id="jadwal-kelas" required class="w-full mt-1 p-2 border rounded-lg bg-white" disabled>
-                                        <option value="">Pilih Kelas...</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label for="jadwal-waktu" class="text-sm font-medium">Waktu</label>
-                                    <input type="text" id="jadwal-waktu" placeholder="07:00-08:30" required class="w-full mt-1 p-2 border rounded-lg bg-white">
-                                </div>
-                                <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600 h-fit w-full">Tambah</button>
-                            </form>
+                    <div id="jadwal-image-container" class="mt-4 border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[60vh] flex items-center justify-center bg-gray-50">
+                         <div id="jadwal-placeholder" class="text-center text-gray-500">
+                            <i class="fa-solid fa-image text-5xl mb-4"></i>
+                            <p>Belum ada jadwal yang diunggah.</p>
+                            <p class="text-sm">Silakan unggah gambar jadwal Anda.</p>
                         </div>
-                        <div id="jadwal-terstruktur-container" class="space-y-6">
-                            <!-- Jadwal cards will be rendered here by JS -->
-                        </div>
+                        <img id="jadwal-image" src="" alt="Jadwal Pelajaran" class="max-w-full max-h-[70vh] rounded-lg hidden object-contain"/>
                     </div>
                 </div>
             </div>
@@ -406,7 +355,7 @@
             <div id="page-hasil-rekap" class="page-content hidden">
                 <div class="bg-white p-4 rounded-xl shadow-md mb-6">
                     <h3 class="text-lg font-bold mb-4">Rekapitulasi Presensi & Nilai</h3>
-                    
+                    <!-- MODIFIED: Rekap Filter layout changed -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                         <div>
                             <label for="rekap-filter-mapel" class="text-sm font-medium">Mata Pelajaran</label>
@@ -567,8 +516,6 @@
         let githubToken = null;
         let deferredPrompt; 
         let allLoginData = null; 
-        let structuredSchedule = {}; // For new schedule feature
-        let currentJadwalView = 'gambar'; // 'gambar' or 'terstruktur'
 
         // --- UI ELEMENTS ---
         const loadingSpinner = document.getElementById('loading-spinner');
@@ -592,6 +539,7 @@
         const pinKeypadModal = document.getElementById('pin-keypad-modal');
         const pinError = document.getElementById('pin-error');
 
+        // MODIFIED: Get new filter elements
         const filterMapel = document.getElementById('filter-mapel');
         const filterKelas = document.getElementById('filter-kelas');
         const filterTanggal = document.getElementById('filter-tanggal');
@@ -627,11 +575,6 @@
         const mapelClassSelect = document.getElementById('mapel-class');
         const mapelListContainer = document.getElementById('mapel-list-container');
         
-        // Jadwal Page Elements
-        const jadwalTitle = document.getElementById('jadwal-title');
-        const toggleJadwalViewBtn = document.getElementById('toggle-jadwal-view-btn');
-        const jadwalGambarView = document.getElementById('jadwal-gambar-view');
-        const jadwalTerstrukturView = document.getElementById('jadwal-terstruktur-view');
         const jadwalUploadInput = document.getElementById('jadwal-upload');
         const jadwalUploadLabel = document.getElementById('jadwal-upload-label');
         const jadwalImageContainer = document.getElementById('jadwal-image-container');
@@ -641,13 +584,6 @@
         const imageViewerModal = document.getElementById('image-viewer-modal');
         const closeImageViewerBtn = document.getElementById('close-image-viewer-btn');
         const fullscreenImage = document.getElementById('fullscreen-image');
-        const addJadwalForm = document.getElementById('add-jadwal-form');
-        const jadwalHariSelect = document.getElementById('jadwal-hari');
-        const jadwalMapelSelect = document.getElementById('jadwal-mapel');
-        const jadwalKelasSelect = document.getElementById('jadwal-kelas');
-        const jadwalWaktuInput = document.getElementById('jadwal-waktu');
-        const jadwalTerstrukturContainer = document.getElementById('jadwal-terstruktur-container');
-
 
         const rekapTableContainer = document.getElementById('rekap-table-container');
         const rekapDownloadDropdownBtn = document.getElementById('rekap-download-dropdown-btn');
@@ -1144,7 +1080,7 @@
             onValue(ref(db, `users_data/${currentUserKey}/mapel/`), (snapshot) => { 
                 allMapel = snapshot.val() || {};
                 renderMapelList();
-                updateMapelFilter(); 
+                updateMapelFilter(); // MODIFIED: This function is now different
             });
             
             onValue(ref(db, `users_data/${currentUserKey}/jadwal`), (snapshot) => {
@@ -1154,22 +1090,16 @@
                     jadwalImage.classList.remove('hidden');
                     jadwalImage.classList.add('cursor-pointer');
                     jadwalPlaceholder.classList.add('hidden');
-                    jadwalUploadLabel.classList.remove('hidden');
+                    jadwalUploadLabel.classList.add('hidden');
                     deleteJadwalBtn.classList.remove('hidden');
                 } else {
                     jadwalImage.src = '';
                     jadwalImage.classList.add('hidden');
                     jadwalImage.classList.remove('cursor-pointer');
                     jadwalPlaceholder.classList.remove('hidden');
-                    jadwalUploadLabel.classList.add('hidden');
+                    jadwalUploadLabel.classList.remove('hidden');
                     deleteJadwalBtn.classList.add('hidden');
                 }
-            });
-
-            // NEW: Listener for structured schedule
-            onValue(ref(db, `users_data/${currentUserKey}/jadwal_terstruktur`), (snapshot) => {
-                structuredSchedule = snapshot.val() || {};
-                renderStructuredSchedule();
             });
         }
 
@@ -1231,7 +1161,7 @@
             mapelClassSelect.innerHTML = classOptionsHtml; 
         }
         
-        
+        // --- MODIFIED: New filter logic ---
         function updateMapelFilter() {
             const uniqueMapelNames = new Set();
             Object.values(allMapel).forEach(mapel => uniqueMapelNames.add(mapel.nama));
@@ -1242,29 +1172,16 @@
             
             filterMapel.innerHTML = mapelOptionsHtml;
             rekapFilterMapel.innerHTML = mapelOptionsHtml;
-            jadwalMapelSelect.innerHTML = mapelOptionsHtml; // Also update schedule form
 
             // Reset and disable class filters
             updateClassFilter('presensi');
             updateClassFilter('rekap');
-            updateClassFilter('jadwal');
         }
 
         function updateClassFilter(pagePrefix) {
-            let mapelSelect, kelasSelect;
-            if (pagePrefix === 'presensi') {
-                mapelSelect = filterMapel;
-                kelasSelect = filterKelas;
-            } else if (pagePrefix === 'rekap') {
-                mapelSelect = rekapFilterMapel;
-                kelasSelect = rekapFilterKelas;
-            } else { // jadwal
-                mapelSelect = jadwalMapelSelect;
-                kelasSelect = jadwalKelasSelect;
-            }
-
+            const mapelSelect = pagePrefix === 'presensi' ? filterMapel : rekapFilterMapel;
+            const kelasSelect = pagePrefix === 'presensi' ? filterKelas : rekapFilterKelas;
             const selectedMapelName = mapelSelect.value;
-            const currentKelasValue = kelasSelect.value; // Save current selection
 
             kelasSelect.innerHTML = '<option value="">Pilih Kelas...</option>';
 
@@ -1281,7 +1198,7 @@
             });
 
             const sortedClasses = Array.from(availableClassesForMapel).sort();
-            kelasSelect.innerHTML += sortedClasses.map(k => `<option value="${k}" ${k === currentKelasValue ? 'selected' : ''}>${k}</option>`).join('');
+            kelasSelect.innerHTML += sortedClasses.map(k => `<option value="${k}">${k}</option>`).join('');
             kelasSelect.disabled = false;
         }
 
@@ -1299,13 +1216,10 @@
             saveAllBtn.addEventListener('click', handleSaveAllData);
             terapkanRekapBtn.addEventListener('click', handleTerapkanRekap);
             
+            // MODIFIED: Add event listeners for new filters
             filterMapel.addEventListener('change', () => updateClassFilter('presensi'));
             rekapFilterMapel.addEventListener('change', () => updateClassFilter('rekap'));
-            jadwalMapelSelect.addEventListener('change', () => updateClassFilter('jadwal'));
 
-            // Jadwal Page Listeners
-            toggleJadwalViewBtn.addEventListener('click', toggleJadwalView);
-            addJadwalForm.addEventListener('submit', handleAddJadwalEntry);
             jadwalUploadInput.addEventListener('change', handleJadwalUpload);
             deleteJadwalBtn.addEventListener('click', showDeleteJadwalConfirmation);
 
@@ -1475,6 +1389,7 @@
                 return;
             }
 
+            // MODIFIED: Get values from new filters
             const selectedMapelName = filterMapel.value;
             const kelas = filterKelas.value;
             const tanggal = filterTanggal.value;
@@ -1484,6 +1399,7 @@
                 return;
             }
 
+            // Find the mapelId based on name and class
             let mapelId = null;
             for (const id in allMapel) {
                 if (allMapel[id].nama === selectedMapelName && allMapel[id].kelas === kelas) {
@@ -2621,7 +2537,7 @@
             showToast("Menyinkronkan data offline...");
             showLoader();
             try {
-                await update(ref(db), updates);
+                await update(ref(db), pendingUpdates);
                 localStorage.removeItem('pending-updates');
                 showToast("Sinkronisasi data berhasil.");
             } catch (error) {
