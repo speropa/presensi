@@ -1,5 +1,5 @@
 // Nama cache untuk aplikasi (versi dinaikkan untuk memicu pembaruan)
-const CACHE_NAME = 'presensi-guru-cache-v2';
+const CACHE_NAME = 'presensi-guru-cache-v3'; // Versi cache dinaikkan
 
 // Daftar URL aset penting yang akan disimpan di cache
 const urlsToCache = [
@@ -89,5 +89,48 @@ self.addEventListener('fetch', event => {
                     return fetchResponse;
                 });
             })
+    );
+});
+
+// --- NEW: Notification Logic ---
+
+// Listener untuk pesan dari client (halaman web)
+self.addEventListener('message', event => {
+    if (event.data.type === 'SCHEDULE_NOTIFICATION') {
+        const { title, body, timestamp, tag } = event.data.payload;
+        const delay = timestamp - Date.now();
+
+        if (delay > 0) {
+            setTimeout(() => {
+                self.registration.showNotification(title, {
+                    body: body,
+                    icon: 'https://raw.githubusercontent.com/speropa/presensi/main/ikon%20presensi.jpg',
+                    badge: 'https://raw.githubusercontent.com/speropa/presensi/main/ikon%20presensi.jpg',
+                    tag: tag, // Tag untuk mencegah notifikasi duplikat
+                    renotify: true, // Izinkan notifikasi baru dengan tag yang sama untuk muncul kembali
+                });
+            }, delay);
+        }
+    }
+});
+
+// Listener saat notifikasi diklik
+self.addEventListener('notificationclick', event => {
+    event.notification.close(); // Tutup notifikasi
+
+    // Buka aplikasi atau fokus ke tab yang sudah ada
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+            if (clientList.length > 0) {
+                let client = clientList[0];
+                for (let i = 0; i < clientList.length; i++) {
+                    if (clientList[i].focused) {
+                        client = clientList[i];
+                    }
+                }
+                return client.focus();
+            }
+            return clients.openWindow('/');
+        })
     );
 });
