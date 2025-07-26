@@ -1,42 +1,33 @@
-// Nama cache untuk aplikasi (versi dinaikkan untuk memicu pembaruan)
-const CACHE_NAME = 'presensi-guru-cache-v3'; // Versi cache dinaikkan
-
-// Daftar URL aset penting yang akan disimpan di cache
+const CACHE_NAME = 'presensi-guru-cache-v3';
 const urlsToCache = [
-    './', // Ini akan menyimpan index.html
-    './index.html', // Simpan secara eksplisit juga
+    './',
+    './index.html',
     './manifest.json',
     'https://cdn.tailwindcss.com',
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
     'https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
-    'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js',
-    'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js',
-    'https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js'
+    'https://raw.githubusercontent.com/speropa/presensi/main/ikon%20presensi.jpg'
 ];
 
-// Event 'install': Dipanggil saat service worker pertama kali diinstal
+let scheduleCache = {};
+let scheduledTimers = new Map();
+
 self.addEventListener('install', event => {
-    self.skipWaiting(); // Memaksa service worker baru untuk aktif lebih cepat
+    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then(cache => {
-                console.log('Cache dibuka dan aset statis disimpan');
-                return cache.addAll(urlsToCache);
-            })
+            .then(cache => cache.addAll(urlsToCache))
     );
 });
 
-// Event 'activate': Dipanggil saat service worker diaktifkan
 self.addEventListener('activate', event => {
-    const cacheWhitelist = [CACHE_NAME]; // Hanya cache dengan nama ini yang akan dipertahankan
+    const cacheWhitelist = [CACHE_NAME];
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
-                // Hapus semua cache lama yang tidak ada dalam whitelist
                 cacheNames.map(cacheName => {
                     if (cacheWhitelist.indexOf(cacheName) === -1) {
-                        console.log('Menghapus cache lama:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
@@ -45,92 +36,75 @@ self.addEventListener('activate', event => {
     );
 });
 
-// Event 'fetch': Dipanggil setiap kali aplikasi meminta sumber daya
 self.addEventListener('fetch', event => {
     const { request } = event;
     const url = new URL(request.url);
 
-    // Abaikan permintaan ke Firebase Realtime Database, selalu ambil dari jaringan.
-    if (url.hostname.includes('firebasedatabase.app')) {
+    if (url.origin.includes('firebase') || url.origin.includes('googleapis')) {
         event.respondWith(fetch(request));
         return;
     }
 
-    // Untuk halaman HTML, gunakan strategi "Network First, then Cache".
-    if (request.headers.get('Accept').includes('text/html')) {
-        event.respondWith(
-            fetch(request)
-                .then(response => {
-                    // Jika berhasil, simpan versi baru ke cache.
-                    const responseToCache = response.clone();
-                    caches.open(CACHE_NAME).then(cache => {
-                        cache.put(request, responseToCache);
-                    });
-                    return response;
-                })
-                .catch(() => {
-                    // Jika jaringan gagal, ambil dari cache.
-                    return caches.match(request);
-                })
-        );
-        return;
-    }
-
-    // Untuk aset statis lainnya, gunakan strategi "Cache First, then Network".
     event.respondWith(
         caches.match(request)
             .then(response => {
-                // Kembalikan dari cache jika ada, jika tidak, ambil dari jaringan.
                 return response || fetch(request).then(fetchResponse => {
-                    const responseToCache = fetchResponse.clone();
-                    caches.open(CACHE_NAME).then(cache => {
-                        cache.put(request, responseToCache);
-                    });
+                    if (urlsToCache.includes(request.url) || request.url.endsWith('.js')) {
+                       const responseToCache = fetchResponse.clone();
+                        caches.open(CACHE_NAME).then(cache => {
+                            cache.put(request, responseToCache);
+                        });
+                    }
                     return fetchResponse;
                 });
             })
     );
 });
 
-// --- NEW: Notification Logic ---
-
-// Listener untuk pesan dari client (halaman web)
-self.addEventListener('message', event => {
-    if (event.data.type === 'SCHEDULE_NOTIFICATION') {
-        const { title, body, timestamp, tag } = event.data.payload;
-        const delay = timestamp - Date.now();
-
-        if (delay > 0) {
-            setTimeout(() => {
-                self.registration.showNotification(title, {
-                    body: body,
-                    icon: 'https://raw.githubusercontent.com/speropa/presensi/main/ikon%20presensi.jpg',
-                    badge: 'https://raw.githubusercontent.com/speropa/presensi/main/ikon%20presensi.jpg',
-                    tag: tag, // Tag untuk mencegah notifikasi duplikat
-                    renotify: true, // Izinkan notifikasi baru dengan tag yang sama untuk muncul kembali
-                });
-            }, delay);
-        }
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SET_SCHEDULE') {
+        const { allJadwal } = event.data.payload;
+        scheduleCache = allJadwal;
+        rescheduleNotifications();
     }
 });
 
-// Listener saat notifikasi diklik
-self.addEventListener('notificationclick', event => {
-    event.notification.close(); // Tutup notifikasi
+function rescheduleNotifications() {
+    clearAllScheduledTimers();
 
-    // Buka aplikasi atau fokus ke tab yang sudah ada
-    event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-            if (clientList.length > 0) {
-                let client = clientList[0];
-                for (let i = 0; i < clientList.length; i++) {
-                    if (clientList[i].focused) {
-                        client = clientList[i];
-                    }
-                }
-                return client.focus();
-            }
-            return clients.openWindow('/');
-        })
-    );
-});
+    const now = new Date();
+    const todayName = ['minggu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'][now.getDay()];
+    const todaySchedule = scheduleCache[todayName];
+
+    if (!todaySchedule) return;
+
+    Object.values(todaySchedule).forEach(item => {
+        const [hours, minutes] = item.jam_mulai.split(':');
+        const classTime = new Date();
+        classTime.setHours(hours, minutes, 0, 0);
+
+        const reminderTime = new Date(classTime.getTime() - 10 * 60 * 1000);
+
+        if (reminderTime > now) {
+            const delay = reminderTime.getTime() - now.getTime();
+            const notificationId = `${todayName}-${item.jam_mulai}`;
+
+            const timerId = setTimeout(() => {
+                self.registration.showNotification('Pengingat Kelas', {
+                    body: `Kelas ${item.mapelNama} di ${item.kelas} akan dimulai dalam 10 menit.`,
+                    icon: 'https://raw.githubusercontent.com/speropa/presensi/main/ikon%20presensi.jpg',
+                    badge: 'https://raw.githubusercontent.com/speropa/presensi/main/ikon%20presensi.jpg',
+                    tag: notificationId,
+                });
+                scheduledTimers.delete(notificationId);
+            }, delay);
+            
+            scheduledTimers.set(notificationId, timerId);
+        }
+    });
+}
+
+function clearAllScheduledTimers() {
+    scheduledTimers.forEach(timerId => clearTimeout(timerId));
+    scheduledTimers.clear();
+}
