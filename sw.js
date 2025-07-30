@@ -1,3 +1,8 @@
+// 1. Impor Service Worker OneSignal di baris paling atas.
+// Ini akan menangani semua logika penerimaan push notification.
+importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
+
+// 2. Logika Caching Anda untuk fungsionalitas offline tetap dipertahankan.
 const CACHE_NAME = 'presensi-guru-cache-v3';
 const urlsToCache = [
     './',
@@ -10,9 +15,8 @@ const urlsToCache = [
     'https://raw.githubusercontent.com/speropa/presensi/main/ikon%20presensi.jpg'
 ];
 
-let scheduleCache = {};
-let scheduledTimers = new Map();
-
+// Event 'install': Dipicu saat service worker pertama kali diinstal.
+// Di sini kita membuka cache dan menyimpan semua aset penting.
 self.addEventListener('install', event => {
     self.skipWaiting();
     event.waitUntil(
@@ -21,6 +25,8 @@ self.addEventListener('install', event => {
     );
 });
 
+// Event 'activate': Dipicu saat service worker diaktifkan.
+// Di sini kita membersihkan cache lama yang sudah tidak digunakan.
 self.addEventListener('activate', event => {
     const cacheWhitelist = [CACHE_NAME];
     event.waitUntil(
@@ -36,19 +42,27 @@ self.addEventListener('activate', event => {
     );
 });
 
+// Event 'fetch': Dipicu setiap kali aplikasi meminta sebuah resource (file, gambar, dll).
+// Ini adalah inti dari strategi offline-first.
 self.addEventListener('fetch', event => {
     const { request } = event;
     const url = new URL(request.url);
 
+    // Abaikan request ke Firebase/Google API, selalu ambil dari jaringan.
     if (url.origin.includes('firebase') || url.origin.includes('googleapis')) {
         event.respondWith(fetch(request));
         return;
     }
 
+    // Untuk request lainnya, coba cari di cache terlebih dahulu.
     event.respondWith(
         caches.match(request)
             .then(response => {
+                // Jika resource ditemukan di cache, langsung kembalikan.
+                // Jika tidak, ambil dari jaringan.
                 return response || fetch(request).then(fetchResponse => {
+                    // Jika resource yang diambil dari jaringan ada di daftar cache kita,
+                    // simpan salinannya ke cache untuk penggunaan offline berikutnya.
                     if (urlsToCache.includes(request.url) || request.url.endsWith('.js')) {
                        const responseToCache = fetchResponse.clone();
                         caches.open(CACHE_NAME).then(cache => {
@@ -61,50 +75,5 @@ self.addEventListener('fetch', event => {
     );
 });
 
-self.addEventListener('message', (event) => {
-    if (event.data && event.data.type === 'SET_SCHEDULE') {
-        const { allJadwal } = event.data.payload;
-        scheduleCache = allJadwal;
-        rescheduleNotifications();
-    }
-});
-
-function rescheduleNotifications() {
-    clearAllScheduledTimers();
-
-    const now = new Date();
-    const todayName = ['minggu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'][now.getDay()];
-    const todaySchedule = scheduleCache[todayName];
-
-    if (!todaySchedule) return;
-
-    Object.values(todaySchedule).forEach(item => {
-        const [hours, minutes] = item.jam_mulai.split(':');
-        const classTime = new Date();
-        classTime.setHours(hours, minutes, 0, 0);
-
-        const reminderTime = new Date(classTime.getTime() - 10 * 60 * 1000);
-
-        if (reminderTime > now) {
-            const delay = reminderTime.getTime() - now.getTime();
-            const notificationId = `${todayName}-${item.jam_mulai}`;
-
-            const timerId = setTimeout(() => {
-                self.registration.showNotification('Pengingat Kelas', {
-                    body: `Kelas ${item.mapelNama} di ${item.kelas} akan dimulai dalam 10 menit.`,
-                    icon: 'https://raw.githubusercontent.com/speropa/presensi/main/ikon%20presensi.jpg',
-                    badge: 'https://raw.githubusercontent.com/speropa/presensi/main/ikon%20presensi.jpg',
-                    tag: notificationId,
-                });
-                scheduledTimers.delete(notificationId);
-            }, delay);
-            
-            scheduledTimers.set(notificationId, timerId);
-        }
-    });
-}
-
-function clearAllScheduledTimers() {
-    scheduledTimers.forEach(timerId => clearTimeout(timerId));
-    scheduledTimers.clear();
-}
+// CATATAN: Semua kode notifikasi lama (setTimeout, dll.) telah dihapus dari sini
+// karena tugasnya sudah diambil alih oleh OneSignal dan backend.
