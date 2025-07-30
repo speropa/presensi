@@ -301,8 +301,14 @@
         const navLinks = document.querySelectorAll('.nav-link'), pages = document.querySelectorAll('.page-content');
         
         // --- FUNGSI BARU UNTUK ONESIGNAL ---
-        async function initializeAndSubscribeToOneSignal(userId) {
+        async function initializeAndSubscribeToOneSignal(userId, previousUserKey) {
             try {
+                // PERBAIKAN: Cek dulu apakah OneSignal sudah dimuat
+                if (!window.OneSignal) {
+                    console.warn("OneSignal SDK belum siap.");
+                    return;
+                }
+
                 // 1. Ambil App ID dari Firebase
                 const oneSignalAppIdRef = ref(db, 'one/signal');
                 const snapshot = await get(oneSignalAppIdRef);
@@ -321,9 +327,13 @@
                     await OneSignal.showSlidedownPrompt();
                 }
 
-                // 4. Dapatkan Player ID dan simpan ke Firebase
+                // 4. Dapatkan Player ID dan kelola asosiasi user
                 const playerId = await OneSignal.getPlayerId();
                 if (playerId && userId) {
+                    // Jika user berganti di perangkat yang sama, hapus Player ID dari user lama
+                    if (previousUserKey && previousUserKey !== userId) {
+                        await removePlayerIdFromFirebase(previousUserKey, playerId);
+                    }
                     await savePlayerIdToFirebase(userId, playerId);
                 }
 
@@ -332,7 +342,8 @@
 
             } catch (error) {
                 console.error("Gagal inisialisasi OneSignal:", error);
-                showAlertModal("Error Notifikasi", "Gagal mengaktifkan fitur notifikasi.", true);
+                // PERBAIKAN: Tampilkan pesan error yang lebih spesifik
+                showAlertModal("Error Notifikasi", `Gagal mengaktifkan fitur notifikasi: ${error.message}`, true);
             }
         }
 
@@ -466,12 +477,8 @@
             try {
                 const previousUserKey = localStorage.getItem('lastUserKey');
                 
-                // --- LOGIKA BARU: Simpan sesi ke localStorage ---
                 if (!isSessionRestore) {
-                    const loginData = {
-                        userKey: userKey,
-                        timestamp: Date.now()
-                    };
+                    const loginData = { userKey: userKey, timestamp: Date.now() };
                     localStorage.setItem('persistentLogin', JSON.stringify(loginData));
                 }
                 localStorage.setItem('lastUserKey', userKey);
@@ -489,20 +496,14 @@
                 setupEventListeners();
                 initializeDataListeners();
 
-                // --- PANGGILAN BARU KE ONESIGNAL SETELAH LOGIN ---
-                await window.OneSignalDeferred.push(async () => {
-                    // Jika user berganti di perangkat yang sama, hapus Player ID dari user lama
-                    const playerId = await OneSignal.getPlayerId();
-                    if (previousUserKey && previousUserKey !== currentUserKey && playerId) {
-                        await removePlayerIdFromFirebase(previousUserKey, playerId);
-                    }
-                    await initializeAndSubscribeToOneSignal(currentUserKey);
-                });
+                await window.OneSignalDeferred.push(() => initializeAndSubscribeToOneSignal(currentUserKey, previousUserKey));
                 
                 if (dashboardUpdateInterval) clearInterval(dashboardUpdateInterval);
                 dashboardUpdateInterval = setInterval(displayDashboard, 10000);
             } catch (error) {
-                showAlertModal("Error", "Terjadi kesalahan setelah login.", true);
+                // PERBAIKAN: Tampilkan error yang lebih spesifik untuk debugging
+                console.error("Error detail saat login:", error);
+                showAlertModal("Error", `Terjadi kesalahan setelah login: ${error.message}`, true);
             } finally {
                 hideLoader();
             }
@@ -515,13 +516,14 @@
             if (hasUnsavedChanges) {
                 showUnsavedChangesModal('logout');
             } else {
-                // --- LOGIKA BARU UNTUK LOGOUT ONESIGNAL & HAPUS SESI---
                 try {
-                    const playerId = await OneSignal.getPlayerId();
-                    if (currentUserKey && playerId) {
-                        await removePlayerIdFromFirebase(currentUserKey, playerId);
+                    if (window.OneSignal) {
+                        const playerId = await OneSignal.getPlayerId();
+                        if (currentUserKey && playerId) {
+                            await removePlayerIdFromFirebase(currentUserKey, playerId);
+                        }
+                        OneSignal.removeTag("user_id");
                     }
-                    OneSignal.removeTag("user_id");
                 } catch(e) {
                     console.error("Gagal menghapus data OneSignal saat logout", e);
                 }
