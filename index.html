@@ -283,7 +283,7 @@
 
     <script type="module">
         // --- PENTING: GANTI DENGAN URL DARI CLOUDFLARE ANDA ---
-        const CLOUDFLARE_WORKER_URL = "https://sekretaris-notifikasi.examsperopa.workers.dev";
+        const CLOUDFLARE_WORKER_URL = "https://sekretaris-notifikasi.examsperopa.workers.dev"; 
         // ---------------------------------------------------------
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
@@ -411,30 +411,41 @@
             }
         }
 
-        async function initializeAndSubscribeToOneSignal(userId, previousUserKey) {
+        async function initializeOneSignal() {
             try {
                 if (!window.OneSignal) { console.warn("OneSignal SDK belum siap."); return; }
-                if (!isOneSignalInitialized) {
-                    const oneSignalAppIdRef = ref(db, 'one/signal');
-                    const snapshot = await get(oneSignalAppIdRef);
-                    const oneSignalAppId = snapshot.val();
-                    if (!oneSignalAppId) { throw new Error("OneSignal App ID tidak ditemukan di Firebase."); }
-                    await OneSignal.init({ appId: oneSignalAppId, serviceWorkerPath: "OneSignalSDKWorker.js", serviceWorkerUpdaterPath: "OneSignalSDKUpdaterWorker.js" });
-                    isOneSignalInitialized = true;
-                }
+                if (isOneSignalInitialized) return;
+
+                const oneSignalAppIdRef = ref(db, 'one/signal');
+                const snapshot = await get(oneSignalAppIdRef);
+                const oneSignalAppId = snapshot.val();
+                if (!oneSignalAppId) { throw new Error("OneSignal App ID tidak ditemukan di Firebase."); }
+                
+                await OneSignal.init({ appId: oneSignalAppId, serviceWorkerPath: "OneSignalSDKWorker.js", serviceWorkerUpdaterPath: "OneSignalSDKUpdaterWorker.js" });
+                isOneSignalInitialized = true;
                 await OneSignal.Notifications.requestPermission();
-                const subscriptionId = OneSignal.User.PushSubscription.id;
-                if (subscriptionId && userId) {
-                    if (previousUserKey && previousUserKey !== userId) { await removePlayerIdFromFirebase(previousUserKey, subscriptionId); }
-                    await savePlayerIdToFirebase(userId, subscriptionId);
-                }
-                await OneSignal.login(userId);
             } catch (error) {
                 console.error("Gagal inisialisasi OneSignal:", error);
                 showAlertModal("Error Notifikasi", `Gagal mengaktifkan fitur notifikasi: ${error.message}`, true);
             }
         }
-        async function savePlayerIdToFirebase(userId, playerId) { const playerIdsRef = ref(db, `users_data/${userId}/playerIds/${playerId}`); try { await set(playerIdsRef, true); console.log(`Player ID ${playerId} disimpan untuk user ${userId}`); } catch (error) { console.error("Gagal menyimpan Player ID:", error); } }
+
+        async function setOneSignalExternalId(userId) {
+            try {
+                if (!isOneSignalInitialized || !userId) return;
+                const previousUserKey = sessionStorage.getItem('lastUserKeyForOneSignal');
+                if (previousUserKey && previousUserKey !== userId) {
+                    await removePlayerIdFromFirebase(previousUserKey, OneSignal.User.PushSubscription.id);
+                }
+                await OneSignal.login(userId);
+                await savePlayerIdToFirebase(userId, OneSignal.User.PushSubscription.id);
+                sessionStorage.setItem('lastUserKeyForOneSignal', userId);
+            } catch (error) {
+                console.error("Gagal mengatur OneSignal External ID:", error);
+            }
+        }
+
+        async function savePlayerIdToFirebase(userId, playerId) { if(!playerId) return; const playerIdsRef = ref(db, `users_data/${userId}/playerIds/${playerId}`); try { await set(playerIdsRef, true); console.log(`Player ID ${playerId} disimpan untuk user ${userId}`); } catch (error) { console.error("Gagal menyimpan Player ID:", error); } }
         async function removePlayerIdFromFirebase(userId, playerId) { if (!userId || !playerId) return; const playerIdsRef = ref(db, `users_data/${userId}/playerIds/${playerId}`); try { await remove(playerIdsRef); console.log(`Player ID ${playerId} dihapus untuk user ${userId}`); } catch (error) { console.error("Gagal menghapus Player ID:", error); } }
         const mapelColorPalette = [{ bg: 'bg-sky-100', text: 'text-sky-800' }, { bg: 'bg-amber-100', text: 'text-amber-800' }, { bg: 'bg-violet-100', text: 'text-violet-800' }, { bg: 'bg-lime-100', text: 'text-lime-800' }, { bg: 'bg-rose-100', text: 'text-rose-800' }, { bg: 'bg-teal-100', text: 'text-teal-800' }, { bg: 'bg-fuchsia-100', text: 'text-fuchsia-800' }, { bg: 'bg-indigo-100', text: 'text-indigo-800' }, { bg: 'bg-emerald-100', text: 'text-emerald-800' }, { bg: 'bg-cyan-100', text: 'text-cyan-800' }, { bg: 'bg-pink-100', text: 'text-pink-800' }, { bg: 'bg-green-100', text: 'text-green-800' }, { bg: 'bg-purple-100', text: 'text-purple-800' }];
         const kelasColorPalette = { 'A': { bg: 'bg-red-100', text: 'text-red-800' }, 'B': { bg: 'bg-orange-100', text: 'text-orange-800' }, 'C': { bg: 'bg-yellow-100', text: 'text-yellow-800' }, 'D': { bg: 'bg-green-100', text: 'text-green-800' }, 'E': { bg: 'bg-blue-100', text: 'text-blue-800' }, 'F': { bg: 'bg-purple-100', text: 'text-purple-800' }, 'DEFAULT': { bg: 'bg-gray-100', text: 'text-gray-800' } };
@@ -447,17 +458,21 @@
         async function handleSuccessfulLogin(userKey, isSessionRestore = false) {
             showLoader();
             try {
-                const previousUserKey = sessionStorage.getItem('lastUserKey');
-                sessionStorage.setItem('lastUserKey', userKey);
                 currentUserKey = userKey;
-                pinVerificationModal.classList.add('hidden');
-                mainApp.classList.remove('hidden');
-                showToast("Verifikasi PIN berhasil!");
                 await updateUserDisplayName(userKey);
                 await fetchGithubToken();
                 setupEventListeners();
                 initializeDataListeners();
-                await window.OneSignalDeferred.push(() => initializeAndSubscribeToOneSignal(currentUserKey, previousUserKey));
+                
+                await window.OneSignalDeferred.push(async () => {
+                    await initializeOneSignal();
+                    await setOneSignalExternalId(currentUserKey);
+                });
+
+                pinVerificationModal.classList.add('hidden');
+                mainApp.classList.remove('hidden');
+                showToast("Verifikasi PIN berhasil!");
+
                 if (dashboardUpdateInterval) clearInterval(dashboardUpdateInterval);
                 dashboardUpdateInterval = setInterval(displayDashboard, 10000);
                 setTimeout(rescheduleRecurringNotifications, 5000);
@@ -476,7 +491,7 @@
         function checkPin() { const enteredPin = pinInputField.value; if (!allLoginData) { pinError.textContent = "Data login belum siap."; pinError.classList.remove('hidden'); return; } let foundUserKey = Object.keys(allLoginData).find(key => allLoginData[key].login && String(allLoginData[key].login) === enteredPin); if (foundUserKey) { handleSuccessfulLogin(foundUserKey); } else { pinError.textContent = "PIN salah"; pinError.classList.remove('hidden'); pinDashes.classList.add('animate-shake'); setTimeout(() => { pinDashes.classList.remove('animate-shake'); pinInputField.value = ''; updatePinDashes(); }, 800); } }
         async function updateUserDisplayName(userKey) { if (!userKey || !userDisplayName) return; try { const userName = allLoginData?.[userKey]?.nama || (await get(ref(db, `login/${userKey}/nama`))).val() || "Pengguna"; currentUserName = userName; userDisplayName.textContent = `Halo, ${userName.charAt(0).toUpperCase() + userName.slice(1)}`; } catch (error) { currentUserName = "UnknownUser"; userDisplayName.textContent = "Pengguna"; } }
         async function fetchGithubToken() { try { githubToken = (await get(ref(db, 'token/github'))).val(); if(!githubToken) showAlertModal("Konfigurasi Error", "Token GitHub tidak ditemukan.", true); } catch (error) { showAlertModal("Konfigurasi Error", "Gagal mengambil token GitHub.", true); } }
-        logoutBtn.addEventListener('click', async () => { if (hasUnsavedChanges) { showUnsavedChangesModal('logout'); } else { try { if (window.OneSignal) { await OneSignal.logout(); console.log("OneSignal user logged out."); } } catch(e) { console.error("Gagal logout dari OneSignal", e); } sessionStorage.removeItem('lastUserKey'); if (dashboardUpdateInterval) clearInterval(dashboardUpdateInterval); signOut(auth); } });
+        logoutBtn.addEventListener('click', async () => { if (hasUnsavedChanges) { showUnsavedChangesModal('logout'); } else { try { if (window.OneSignal) { await OneSignal.logout(); console.log("OneSignal user logged out."); } } catch(e) { console.error("Gagal logout dari OneSignal", e); } sessionStorage.removeItem('lastUserKeyForOneSignal'); if (dashboardUpdateInterval) clearInterval(dashboardUpdateInterval); signOut(auth); } });
         function switchPage(pageId, force = false) { if (!force && hasUnsavedChanges && !el('page-presensi').classList.contains('hidden')) { showUnsavedChangesModal('changePage', pageId); return; } document.querySelectorAll('.page-content').forEach(page => page.classList.add('hidden')); el(`page-${pageId}`).classList.remove('hidden'); document.querySelectorAll('.nav-link').forEach(nav => nav.classList.remove('active')); document.querySelector(`.nav-link[data-page="${pageId}"]`).classList.add('active'); if (pageId === 'hasil-rekap') handleTerapkanRekap(); }
         navLinks.forEach(link => { link.addEventListener('click', () => switchPage(link.dataset.page)); });
         function initializeDataListeners() { if (!currentUserKey) return; const userPath = `users_data/${currentUserKey}`; onValue(ref(db, `${userPath}/siswa/`), (s) => { allStudents = s.val() || {}; renderStudentsTable(); updateClassFilters(); displayDashboard(); }); onValue(ref(db, `${userPath}/mapel/`), (s) => { allMapel = s.val() || {}; renderMapelList(); updateMapelFilter(); updateJadwalMapelFilter(); displayDashboard(); }); onValue(ref(db, `${userPath}/jadwal_terstruktur`), (s) => { allJadwalTerstruktur = s.val() || {}; renderJadwalTerstruktur(); displayDashboard(); }); onValue(ref(db, `${userPath}/jadwal`), (s) => { const d = s.val(); const hasImage = d && d.imageUrl; jadwalImage.src = hasImage ? d.imageUrl : ''; jadwalImage.classList.toggle('hidden', !hasImage); jadwalImage.classList.toggle('cursor-pointer', hasImage); jadwalPlaceholder.classList.toggle('hidden', hasImage); jadwalUploadLabel.classList.toggle('hidden', hasImage); deleteJadwalBtn.classList.toggle('hidden', !hasImage); }); onValue(ref(db, `${userPath}/presensi`), (s) => { allPresensiData = s.val() || {}; displayDashboard(); }); onValue(ref(db, `${userPath}/kegiatan`), (s) => { allKegiatanData = s.val() || {}; displayDashboard(); }); }
