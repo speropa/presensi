@@ -300,14 +300,16 @@
         const loadingSpinner = el('loading-spinner'), loginPage = el('login-page'), mainApp = el('app'), loginForm = el('login-form'), loginError = el('login-error'), logoutBtn = el('logout-btn'), userDisplayName = el('user-display-name'), offlineIndicator = el('offline-indicator'), installPwaBtn = el('install-pwa-btn'), emailInput = el('email'), passwordInput = el('password'), pinVerificationModal = el('pin-verification-modal'), pinInputField = el('pin-input-field'), pinDashes = el('pin-dashes'), pinKeypadModal = el('pin-keypad-modal'), pinError = el('pin-error'), filterMapel = el('filter-mapel'), filterKelas = el('filter-kelas'), filterTanggal = el('filter-tanggal'), terapkanBtn = el('terapkan-filter-btn'), rekapFilterMapel = el('rekap-filter-mapel'), rekapFilterKelas = el('rekap-filter-kelas'), terapkanRekapBtn = el('terapkan-rekap-btn'), deleteDailyDataBtn = el('delete-daily-data-btn'), toggleModeBtn = el('toggle-mode-btn'), toggleModeSwitch = el('toggle-mode-switch'), modeLabel = el('mode-label'), contentArea = el('content-area'), kegiatanInput = el('kegiatan-pembelajaran'), studentListContainer = el('student-list-container'), saveAllBtn = el('save-all-btn'), kegiatanHistoryList = el('kegiatan-history-list'), kegiatanHistoryToggleMore = el('kegiatan-history-toggle-more'), presensiSearchContainer = el('presensi-search-container'), searchPresensiStudentInput = el('search-presensi-student'), addStudentForm = el('add-student-form'), studentNameInput = el('student-name'), studentClassInput = el('student-class'), allStudentsTable = el('all-students-table'), csvUploadInput = el('csv-upload'), downloadTemplateBtn = el('download-template-btn'), deleteAllStudentsBtn = el('delete-all-students-btn'), searchAllStudentsInput = el('search-all-students'), addMapelForm = el('add-mapel-form'), mapelNameInput = el('mapel-name'), mapelClassSelect = el('mapel-class'), mapelListContainer = el('mapel-list-container'), jadwalUploadInput = el('jadwal-upload'), jadwalUploadLabel = el('jadwal-upload-label'), jadwalImageContainer = el('jadwal-image-container'), jadwalImage = el('jadwal-image'), jadwalPlaceholder = el('jadwal-placeholder'), deleteJadwalBtn = el('delete-jadwal-btn'), imageViewerModal = el('image-viewer-modal'), closeImageViewerBtn = el('close-image-viewer-btn'), fullscreenImage = el('fullscreen-image'), rekapTableContainer = el('rekap-table-container'), rekapDownloadDropdownBtn = el('rekap-download-dropdown-btn'), rekapDownloadOptions = el('rekap-download-options'), downloadCsvBtn = el('download-csv-btn'), printRekapBtn = el('print-rekap-btn'), rekapSearchContainer = el('rekap-search-container'), searchRekapStudentInput = el('search-rekap-student'), rekapDynamicTableContent = el('rekap-dynamic-table-content'), addJadwalForm = el('add-jadwal-form'), jadwalHariSelect = el('jadwal-hari'), jadwalJamMulaiInput = el('jadwal-jam-mulai'), jadwalJamSelesaiInput = el('jadwal-jam-selesai'), jadwalMapelSelect = el('jadwal-mapel'), jadwalTerstrukturContainer = el('jadwal-terstruktur-container'), toggleJadwalModeBtn = el('toggle-jadwal-mode-btn'), toggleJadwalModeSwitch = el('toggle-jadwal-mode-switch'), jadwalModeLabel = el('jadwal-mode-label'), jadwalViewGambar = el('jadwal-view-gambar'), jadwalViewDinamis = el('jadwal-view-dinamis'), dashboardGreeting = el('dashboard-greeting'), dashboardDate = el('dashboard-date'), dashboardJadwalCerdas = el('dashboard-jadwal-cerdas'), modal = el('modal'), modalContent = el('modal-content');
         const navLinks = document.querySelectorAll('.nav-link'), pages = document.querySelectorAll('.page-content');
         
-        // --- FUNGSI BARU UNTUK ONESIGNAL (DENGAN PERBAIKAN) ---
+        // --- FUNGSI BARU UNTUK ONESIGNAL ---
         async function initializeAndSubscribeToOneSignal(userId, previousUserKey) {
             try {
+                // PERBAIKAN: Cek dulu apakah OneSignal sudah dimuat
                 if (!window.OneSignal) {
                     console.warn("OneSignal SDK belum siap.");
                     return;
                 }
 
+                // 1. Ambil App ID dari Firebase
                 const oneSignalAppIdRef = ref(db, 'one/signal');
                 const snapshot = await get(oneSignalAppIdRef);
                 const oneSignalAppId = snapshot.val();
@@ -316,26 +318,31 @@
                     throw new Error("OneSignal App ID tidak ditemukan di Firebase.");
                 }
 
+                // 2. Inisialisasi OneSignal
                 await OneSignal.init({ appId: oneSignalAppId });
 
-                // PERBAIKAN: Ini adalah cara baru untuk meminta izin dan mendapatkan status
-                // OneSignal akan secara otomatis hanya menampilkan prompt jika diperlukan.
-                await OneSignal.showSlidedownPrompt();
+                // 3. Minta izin notifikasi jika belum
+                const isSubscribed = await OneSignal.isPushNotificationsEnabled();
+                if (!isSubscribed) {
+                    await OneSignal.showSlidedownPrompt();
+                }
 
-                // PERBAIKAN: Ini adalah cara baru untuk mendapatkan Player ID
-                const playerId = await OneSignal.User.getOnesignalId();
-                
+                // 4. Dapatkan Player ID dan kelola asosiasi user
+                const playerId = await OneSignal.getPlayerId();
                 if (playerId && userId) {
+                    // Jika user berganti di perangkat yang sama, hapus Player ID dari user lama
                     if (previousUserKey && previousUserKey !== userId) {
                         await removePlayerIdFromFirebase(previousUserKey, playerId);
                     }
                     await savePlayerIdToFirebase(userId, playerId);
                 }
 
+                // 5. Tandai user yang sedang aktif di perangkat ini
                 OneSignal.sendTag("user_id", userId);
 
             } catch (error) {
                 console.error("Gagal inisialisasi OneSignal:", error);
+                // PERBAIKAN: Tampilkan pesan error yang lebih spesifik
                 showAlertModal("Error Notifikasi", `Gagal mengaktifkan fitur notifikasi: ${error.message}`, true);
             }
         }
@@ -511,8 +518,7 @@
             } else {
                 try {
                     if (window.OneSignal) {
-                        // PERBAIKAN: Gunakan metode baru untuk mendapatkan Player ID
-                        const playerId = await OneSignal.User.getOnesignalId();
+                        const playerId = await OneSignal.getPlayerId();
                         if (currentUserKey && playerId) {
                             await removePlayerIdFromFirebase(currentUserKey, playerId);
                         }
