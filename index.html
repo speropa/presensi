@@ -96,15 +96,17 @@
                     </div>
                 </div>
                 <div id="content-area" class="hidden">
-                    <div class="bg-white p-4 rounded-xl shadow-md mb-6">
-                        <label for="kegiatan-pembelajaran" class="text-sm font-bold text-gray-700">Kegiatan Hari Ini</label>
-                        <input type="text" id="kegiatan-pembelajaran" placeholder="Contoh: Mengerjakan Latihan Bab 3" class="w-full mt-2 p-2 border rounded-lg bg-gray-50">
-                        <div class="mt-4 pt-4 border-t">
-                            <h4 class="text-sm font-semibold mb-2">Riwayat Kegiatan</h4>
+                    <!-- MODIFIED KEGIATAN CARD -->
+                    <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl shadow-md mb-6">
+                        <label for="kegiatan-pembelajaran" class="text-sm font-bold text-amber-800">Kegiatan Pembelajaran Hari Ini</label>
+                        <input type="text" id="kegiatan-pembelajaran" placeholder="Ketikkan ringkasan kegiatan di sini..." class="w-full mt-2 p-2 border border-amber-300 rounded-lg bg-white focus:ring-amber-500 focus:border-amber-500">
+                        <div class="mt-4 pt-4 border-t border-amber-200">
+                            <h4 class="text-sm font-semibold mb-2 text-amber-700">Riwayat Kegiatan</h4>
                             <div id="kegiatan-history-list" class="space-y-3 text-xs"></div>
-                            <button id="kegiatan-history-toggle-more" data-state="partial" class="text-blue-600 text-xs font-semibold mt-2 hidden">Selengkapnya &darr;</button>
+                            <button id="kegiatan-history-toggle-more" data-state="partial" class="text-amber-600 text-xs font-semibold mt-2 hidden">Selengkapnya &darr;</button>
                         </div>
                     </div>
+                    <!-- END OF MODIFIED KEGIATAN CARD -->
                     <div class="bg-white p-4 rounded-xl shadow-md mb-6" id="presensi-search-container">
                         <label for="search-presensi-student" class="block text-sm font-medium text-gray-700 mb-1">Cari Siswa:</label>
                         <input type="text" id="search-presensi-student" placeholder="Cari berdasarkan nama..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
@@ -742,7 +744,104 @@
         };
         function handleToggleJadwalMode() { currentJadwalMode = currentJadwalMode === 'dinamis' ? 'gambar' : 'dinamis'; const isGambar = currentJadwalMode === 'gambar'; toggleJadwalModeSwitch.style.transform = isGambar ? 'translateX(0)' : 'translateX(1.25rem)'; toggleJadwalModeBtn.classList.toggle('bg-blue-600', !isGambar); toggleJadwalModeBtn.classList.toggle('bg-gray-200', isGambar); jadwalModeLabel.textContent = `Mode: ${isGambar ? 'Gambar' : 'Buat Jadwal'}`; jadwalViewDinamis.classList.toggle('hidden', isGambar); jadwalViewGambar.classList.toggle('hidden', !isGambar); }
         function displayDashboard() { const now = new Date(); const hours = now.getHours(); let greeting = 'Selamat Pagi!'; if (hours >= 11 && hours < 15) greeting = 'Selamat Siang!'; else if (hours >= 15 && hours < 19) greeting = 'Selamat Sore!'; else if (hours >= 19 || hours < 5) greeting = 'Selamat Malam!'; dashboardGreeting.textContent = greeting; dashboardDate.textContent = formatDateToIndonesian(now); renderSmartScheduleDashboard(); }
-        function renderSmartScheduleDashboard() { dashboardJadwalCerdas.innerHTML = ''; const now = new Date(); const todayDateString = getLocalISODate(now); const days = ['minggu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu']; const todayName = days[now.getDay()]; const todaySchedule = allJadwalTerstruktur[todayName] ? Object.entries(allJadwalTerstruktur[todayName]).map(([id, data]) => ({ id, ...data })) : []; const currentTime = now.toTimeString().slice(0, 5); let cardsToRender = []; for (const item of todaySchedule) { const isPast = currentTime >= item.jam_selesai; const hasPresensi = !!allPresensiData[item.kelas]?.[item.mapelId]?.[todayDateString]; const hasKegiatan = !!allKegiatanData[item.kelas]?.[item.mapelId]?.[todayDateString]?.deskripsi; const isTouched = hasPresensi || hasKegiatan; if (isPast && !isTouched) { continue; } cardsToRender.push(item); } const enrichedCards = cardsToRender.map(item => { const isPast = currentTime >= item.jam_selesai; const isCurrent = currentTime >= item.jam_mulai && currentTime < item.jam_selesai; const hasPresensi = !!allPresensiData[item.kelas]?.[item.mapelId]?.[todayDateString]; const hasKegiatan = !!allKegiatanData[item.kelas]?.[item.mapelId]?.[todayDateString]?.deskripsi; const isComplete = hasPresensi && hasKegiatan; let sortOrder; if (isCurrent) { sortOrder = 1; } else if (!isPast) { sortOrder = 2; } else { if (!isComplete) { sortOrder = 3; } else { sortOrder = 4; } } return { ...item, sortOrder }; }); enrichedCards.sort((a, b) => { if (a.sortOrder !== b.sortOrder) { return a.sortOrder - b.sortOrder; } return a.jam_mulai.localeCompare(b.jam_mulai); }); let dashboardHTML = ''; if (enrichedCards.length > 0) { enrichedCards.forEach(item => { const isPast = currentTime >= item.jam_selesai; const isCurrent = currentTime >= item.jam_mulai && currentTime < item.jam_selesai; const hasPresensi = !!allPresensiData[item.kelas]?.[item.mapelId]?.[todayDateString]; const hasKegiatan = !!allKegiatanData[item.kelas]?.[item.mapelId]?.[todayDateString]?.deskripsi; const isComplete = hasPresensi && hasKegiatan; let cardHeader, cardHeaderColor, cardBorderColor, cardIcon; if (isCurrent) { cardHeader = "SEDANG BERLANGSUNG"; cardHeaderColor = "text-blue-600"; cardBorderColor = "highlight-card"; cardIcon = `<i class="fa-solid fa-person-chalkboard text-xl ${cardHeaderColor}"></i>`; } else if (isPast) { if (isComplete) { cardHeader = "SELESAI"; cardHeaderColor = "text-green-600"; cardBorderColor = "completed-card"; cardIcon = `<i class="fa-solid fa-check-circle text-xl ${cardHeaderColor}"></i>`; } else { cardHeader = "PERLU DILENGKAPI"; cardHeaderColor = "text-yellow-600"; cardBorderColor = "persistent-card"; cardIcon = `<i class="fa-solid fa-exclamation-triangle text-xl ${cardHeaderColor}"></i>`; } } else { cardHeader = "SELANJUTNYA"; cardHeaderColor = "text-gray-500"; cardBorderColor = "future-card"; cardIcon = `<i class="fa-solid fa-hourglass-start text-xl ${cardHeaderColor}"></i>`; } const mapelColor = getDeterministicColor(item.mapelNama, 'mapel'); const kelasColor = getDeterministicColor(item.kelas, 'kelas'); const presensiData = allPresensiData[item.kelas]?.[item.mapelId]?.[todayDateString]; const kegiatanData = allKegiatanData[item.kelas]?.[item.mapelId]?.[todayDateString]; let presensiHTML = '', presensiDetailHTML = '', buttonHTML = '', kegiatanHTML = ''; if (isCurrent || isPast) { let buttonText = "Mulai Presensi"; let buttonClass = "bg-blue-600 hover:bg-blue-700"; let buttonIcon = `<i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>`; if(hasPresensi && !hasKegiatan){ buttonText = "Lengkapi Kegiatan"; buttonClass = "bg-yellow-500 hover:bg-yellow-600"; buttonIcon = `<i class="fa-solid fa-file-pen mr-2"></i>`; } else if(isComplete) { buttonText = "Lihat/Ubah Data"; buttonClass = "bg-green-600 hover:bg-green-700"; buttonIcon = `<i class="fa-solid fa-eye mr-2"></i>`; } else if(hasPresensi && hasKegiatan) { buttonText = "Lihat/Ubah Data"; buttonClass = "bg-green-600 hover:bg-green-700"; buttonIcon = `<i class="fa-solid fa-eye mr-2"></i>`; } buttonHTML = `<button onclick="window.handlePresensiShortcut('${item.mapelId}', '${item.kelas}')" class="${buttonClass} text-white font-bold py-2 px-4 rounded-lg flex items-center transition text-sm">${buttonIcon}<span>${buttonText}</span></button>`; } if (presensiData) { let h = 0, s = 0, i = 0, a = 0; let sakitList = [], izinList = [], alpaList = [], hadirDenganCatatanList = []; Object.entries(presensiData).forEach(([studentId, p]) => { const studentName = allStudents[studentId]?.nama || 'Siswa Dihapus'; switch(p.status) { case 'Hadir': h++; if(p.catatan) hadirDenganCatatanList.push({name: studentName, note: p.catatan}); break; case 'Sakit': s++; sakitList.push({name: studentName, note: p.catatan}); break; case 'Izin': i++; izinList.push({name: studentName, note: p.catatan}); break; case 'Alpa': a++; alpaList.push({name: studentName, note: p.catatan}); break; } }); presensiHTML = `<div class="mt-4 pt-4 border-t"><p class="text-sm font-bold mb-2">Rekap Presensi</p><div class="flex justify-around text-center text-sm"><div><strong>${h}</strong><p>Hadir</p></div><div><strong class="text-orange-600">${s}</strong><p>Sakit</p></div><div><strong class="text-green-600">${i}</strong><p>Izin</p></div><div><strong class="text-red-600">${a}</strong><p>Alpa</p></div></div></div>`; if (sakitList.length > 0 || izinList.length > 0 || alpaList.length > 0 || hadirDenganCatatanList.length > 0) { presensiDetailHTML += '<div class="mt-3 text-xs space-y-1">'; const createList = (title, list) => { if(list.length > 0) presensiDetailHTML += `<div><strong>${title}:</strong> ${list.map(item => `${item.name}<span class="italic text-gray-500">${item.note ? ` (${item.note})` : ''}</span>`).join(', ')}</div>`; }; createList('Sakit', sakitList); createList('Izin', izinList); createList('Alpa', alpaList); createList('Hadir (dgn catatan)', hadirDenganCatatanList); presensiDetailHTML += '</div>'; } } if (kegiatanData?.deskripsi) { kegiatanHTML = `<div class="mt-4 pt-4 border-t"><p class="text-sm font-bold mb-1">Kegiatan</p><p class="text-sm bg-gray-100 p-2 rounded">${kegiatanData.deskripsi}</p></div>`; } else if (hasPresensi) { kegiatanHTML = `<div class="mt-4 pt-4 border-t"><p class="text-sm font-bold mb-1">Kegiatan</p><p class="text-sm text-orange-600 font-semibold">Belum diisi.</p></div>`; } const detailContent = (presensiHTML + presensiDetailHTML + kegiatanHTML); dashboardHTML += ` <div class="dashboard-card ${cardBorderColor} mb-4"> <div class="flex justify-between items-center mb-2"> <div class="flex items-center space-x-3"> ${cardIcon} <p class="text-sm font-bold ${cardHeaderColor}">${cardHeader}</p> </div> <p class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">${item.jam_mulai} - ${item.jam_selesai}</p> </div> <div class="flex justify-between items-start"> <div> <h4 class="text-2xl font-bold mb-1"> <span class="px-2 py-1 rounded-md text-xl ${mapelColor.bg} ${mapelColor.text}"> ${item.mapelNama} </span> </h4> <p class="text-lg text-gray-600"> <span class="font-semibold px-2 py-1 rounded-md text-base ${kelasColor.bg} ${kelasColor.text}"> Kelas ${item.kelas} </span> </p> </div> ${buttonHTML ? `<div class="mt-2 sm:mt-0">${buttonHTML}</div>` : ''} </div> ${(hasPresensi || hasKegiatan) ? `${detailContent}` : ''} </div>`; }); } if (dashboardHTML === '') { if (todaySchedule.length > 0) { dashboardHTML = `<div class="dashboard-card text-center"><i class="fa-solid fa-check-circle text-4xl text-green-500 mb-3"></i><h4 class="font-bold text-lg">Semua Jadwal Selesai</h4><p class="text-gray-500">Jadwal yang tidak diisi telah disembunyikan. Anda dapat beristirahat.</p></div>`; } else { dashboardHTML = `<div class="dashboard-card text-center"><i class="fa-solid fa-calendar-times text-4xl text-gray-400 mb-3"></i><h4 class="font-bold text-lg">Tidak Ada Jadwal Hari Ini</h4><p class="mb-4">Buat jadwal untuk menggunakan dasbor cerdas.</p><button onclick="window.goToBuatJadwal()" class="bg-blue-500 text-white py-2 px-4 rounded-lg">Buat Jadwal</button></div>`; } } dashboardJadwalCerdas.innerHTML = dashboardHTML; }
+        
+        function renderSmartScheduleDashboard() {
+            dashboardJadwalCerdas.innerHTML = '';
+            const now = new Date();
+            const todayDateString = getLocalISODate(now);
+            const days = ['minggu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
+            const todayName = days[now.getDay()];
+            const todaySchedule = allJadwalTerstruktur[todayName] ? Object.entries(allJadwalTerstruktur[todayName]).map(([id, data]) => ({ id, ...data })) : [];
+            const currentTime = now.toTimeString().slice(0, 5);
+            let cardsToRender = [];
+            for (const item of todaySchedule) {
+                const isPast = currentTime >= item.jam_selesai;
+                const hasPresensi = !!allPresensiData[item.kelas]?.[item.mapelId]?.[todayDateString];
+                const hasKegiatan = !!allKegiatanData[item.kelas]?.[item.mapelId]?.[todayDateString]?.deskripsi;
+                const isTouched = hasPresensi || hasKegiatan;
+                if (isPast && !isTouched) {
+                    continue;
+                }
+                cardsToRender.push(item);
+            }
+            const enrichedCards = cardsToRender.map(item => {
+                const isPast = currentTime >= item.jam_selesai;
+                const isCurrent = currentTime >= item.jam_mulai && currentTime < item.jam_selesai;
+                const hasPresensi = !!allPresensiData[item.kelas]?.[item.mapelId]?.[todayDateString];
+                const hasKegiatan = !!allKegiatanData[item.kelas]?.[item.mapelId]?.[todayDateString]?.deskripsi;
+                const isComplete = hasPresensi && hasKegiatan;
+                let sortOrder;
+                if (isCurrent) { sortOrder = 1; } 
+                else if (!isPast) { sortOrder = 2; } 
+                else { if (!isComplete) { sortOrder = 3; } else { sortOrder = 4; } }
+                return { ...item, sortOrder };
+            });
+            enrichedCards.sort((a, b) => {
+                if (a.sortOrder !== b.sortOrder) { return a.sortOrder - b.sortOrder; }
+                return a.jam_mulai.localeCompare(b.jam_mulai);
+            });
+            let dashboardHTML = '';
+            if (enrichedCards.length > 0) {
+                enrichedCards.forEach(item => {
+                    const isPast = currentTime >= item.jam_selesai;
+                    const isCurrent = currentTime >= item.jam_mulai && currentTime < item.jam_selesai;
+                    const hasPresensi = !!allPresensiData[item.kelas]?.[item.mapelId]?.[todayDateString];
+                    const hasKegiatan = !!allKegiatanData[item.kelas]?.[item.mapelId]?.[todayDateString]?.deskripsi;
+                    const isComplete = hasPresensi && hasKegiatan;
+                    let cardHeader, cardHeaderColor, cardBorderColor, cardIcon;
+                    if (isCurrent) {
+                        cardHeader = "SEDANG BERLANGSUNG";
+                        cardHeaderColor = "text-blue-600";
+                        cardBorderColor = "highlight-card";
+                        cardIcon = `<i class="fa-solid fa-person-chalkboard text-xl ${cardHeaderColor}"></i>`;
+                    } else if (isPast) {
+                        if (isComplete) {
+                            cardHeader = "SELESAI";
+                            cardHeaderColor = "text-green-600";
+                            cardBorderColor = "completed-card";
+                            cardIcon = `<i class="fa-solid fa-check-circle text-xl ${cardHeaderColor}"></i>`;
+                        } else {
+                            cardHeader = "PERLU DILENGKAPI";
+                            cardHeaderColor = "text-yellow-600";
+                            cardBorderColor = "persistent-card";
+                            cardIcon = `<i class="fa-solid fa-exclamation-triangle text-xl ${cardHeaderColor}"></i>`;
+                        }
+                    } else {
+                        cardHeader = "SELANJUTNYA";
+                        cardHeaderColor = "text-gray-500";
+                        cardBorderColor = "future-card";
+                        cardIcon = `<i class="fa-solid fa-hourglass-start text-xl ${cardHeaderColor}"></i>`;
+                    }
+                    const mapelColor = getDeterministicColor(item.mapelNama, 'mapel');
+                    const kelasColor = getDeterministicColor(item.kelas, 'kelas');
+                    const presensiData = allPresensiData[item.kelas]?.[item.mapelId]?.[todayDateString];
+                    const kegiatanData = allKegiatanData[item.kelas]?.[item.mapelId]?.[todayDateString];
+                    let presensiHTML = '', presensiDetailHTML = '', buttonHTML = '', kegiatanHTML = '';
+                    
+                    if (isCurrent || isPast) {
+                        let buttonText = "Presensi";
+                        let buttonClass = "bg-blue-600 hover:bg-blue-700";
+                        
+                        if (hasPresensi && !hasKegiatan) {
+                            buttonText = "Kegiatan";
+                            buttonClass = "bg-yellow-500 hover:bg-yellow-600";
+                        } else if (isComplete || (hasPresensi && hasKegiatan)) {
+                            buttonText = "Edit";
+                            buttonClass = "bg-green-600 hover:bg-green-700";
+                        }
+                        buttonHTML = `<button onclick="window.handlePresensiShortcut('${item.mapelId}', '${item.kelas}')" class="${buttonClass} text-white font-semibold py-1.5 px-4 rounded-md transition text-sm">${buttonText}</button>`;
+                    }
+
+                    if (presensiData) { let h = 0, s = 0, i = 0, a = 0; let sakitList = [], izinList = [], alpaList = [], hadirDenganCatatanList = []; Object.entries(presensiData).forEach(([studentId, p]) => { const studentName = allStudents[studentId]?.nama || 'Siswa Dihapus'; switch(p.status) { case 'Hadir': h++; if(p.catatan) hadirDenganCatatanList.push({name: studentName, note: p.catatan}); break; case 'Sakit': s++; sakitList.push({name: studentName, note: p.catatan}); break; case 'Izin': i++; izinList.push({name: studentName, note: p.catatan}); break; case 'Alpa': a++; alpaList.push({name: studentName, note: p.catatan}); break; } }); presensiHTML = `<div class="mt-4 pt-4 border-t"><p class="text-sm font-bold mb-2">Rekap Presensi</p><div class="flex justify-around text-center text-sm"><div><strong>${h}</strong><p>Hadir</p></div><div><strong class="text-orange-600">${s}</strong><p>Sakit</p></div><div><strong class="text-green-600">${i}</strong><p>Izin</p></div><div><strong class="text-red-600">${a}</strong><p>Alpa</p></div></div></div>`; if (sakitList.length > 0 || izinList.length > 0 || alpaList.length > 0 || hadirDenganCatatanList.length > 0) { presensiDetailHTML += '<div class="mt-3 text-xs space-y-1">'; const createList = (title, list) => { if(list.length > 0) presensiDetailHTML += `<div><strong>${title}:</strong> ${list.map(item => `${item.name}<span class="italic text-gray-500">${item.note ? ` (${item.note})` : ''}</span>`).join(', ')}</div>`; }; createList('Sakit', sakitList); createList('Izin', izinList); createList('Alpa', alpaList); createList('Hadir (dgn catatan)', hadirDenganCatatanList); presensiDetailHTML += '</div>'; } } 
+                    if (kegiatanData?.deskripsi) { kegiatanHTML = `<div class="mt-4 pt-4 border-t"><p class="text-sm font-bold mb-1">Kegiatan</p><p class="text-sm bg-gray-100 p-2 rounded">${kegiatanData.deskripsi}</p></div>`; } else if (hasPresensi) { kegiatanHTML = `<div class="mt-4 pt-4 border-t"><p class="text-sm font-bold mb-1">Kegiatan</p><p class="text-sm text-orange-600 font-semibold">Belum diisi.</p></div>`; } 
+                    const detailContent = (presensiHTML + presensiDetailHTML + kegiatanHTML); 
+                    dashboardHTML += ` <div class="dashboard-card ${cardBorderColor} mb-4"> <div class="flex justify-between items-center mb-2"> <div class="flex items-center space-x-3"> ${cardIcon} <p class="text-sm font-bold ${cardHeaderColor}">${cardHeader}</p> </div> <p class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">${item.jam_mulai} - ${item.jam_selesai}</p> </div> <div class="flex justify-between items-center"> <div> <h4 class="text-2xl font-bold mb-1"> <span class="px-2 py-1 rounded-md text-xl ${mapelColor.bg} ${mapelColor.text}"> ${item.mapelNama} </span> </h4> <p class="text-lg text-gray-600"> <span class="font-semibold px-2 py-1 rounded-md text-base ${kelasColor.bg} ${kelasColor.text}"> Kelas ${item.kelas} </span> </p> </div> ${buttonHTML ? `<div class="flex-shrink-0 ml-4">${buttonHTML}</div>` : ''} </div> ${(hasPresensi || hasKegiatan) ? `${detailContent}` : ''} </div>`; 
+                });
+            }
+            if (dashboardHTML === '') { if (todaySchedule.length > 0) { dashboardHTML = `<div class="dashboard-card text-center"><i class="fa-solid fa-check-circle text-4xl text-green-500 mb-3"></i><h4 class="font-bold text-lg">Semua Jadwal Selesai</h4><p class="text-gray-500">Jadwal yang tidak diisi telah disembunyikan. Anda dapat beristirahat.</p></div>`; } else { dashboardHTML = `<div class="dashboard-card text-center"><i class="fa-solid fa-calendar-times text-4xl text-gray-400 mb-3"></i><h4 class="font-bold text-lg">Tidak Ada Jadwal Hari Ini</h4><p class="mb-4">Buat jadwal untuk menggunakan dasbor cerdas.</p><button onclick="window.goToBuatJadwal()" class="bg-blue-500 text-white py-2 px-4 rounded-lg">Buat Jadwal</button></div>`; } } 
+            dashboardJadwalCerdas.innerHTML = dashboardHTML;
+        }
+
         window.goToBuatJadwal = () => { switchPage('jadwal'); if (currentJadwalMode !== 'dinamis') handleToggleJadwalMode(); }
         async function handlePresensiShortcut(mapelId, kelas) { const mapelData = allMapel[mapelId]; if (!mapelData) return showAlertModal("Error", "Mapel tidak ditemukan.", true); switchPage('presensi'); filterMapel.value = mapelData.nama; await updateClassFilter('presensi'); filterKelas.value = kelas; filterTanggal.value = getLocalISODate(); await handleTerapkanFilter(true); el('filter-container').scrollIntoView({ behavior: 'smooth' }); }
         async function syncOfflineData() { const pending = JSON.parse(localStorage.getItem('pending-updates') || '{}'); if (Object.keys(pending).length === 0) return; showToast("Menyinkronkan data..."); showLoader(); try { await update(ref(db), pending); localStorage.removeItem('pending-updates'); showToast("Sinkronisasi berhasil."); } catch (e) { showToast("Gagal sinkronisasi.", true); } finally { hideLoader(); } }
