@@ -1,242 +1,242 @@
-    <!DOCTYPE html>
-    <html lang="id">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Presensi Online Guru</title>
-        <meta name="theme-color" content="#ffffff"/>
-        <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/speropa/presensi/main/ikon%20presensi.jpg">
-        <link rel="manifest" href="manifest.json">
-        <script src="https://cdn.tailwindcss.com"></script>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-        <style>
-            body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; }
-            ::-webkit-scrollbar { width: 6px; }
-            ::-webkit-scrollbar-track { background: #f1f1f1; }
-            ::-webkit-scrollbar-thumb { background: #888; border-radius: 3px; }
-            ::-webkit-scrollbar-thumb:hover { background: #555; }
-            .hidden { display: none; }
-            .fade-in { animation: fadeIn 0.3s ease-out; }
-            .fade-out { animation: fadeOut 0.3s ease-in forwards; }
-            @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-            @keyframes fadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.95); } }
-            @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
-            .animate-shake { animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both; }
-            .nav-link.active { color: #2563eb; transform: scale(1.1); }
-            .vertical-th { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; padding-bottom: 8px; padding-top: 8px; }
-            button:disabled, select:disabled { background-color: #e5e7eb; cursor: not-allowed; color: #9ca3af; }
-            .pin-input-dashes { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 4rem; }
-            .pin-input-dashes .pin-dash { width: 16px; height: 16px; border-radius: 50%; background-color: #d1d5db; transition: background-color 0.2s ease; }
-            .pin-input-dashes .pin-dash.filled { background-color: #1f2937; }
-            .ios-keypad-button { display: flex; align-items: center; justify-content: center; width: 75px; height: 75px; background-color: #e5e7eb; border-radius: 50%; font-size: 2rem; font-weight: 400; color: #1f2937; transition: background-color 0.2s ease; cursor: pointer; }
-            .ios-keypad-button:active { background-color: #d1d5db; }
-            .ios-keypad-button.functional { background-color: transparent; border: none; }
-            .dashboard-card { background-color: white; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); transition: transform 0.2s ease-in-out; }
-            .dashboard-card:hover { transform: translateY(-2px); }
-            .highlight-card { border-left: 5px solid #2563eb; }
-            .persistent-card { border-left: 5px solid #f59e0b; }
-            .completed-card { border-left: 5px solid #22c55e; }
-            .future-card { border-left: 5px solid #9ca3af; }
-        </style>
-    </head>
-    <body class="antialiased text-gray-800">
-        <div id="loading-spinner" class="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>
-        <div id="toast" class="fixed top-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg hidden fade-in z-[100]"><p id="toast-message"></p></div>
-        <div id="login-page" class="min-h-screen flex items-center justify-center bg-gray-100 p-4 hidden">
-            <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
-                <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">Login Guru</h2>
-                <p class="text-center text-gray-500 mb-8">Gunakan akun yang terdaftar untuk masuk.</p>
-                <form id="login-form">
-                    <div class="mb-4"><label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label><input type="email" id="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required></div>
-                    <div class="mb-6"><label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label><input type="password" id="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required></div>
-                    <p id="login-error" class="text-red-500 text-sm mb-4 text-center hidden"></p>
-                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300">Masuk</button>
-                </form>
-            </div>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presensi Online Guru</title>
+    <meta name="theme-color" content="#ffffff"/>
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/speropa/presensi/main/ikon%20presensi.jpg">
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        .hidden { display: none; }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        .fade-out { animation: fadeOut 0.3s ease-in forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes fadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.95); } }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+        .animate-shake { animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both; }
+        .nav-link.active { color: #2563eb; transform: scale(1.1); }
+        .vertical-th { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; padding-bottom: 8px; padding-top: 8px; }
+        button:disabled, select:disabled { background-color: #e5e7eb; cursor: not-allowed; color: #9ca3af; }
+        .pin-input-dashes { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 4rem; }
+        .pin-input-dashes .pin-dash { width: 16px; height: 16px; border-radius: 50%; background-color: #d1d5db; transition: background-color 0.2s ease; }
+        .pin-input-dashes .pin-dash.filled { background-color: #1f2937; }
+        .ios-keypad-button { display: flex; align-items: center; justify-content: center; width: 75px; height: 75px; background-color: #e5e7eb; border-radius: 50%; font-size: 2rem; font-weight: 400; color: #1f2937; transition: background-color 0.2s ease; cursor: pointer; }
+        .ios-keypad-button:active { background-color: #d1d5db; }
+        .ios-keypad-button.functional { background-color: transparent; border: none; }
+        .dashboard-card { background-color: white; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); transition: transform 0.2s ease-in-out; }
+        .dashboard-card:hover { transform: translateY(-2px); }
+        .highlight-card { border-left: 5px solid #2563eb; }
+        .persistent-card { border-left: 5px solid #f59e0b; }
+        .completed-card { border-left: 5px solid #22c55e; }
+        .future-card { border-left: 5px solid #9ca3af; }
+    </style>
+</head>
+<body class="antialiased text-gray-800">
+    <div id="loading-spinner" class="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>
+    <div id="toast" class="fixed top-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg hidden fade-in z-[100]"><p id="toast-message"></p></div>
+    <div id="login-page" class="min-h-screen flex items-center justify-center bg-gray-100 p-4 hidden">
+        <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">Login Guru</h2>
+            <p class="text-center text-gray-500 mb-8">Gunakan akun yang terdaftar untuk masuk.</p>
+            <form id="login-form">
+                <div class="mb-4"><label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label><input type="email" id="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required></div>
+                <div class="mb-6"><label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label><input type="password" id="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required></div>
+                <p id="login-error" class="text-red-500 text-sm mb-4 text-center hidden"></p>
+                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300">Masuk</button>
+            </form>
         </div>
-        <div id="app" class="hidden">
-            <div id="offline-indicator" class="bg-yellow-500 text-center text-white p-2 text-sm hidden fixed top-0 w-full z-[90]">Anda sedang offline. Perubahan akan disinkronkan saat kembali online.</div>
-            <header class="w-full">
-                <div class="container mx-auto px-4 py-3 flex justify-between items-center bg-white shadow-md rounded-b-xl">
-                    <h1 id="user-display-name" class="text-xl font-bold text-gray-700">Memuat...</h1>
-                    <div class="flex items-center space-x-2">
-                         <button id="install-pwa-btn" class="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-blue-600 transition hidden flex items-center space-x-2"><i class="fa-solid fa-download"></i><span>Install</span></button>
-                         <button id="logout-btn" class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-red-600 transition">Keluar</button>
+    </div>
+    <div id="app" class="hidden">
+        <div id="offline-indicator" class="bg-yellow-500 text-center text-white p-2 text-sm hidden fixed top-0 w-full z-[90]">Anda sedang offline. Perubahan akan disinkronkan saat kembali online.</div>
+        <header class="w-full">
+            <div class="container mx-auto px-4 py-3 flex justify-between items-center bg-white shadow-md rounded-b-xl">
+                <h1 id="user-display-name" class="text-xl font-bold text-gray-700">Memuat...</h1>
+                <div class="flex items-center space-x-2">
+                     <button id="install-pwa-btn" class="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-blue-600 transition hidden flex items-center space-x-2"><i class="fa-solid fa-download"></i><span>Install</span></button>
+                     <button id="logout-btn" class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-red-600 transition">Keluar</button>
+                </div>
+            </div>
+        </header>
+        <main class="container mx-auto p-4 pb-24">
+            <div id="page-dashboard" class="page-content">
+                <div id="dashboard-container" class="mb-6">
+                    <div class="mb-4">
+                        <h2 id="dashboard-greeting" class="text-2xl font-bold text-gray-800">Selamat Datang!</h2>
+                        <p id="dashboard-date" class="text-gray-500"></p>
+                    </div>
+                    <div id="dashboard-jadwal-cerdas"></div>
+                </div>
+            </div>
+            <div id="page-presensi" class="page-content hidden">
+                <div class="bg-white p-4 rounded-xl shadow-md mb-6" id="filter-container">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold">Filter Presensi & Nilai</h3>
+                        <button id="delete-daily-data-btn" class="bg-red-500 text-white px-3 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors flex items-center space-x-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg><span class="hidden sm:inline">Hapus Data Hari Ini</span></button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div><label for="filter-mapel" class="text-sm font-medium">Mata Pelajaran</label><select id="filter-mapel" class="w-full mt-1 p-2 border rounded-lg bg-gray-50"><option value="">Pilih Mapel...</option></select></div>
+                        <div><label for="filter-kelas" class="text-sm font-medium">Kelas</label><select id="filter-kelas" class="w-full mt-1 p-2 border rounded-lg bg-gray-50" disabled><option value="">Pilih Kelas...</option></select></div>
+                        <div><label for="filter-tanggal" class="text-sm font-medium">Tanggal</label><input type="date" id="filter-tanggal" class="w-full mt-1 p-2 border rounded-lg bg-gray-50"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-4">
+                        <button id="terapkan-filter-btn" class="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors">Terapkan</button>
+                        <div class="flex items-center space-x-2"><span id="mode-label" class="text-sm font-medium text-gray-600">Mode: Presensi</span><button id="toggle-mode-btn" class="relative inline-flex items-center h-6 rounded-full w-11 transition-colors bg-gray-200 focus:outline-none"><span class="inline-block w-4 h-4 transform bg-white rounded-full transition-transform" id="toggle-mode-switch"></span></button></div>
                     </div>
                 </div>
-            </header>
-            <main class="container mx-auto p-4 pb-24">
-                <div id="page-dashboard" class="page-content">
-                    <div id="dashboard-container" class="mb-6">
-                        <div class="mb-4">
-                            <h2 id="dashboard-greeting" class="text-2xl font-bold text-gray-800">Selamat Datang!</h2>
-                            <p id="dashboard-date" class="text-gray-500"></p>
-                        </div>
-                        <div id="dashboard-jadwal-cerdas"></div>
-                    </div>
-                </div>
-                <div id="page-presensi" class="page-content hidden">
-                    <div class="bg-white p-4 rounded-xl shadow-md mb-6" id="filter-container">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-bold">Filter Presensi & Nilai</h3>
-                            <button id="delete-daily-data-btn" class="bg-red-500 text-white px-3 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors flex items-center space-x-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg><span class="hidden sm:inline">Hapus Data Hari Ini</span></button>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div><label for="filter-mapel" class="text-sm font-medium">Mata Pelajaran</label><select id="filter-mapel" class="w-full mt-1 p-2 border rounded-lg bg-gray-50"><option value="">Pilih Mapel...</option></select></div>
-                            <div><label for="filter-kelas" class="text-sm font-medium">Kelas</label><select id="filter-kelas" class="w-full mt-1 p-2 border rounded-lg bg-gray-50" disabled><option value="">Pilih Kelas...</option></select></div>
-                            <div><label for="filter-tanggal" class="text-sm font-medium">Tanggal</label><input type="date" id="filter-tanggal" class="w-full mt-1 p-2 border rounded-lg bg-gray-50"></div>
-                        </div>
-                        <div class="flex justify-between items-center mt-4">
-                            <button id="terapkan-filter-btn" class="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors">Terapkan</button>
-                            <div class="flex items-center space-x-2"><span id="mode-label" class="text-sm font-medium text-gray-600">Mode: Presensi</span><button id="toggle-mode-btn" class="relative inline-flex items-center h-6 rounded-full w-11 transition-colors bg-gray-200 focus:outline-none"><span class="inline-block w-4 h-4 transform bg-white rounded-full transition-transform" id="toggle-mode-switch"></span></button></div>
-                        </div>
-                    </div>
-                    <div id="content-area" class="hidden">
-                        <div class="bg-white p-4 rounded-xl shadow-md mb-6">
-                            <label for="kegiatan-pembelajaran" class="text-sm font-bold text-gray-700">Kegiatan Hari Ini</label>
-                            <input type="text" id="kegiatan-pembelajaran" placeholder="Contoh: Mengerjakan Latihan Bab 3" class="w-full mt-2 p-2 border rounded-lg bg-gray-50">
-                            <div class="mt-4 pt-4 border-t">
-                                <h4 class="text-sm font-semibold mb-2">Riwayat Kegiatan</h4>
-                                <div id="kegiatan-history-list" class="space-y-3 text-xs"></div>
-                                <button id="kegiatan-history-toggle-more" data-state="partial" class="text-blue-600 text-xs font-semibold mt-2 hidden">Selengkapnya &darr;</button>
-                            </div>
-                        </div>
-                        <div class="bg-white p-4 rounded-xl shadow-md mb-6" id="presensi-search-container">
-                            <label for="search-presensi-student" class="block text-sm font-medium text-gray-700 mb-1">Cari Siswa:</label>
-                            <input type="text" id="search-presensi-student" placeholder="Cari berdasarkan nama..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                        <div id="student-list-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
-                        <div id="save-all-container" class="mt-6 text-center"><button id="save-all-btn" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition duration-300 shadow-lg">Simpan Semua Perubahan</button></div>
-                    </div>
-                </div>
-                <div id="page-kelola-siswa" class="page-content hidden">
+                <div id="content-area" class="hidden">
                     <div class="bg-white p-4 rounded-xl shadow-md mb-6">
+                        <label for="kegiatan-pembelajaran" class="text-sm font-bold text-gray-700">Kegiatan Hari Ini</label>
+                        <input type="text" id="kegiatan-pembelajaran" placeholder="Contoh: Mengerjakan Latihan Bab 3" class="w-full mt-2 p-2 border rounded-lg bg-gray-50">
+                        <div class="mt-4 pt-4 border-t">
+                            <h4 class="text-sm font-semibold mb-2">Riwayat Kegiatan</h4>
+                            <div id="kegiatan-history-list" class="space-y-3 text-xs"></div>
+                            <button id="kegiatan-history-toggle-more" data-state="partial" class="text-blue-600 text-xs font-semibold mt-2 hidden">Selengkapnya &darr;</button>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-md mb-6" id="presensi-search-container">
+                        <label for="search-presensi-student" class="block text-sm font-medium text-gray-700 mb-1">Cari Siswa:</label>
+                        <input type="text" id="search-presensi-student" placeholder="Cari berdasarkan nama..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div id="student-list-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+                    <div id="save-all-container" class="mt-6 text-center"><button id="save-all-btn" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition duration-300 shadow-lg">Simpan Semua Perubahan</button></div>
+                </div>
+            </div>
+            <div id="page-kelola-siswa" class="page-content hidden">
+                <div class="bg-white p-4 rounded-xl shadow-md mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold">Tambah Siswa Baru</h3>
+                        <div class="flex items-center space-x-2">
+                            <label for="csv-upload" class="bg-blue-500 text-white font-medium py-2 px-3 rounded-lg hover:bg-blue-600 cursor-pointer flex items-center space-x-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg><span class="hidden sm:inline">Unggah</span></label>
+                            <input type="file" id="csv-upload" class="hidden" accept=".csv">
+                            <button id="download-template-btn" class="bg-gray-600 text-white font-medium py-2 px-3 rounded-lg hover:bg-gray-700 flex items-center space-x-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg><span class="hidden sm:inline">Unduh</span></button>
+                            <button id="delete-all-students-btn" class="bg-red-500 text-white font-medium py-2 px-3 rounded-lg hover:bg-red-600 flex items-center space-x-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg><span class="hidden sm:inline">Hapus Semua</span></button>
+                        </div>
+                    </div>
+                    <form id="add-student-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                        <div><label for="student-name" class="text-sm font-medium">Nama Lengkap</label><input type="text" id="student-name" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50"></div>
+                        <div><label for="student-class" class="text-sm font-medium">Kelas</label><input type="text" id="student-class" required placeholder="Contoh: 7A" class="w-full mt-1 p-2 border rounded-lg bg-gray-50"></div>
+                        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600 h-fit">Tambah Siswa</button>
+                    </form>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-md">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                        <h3 class="text-lg font-bold mb-2 sm:mb-0">Daftar Semua Siswa</h3>
+                        <input type="text" id="search-all-students" placeholder="Cari siswa..." class="w-full sm:w-auto px-3 py-2 border rounded-lg bg-gray-50">
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-gray-100"><tr><th class="p-3">No</th><th class="p-3">Nama Lengkap</th><th class="p-3">Kelas</th><th class="p-3 text-center">Aksi</th></tr></thead>
+                            <tbody id="all-students-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div id="page-kelola-mapel" class="page-content hidden">
+                 <div class="bg-white p-4 rounded-xl shadow-md mb-6">
+                    <h3 class="text-lg font-bold mb-3">Tambah Mata Pelajaran</h3>
+                    <form id="add-mapel-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                        <div><label for="mapel-name" class="text-sm font-medium">Nama Mapel</label><input type="text" id="mapel-name" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50"></div>
+                        <div><label for="mapel-class" class="text-sm font-medium">Untuk Kelas</label><select id="mapel-class" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50"><option value="">Memuat Kelas...</option></select></div>
+                        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600 h-fit">Tambah Mapel</button>
+                    </form>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-md">
+                    <h3 class="text-lg font-bold mb-4">Daftar Mata Pelajaran</h3>
+                    <div id="mapel-list-container" class="space-y-3"></div>
+                </div>
+            </div>
+            <div id="page-jadwal" class="page-content hidden">
+                <div class="bg-white p-4 rounded-xl shadow-md mb-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold">Jadwal Pelajaran</h3>
+                        <div class="flex items-center space-x-3">
+                            <span id="jadwal-mode-label" class="text-sm font-medium text-gray-600">Mode: Gambar</span>
+                            <button id="toggle-jadwal-mode-btn" class="relative inline-flex items-center h-6 rounded-full w-11 transition-colors bg-blue-600 focus:outline-none"><span id="toggle-jadwal-mode-switch" class="inline-block w-4 h-4 transform bg-white rounded-full transition-transform translate-x-5"></span></button>
+                        </div>
+                    </div>
+                </div>
+                <div id="jadwal-view-gambar" class="hidden">
+                     <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-bold">Tambah Siswa Baru</h3>
+                            <h3 class="text-lg font-bold">Jadwal (Gambar)</h3>
                             <div class="flex items-center space-x-2">
-                                <label for="csv-upload" class="bg-blue-500 text-white font-medium py-2 px-3 rounded-lg hover:bg-blue-600 cursor-pointer flex items-center space-x-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg><span class="hidden sm:inline">Unggah</span></label>
-                                <input type="file" id="csv-upload" class="hidden" accept=".csv">
-                                <button id="download-template-btn" class="bg-gray-600 text-white font-medium py-2 px-3 rounded-lg hover:bg-gray-700 flex items-center space-x-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg><span class="hidden sm:inline">Unduh</span></button>
-                                <button id="delete-all-students-btn" class="bg-red-500 text-white font-medium py-2 px-3 rounded-lg hover:bg-red-600 flex items-center space-x-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg><span class="hidden sm:inline">Hapus Semua</span></button>
+                                <label id="jadwal-upload-label" for="jadwal-upload" class="bg-blue-500 text-white font-medium py-2 px-4 rounded-lg hover:bg-blue-600 cursor-pointer flex items-center space-x-2 transition-colors"><i class="fa-solid fa-upload"></i><span class="hidden sm:inline">Unggah</span></label>
+                                <input type="file" id="jadwal-upload" class="hidden" accept="image/*">
+                                <button id="delete-jadwal-btn" class="bg-red-500 text-white font-medium py-2 px-4 rounded-lg hover:bg-red-600 flex items-center space-x-2 transition-colors hidden"><i class="fa-solid fa-trash"></i><span class="hidden sm:inline">Hapus</span></button>
                             </div>
                         </div>
-                        <form id="add-student-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                            <div><label for="student-name" class="text-sm font-medium">Nama Lengkap</label><input type="text" id="student-name" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50"></div>
-                            <div><label for="student-class" class="text-sm font-medium">Kelas</label><input type="text" id="student-class" required placeholder="Contoh: 7A" class="w-full mt-1 p-2 border rounded-lg bg-gray-50"></div>
-                            <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600 h-fit">Tambah Siswa</button>
+                        <div id="jadwal-image-container" class="mt-4 border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[60vh] flex items-center justify-center bg-gray-50">
+                             <div id="jadwal-placeholder" class="text-center text-gray-500"><i class="fa-solid fa-image text-5xl mb-4"></i><p>Belum ada jadwal yang diunggah.</p><p class="text-sm">Silakan unggah gambar jadwal Anda.</p></div>
+                            <img id="jadwal-image" src="" alt="Jadwal Pelajaran" class="max-w-full max-h-[70vh] rounded-lg hidden object-contain"/>
+                        </div>
+                    </div>
+                </div>
+                <div id="jadwal-view-dinamis">
+                    <div class="bg-white p-4 rounded-xl shadow-md mb-6">
+                        <h3 class="text-lg font-bold mb-4">Buat Jadwal Pelajaran</h3>
+                        <form id="add-jadwal-form" class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                            <div>
+                                <label for="jadwal-hari" class="text-sm font-medium">Hari</label>
+                                <select id="jadwal-hari" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50">
+                                    <option value="senin">Senin</option><option value="selasa">Selasa</option><option value="rabu">Rabu</option><option value="kamis">Kamis</option><option value="jumat">Jumat</option><option value="sabtu">Sabtu</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div><label for="jadwal-jam-mulai" class="text-sm font-medium">Mulai</label><input type="time" id="jadwal-jam-mulai" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50"></div>
+                                <div><label for="jadwal-jam-selesai" class="text-sm font-medium">Selesai</label><input type="time" id="jadwal-jam-selesai" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50"></div>
+                            </div>
+                            <div><label for="jadwal-mapel" class="text-sm font-medium">Mata Pelajaran</label><select id="jadwal-mapel" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50"><option value="">Pilih Mapel...</option></select></div>
+                            <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600 h-fit w-full">Tambah Jadwal</button>
                         </form>
                     </div>
                     <div class="bg-white p-4 rounded-xl shadow-md">
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-                            <h3 class="text-lg font-bold mb-2 sm:mb-0">Daftar Semua Siswa</h3>
-                            <input type="text" id="search-all-students" placeholder="Cari siswa..." class="w-full sm:w-auto px-3 py-2 border rounded-lg bg-gray-50">
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm text-left">
-                                <thead class="bg-gray-100"><tr><th class="p-3">No</th><th class="p-3">Nama Lengkap</th><th class="p-3">Kelas</th><th class="p-3 text-center">Aksi</th></tr></thead>
-                                <tbody id="all-students-table"></tbody>
-                            </table>
-                        </div>
+                        <h3 class="text-lg font-bold mb-4">Jadwal Tersimpan</h3>
+                        <div id="jadwal-terstruktur-container" class="space-y-6"></div>
                     </div>
                 </div>
-                <div id="page-kelola-mapel" class="page-content hidden">
-                     <div class="bg-white p-4 rounded-xl shadow-md mb-6">
-                        <h3 class="text-lg font-bold mb-3">Tambah Mata Pelajaran</h3>
-                        <form id="add-mapel-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                            <div><label for="mapel-name" class="text-sm font-medium">Nama Mapel</label><input type="text" id="mapel-name" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50"></div>
-                            <div><label for="mapel-class" class="text-sm font-medium">Untuk Kelas</label><select id="mapel-class" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50"><option value="">Memuat Kelas...</option></select></div>
-                            <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600 h-fit">Tambah Mapel</button>
-                        </form>
-                    </div>
-                    <div class="bg-white p-4 rounded-xl shadow-md">
-                        <h3 class="text-lg font-bold mb-4">Daftar Mata Pelajaran</h3>
-                        <div id="mapel-list-container" class="space-y-3"></div>
+            </div>
+            <div id="page-hasil-rekap" class="page-content hidden">
+                <div class="bg-white p-4 rounded-xl shadow-md mb-6">
+                    <h3 class="text-lg font-bold mb-4">Rekapitulasi Presensi & Nilai</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                        <div><label for="rekap-filter-mapel" class="text-sm font-medium">Mata Pelajaran</label><select id="rekap-filter-mapel" class="w-full mt-1 p-2 border rounded-lg bg-gray-50"><option value="">Pilih Mapel...</option></select></div>
+                        <div><label for="rekap-filter-kelas" class="text-sm font-medium">Kelas</label><select id="rekap-filter-kelas" class="w-full mt-1 p-2 border rounded-lg bg-gray-50" disabled><option value="">Pilih Kelas...</option></select></div>
+                        <div class="flex items-end"><button id="terapkan-rekap-btn" class="w-full bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors">Terapkan</button></div>
                     </div>
                 </div>
-                <div id="page-jadwal" class="page-content hidden">
-                    <div class="bg-white p-4 rounded-xl shadow-md mb-6">
-                        <div class="flex justify-between items-center">
-                            <h3 class="text-xl font-bold">Jadwal Pelajaran</h3>
-                            <div class="flex items-center space-x-3">
-                                <span id="jadwal-mode-label" class="text-sm font-medium text-gray-600">Mode: Gambar</span>
-                                <button id="toggle-jadwal-mode-btn" class="relative inline-flex items-center h-6 rounded-full w-11 transition-colors bg-blue-600 focus:outline-none"><span id="toggle-jadwal-mode-switch" class="inline-block w-4 h-4 transform bg-white rounded-full transition-transform translate-x-5"></span></button>
-                            </div>
+                <div id="rekap-table-container" class="bg-white p-4 rounded-xl shadow-md overflow-x-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold">Data Rekapitulasi</h3>
+                        <div class="relative inline-block text-left">
+                            <button id="rekap-download-dropdown-btn" class="bg-gray-600 text-white font-medium py-2 px-3 rounded-lg hover:bg-gray-700 flex items-center space-x-2 hidden"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg><span class="hidden sm:inline">Unduh Rekap</span><svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></button>
+                            <div id="rekap-download-options" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none hidden"><div class="py-1"><button id="download-csv-btn" class="text-gray-700 block px-4 py-2 text-sm w-full text-left hover:bg-gray-100">Unduh sebagai CSV</button><button id="print-rekap-btn" class="text-gray-700 block px-4 py-2 text-sm w-full text-left hover:bg-gray-100">Cetak (PDF)</button></div></div>
                         </div>
                     </div>
-                    <div id="jadwal-view-gambar" class="hidden">
-                         <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md">
-                            <div class="flex justify-between items-center mb-4">
-                                <h3 class="text-lg font-bold">Jadwal (Gambar)</h3>
-                                <div class="flex items-center space-x-2">
-                                    <label id="jadwal-upload-label" for="jadwal-upload" class="bg-blue-500 text-white font-medium py-2 px-4 rounded-lg hover:bg-blue-600 cursor-pointer flex items-center space-x-2 transition-colors"><i class="fa-solid fa-upload"></i><span class="hidden sm:inline">Unggah</span></label>
-                                    <input type="file" id="jadwal-upload" class="hidden" accept="image/*">
-                                    <button id="delete-jadwal-btn" class="bg-red-500 text-white font-medium py-2 px-4 rounded-lg hover:bg-red-600 flex items-center space-x-2 transition-colors hidden"><i class="fa-solid fa-trash"></i><span class="hidden sm:inline">Hapus</span></button>
-                                </div>
-                            </div>
-                            <div id="jadwal-image-container" class="mt-4 border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[60vh] flex items-center justify-center bg-gray-50">
-                                 <div id="jadwal-placeholder" class="text-center text-gray-500"><i class="fa-solid fa-image text-5xl mb-4"></i><p>Belum ada jadwal yang diunggah.</p><p class="text-sm">Silakan unggah gambar jadwal Anda.</p></div>
-                                <img id="jadwal-image" src="" alt="Jadwal Pelajaran" class="max-w-full max-h-[70vh] rounded-lg hidden object-contain"/>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="jadwal-view-dinamis">
-                        <div class="bg-white p-4 rounded-xl shadow-md mb-6">
-                            <h3 class="text-lg font-bold mb-4">Buat Jadwal Pelajaran</h3>
-                            <form id="add-jadwal-form" class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-                                <div>
-                                    <label for="jadwal-hari" class="text-sm font-medium">Hari</label>
-                                    <select id="jadwal-hari" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50">
-                                        <option value="senin">Senin</option><option value="selasa">Selasa</option><option value="rabu">Rabu</option><option value="kamis">Kamis</option><option value="jumat">Jumat</option><option value="sabtu">Sabtu</option>
-                                    </select>
-                                </div>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div><label for="jadwal-jam-mulai" class="text-sm font-medium">Mulai</label><input type="time" id="jadwal-jam-mulai" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50"></div>
-                                    <div><label for="jadwal-jam-selesai" class="text-sm font-medium">Selesai</label><input type="time" id="jadwal-jam-selesai" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50"></div>
-                                </div>
-                                <div><label for="jadwal-mapel" class="text-sm font-medium">Mata Pelajaran</label><select id="jadwal-mapel" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50"><option value="">Pilih Mapel...</option></select></div>
-                                <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600 h-fit w-full">Tambah Jadwal</button>
-                            </form>
-                        </div>
-                        <div class="bg-white p-4 rounded-xl shadow-md">
-                            <h3 class="text-lg font-bold mb-4">Jadwal Tersimpan</h3>
-                            <div id="jadwal-terstruktur-container" class="space-y-6"></div>
-                        </div>
-                    </div>
+                    <div id="rekap-search-container" class="mb-4 hidden"><label for="search-rekap-student" class="block text-sm font-medium text-gray-700 mb-1">Cari Siswa:</label><input type="text" id="search-rekap-student" placeholder="Cari berdasarkan nama..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"></div>
+                    <div id="rekap-dynamic-table-content"></div>
                 </div>
-                <div id="page-hasil-rekap" class="page-content hidden">
-                    <div class="bg-white p-4 rounded-xl shadow-md mb-6">
-                        <h3 class="text-lg font-bold mb-4">Rekapitulasi Presensi & Nilai</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                            <div><label for="rekap-filter-mapel" class="text-sm font-medium">Mata Pelajaran</label><select id="rekap-filter-mapel" class="w-full mt-1 p-2 border rounded-lg bg-gray-50"><option value="">Pilih Mapel...</option></select></div>
-                            <div><label for="rekap-filter-kelas" class="text-sm font-medium">Kelas</label><select id="rekap-filter-kelas" class="w-full mt-1 p-2 border rounded-lg bg-gray-50" disabled><option value="">Pilih Kelas...</option></select></div>
-                            <div class="flex items-end"><button id="terapkan-rekap-btn" class="w-full bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors">Terapkan</button></div>
-                        </div>
-                    </div>
-                    <div id="rekap-table-container" class="bg-white p-4 rounded-xl shadow-md overflow-x-auto">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-bold">Data Rekapitulasi</h3>
-                            <div class="relative inline-block text-left">
-                                <button id="rekap-download-dropdown-btn" class="bg-gray-600 text-white font-medium py-2 px-3 rounded-lg hover:bg-gray-700 flex items-center space-x-2 hidden"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg><span class="hidden sm:inline">Unduh Rekap</span><svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></button>
-                                <div id="rekap-download-options" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none hidden"><div class="py-1"><button id="download-csv-btn" class="text-gray-700 block px-4 py-2 text-sm w-full text-left hover:bg-gray-100">Unduh sebagai CSV</button><button id="print-rekap-btn" class="text-gray-700 block px-4 py-2 text-sm w-full text-left hover:bg-gray-100">Cetak (PDF)</button></div></div>
-                            </div>
-                        </div>
-                        <div id="rekap-search-container" class="mb-4 hidden"><label for="search-rekap-student" class="block text-sm font-medium text-gray-700 mb-1">Cari Siswa:</label><input type="text" id="search-rekap-student" placeholder="Cari berdasarkan nama..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"></div>
-                        <div id="rekap-dynamic-table-content"></div>
-                    </div>
-                </div>
-            </main>
-            <div class="fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_5px_rgba(0,0,0,0.1)] z-40">
-                <nav class="container mx-auto flex justify-around">
-                    <button data-page="dashboard" class="nav-link active flex flex-col items-center text-gray-500 hover:text-blue-600 p-2 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg><span class="text-xs font-medium">Dasbor</span></button>
-                    <button data-page="presensi" class="nav-link flex flex-col items-center text-gray-500 hover:text-blue-600 p-2 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg><span class="text-xs font-medium">Presensi</span></button>
-                    <button data-page="kelola-siswa" class="nav-link flex flex-col items-center text-gray-500 hover:text-blue-600 p-2 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a3.002 3.002 0 013.39-2.142 3.002 3.002 0 013.39 2.142M9 11a4 4 0 110-8 4 4 0 010 8z"></path></svg><span class="text-xs font-medium">Siswa</span></button>
-                    <button data-page="kelola-mapel" class="nav-link flex flex-col items-center text-gray-500 hover:text-blue-600 p-2 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg><span class="text-xs font-medium">Mapel</span></button>
-                    <button data-page="jadwal" class="nav-link flex flex-col items-center text-gray-500 hover:text-blue-600 p-2 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span class="text-xs font-medium">Jadwal</span></button>
-                    <button data-page="hasil-rekap" class="nav-link flex flex-col items-center text-gray-500 hover:text-blue-600 p-2 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg><span class="text-xs font-medium">Rekap</span></button>
+            </div>
+        </main>
+        <div class="fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_5px_rgba(0,0,0,0.1)] z-40">
+            <nav class="container mx-auto flex justify-around">
+                <button data-page="dashboard" class="nav-link active flex flex-col items-center text-gray-500 hover:text-blue-600 p-2 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg><span class="text-xs font-medium">Dasbor</span></button>
+                <button data-page="presensi" class="nav-link flex flex-col items-center text-gray-500 hover:text-blue-600 p-2 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg><span class="text-xs font-medium">Presensi</span></button>
+                <button data-page="kelola-siswa" class="nav-link flex flex-col items-center text-gray-500 hover:text-blue-600 p-2 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a3.002 3.002 0 013.39-2.142 3.002 3.002 0 013.39 2.142M9 11a4 4 0 110-8 4 4 0 010 8z"></path></svg><span class="text-xs font-medium">Siswa</span></button>
+                <button data-page="kelola-mapel" class="nav-link flex flex-col items-center text-gray-500 hover:text-blue-600 p-2 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg><span class="text-xs font-medium">Mapel</span></button>
+                <button data-page="jadwal" class="nav-link flex flex-col items-center text-gray-500 hover:text-blue-600 p-2 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span class="text-xs font-medium">Jadwal</span></button>
+                <button data-page="hasil-rekap" class="nav-link flex flex-col items-center text-gray-500 hover:text-blue-600 p-2 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg><span class="text-xs font-medium">Rekap</span></button>
                 </nav>
             </div>
         </div>
