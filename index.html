@@ -522,10 +522,11 @@
                         await OneSignal.init({ appId: oneSignalAppId, serviceWorkerPath: "OneSignalSDKWorker.js", serviceWorkerUpdaterPath: "OneSignalSDKUpdaterWorker.js" });
                         isOneSignalInitialized = true;
                     }
-                    const permission = await OneSignal.Notifications.getPermissionStatus();
+                    // --- FIXED NOTIFICATION PERMISSION CHECK ---
+                    const permission = await OneSignal.Notifications.getPermission();
                     if (permission === 'default') {
                         await OneSignal.Notifications.requestPermission();
-                        const newPermission = await OneSignal.Notifications.getPermissionStatus();
+                        const newPermission = await OneSignal.Notifications.getPermission();
                         if (newPermission === 'denied') {
                             showToast("Notifikasi tidak akan aktif.", true);
                         }
