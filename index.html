@@ -375,7 +375,8 @@
                         localStorage.removeItem('currentUserKey');
                         localStorage.removeItem('loginTimestamp');
                         allLoginData = (await get(ref(db, 'login'))).val();
-                        await requestNotificationPermissionAndShowPin();
+                        showPinVerificationModal();
+                        hideLoader();
                     }
                 } catch (error) {
                     showAlertModal("Error", "Gagal memuat data login awal.", true);
@@ -394,37 +395,6 @@
                 }
             }
         });
-
-        async function requestNotificationPermissionAndShowPin() {
-            await window.OneSignalDeferred.push(async () => {
-                try {
-                    if (!isOneSignalInitialized) {
-                        const oneSignalAppIdRef = ref(db, 'one/signal');
-                        const snapshot = await get(oneSignalAppIdRef);
-                        const oneSignalAppId = snapshot.val();
-                        if (!oneSignalAppId) throw new Error("OneSignal App ID tidak ditemukan.");
-                        await OneSignal.init({ appId: oneSignalAppId, serviceWorkerPath: "OneSignalSDKWorker.js", serviceWorkerUpdaterPath: "OneSignalSDKUpdaterWorker.js" });
-                        isOneSignalInitialized = true;
-                    }
-                    const permission = await OneSignal.Notifications.getPermissionStatus();
-                    if (permission === 'default') {
-                        await OneSignal.Notifications.requestPermission();
-                        const newPermission = await OneSignal.Notifications.getPermissionStatus();
-                        if (newPermission === 'denied') {
-                            showToast("Notifikasi tidak akan aktif.", true);
-                        }
-                    } else if (permission === 'denied') {
-                        showToast("Notifikasi tidak aktif. Aktifkan di setelan browser.", true);
-                    }
-                } catch (error) {
-                    console.error("Gagal inisialisasi/meminta izin OneSignal:", error);
-                    showAlertModal("Error Notifikasi", `Gagal mengaktifkan fitur notifikasi: ${error.message}`, true);
-                } finally {
-                    showPinVerificationModal();
-                    hideLoader();
-                }
-            });
-        }
         
         loginForm.addEventListener('submit', async (e) => { 
             e.preventDefault(); 
@@ -512,21 +482,25 @@
                 const initPromises = [
                     updateUserDisplayName(userKey),
                     fetchGithubToken(),
-                    setOneSignalExternalId(currentUserKey)
                 ];
                 await Promise.all(initPromises);
                 
                 setupEventListeners();
                 initializeDataListeners();
 
+                pinVerificationModal.classList.add('hidden');
+                mainApp.classList.remove('hidden');
+
+                // Inisialisasi notifikasi setelah UI utama terlihat
+                await initializeNotifications();
+                await setOneSignalExternalId(currentUserKey);
                 await rescheduleRecurringNotifications();
+                
                 displayDashboard();
 
                 if (dashboardUpdateInterval) clearInterval(dashboardUpdateInterval);
                 dashboardUpdateInterval = setInterval(displayDashboard, 10000);
                 
-                pinVerificationModal.classList.add('hidden');
-                mainApp.classList.remove('hidden');
                 showToast(isSessionRestore ? "Sesi berhasil dipulihkan!" : "Verifikasi PIN berhasil!");
 
             } catch (error) {
@@ -535,6 +509,34 @@
             } finally {
                 hideLoader();
             }
+        }
+
+        async function initializeNotifications() {
+            await window.OneSignalDeferred.push(async () => {
+                try {
+                    if (!isOneSignalInitialized) {
+                        const oneSignalAppIdRef = ref(db, 'one/signal');
+                        const snapshot = await get(oneSignalAppIdRef);
+                        const oneSignalAppId = snapshot.val();
+                        if (!oneSignalAppId) throw new Error("OneSignal App ID tidak ditemukan.");
+                        await OneSignal.init({ appId: oneSignalAppId, serviceWorkerPath: "OneSignalSDKWorker.js", serviceWorkerUpdaterPath: "OneSignalSDKUpdaterWorker.js" });
+                        isOneSignalInitialized = true;
+                    }
+                    const permission = await OneSignal.Notifications.getPermissionStatus();
+                    if (permission === 'default') {
+                        await OneSignal.Notifications.requestPermission();
+                        const newPermission = await OneSignal.Notifications.getPermissionStatus();
+                        if (newPermission === 'denied') {
+                            showToast("Notifikasi tidak akan aktif.", true);
+                        }
+                    } else if (permission === 'denied') {
+                        showToast("Notifikasi tidak aktif. Aktifkan di setelan browser.", true);
+                    }
+                } catch (error) {
+                    console.error("Gagal inisialisasi/meminta izin OneSignal:", error);
+                    showAlertModal("Error Notifikasi", `Gagal mengaktifkan fitur notifikasi: ${error.message}`, true);
+                }
+            });
         }
         
         async function setOneSignalExternalId(userId) {
