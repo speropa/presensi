@@ -301,6 +301,7 @@
         let availableClasses = new Set(), currentPresensiStudentsData = [], currentRekapData = { presensi: {}, nilai: {}, kelas: '' };
         let allPresensiData = {}, allKegiatanData = {};
         let isOneSignalInitialized = false;
+        let firebaseListeners = [];
 
         const el = id => document.getElementById(id);
         const loadingSpinner = el('loading-spinner'), loginPage = el('login-page'), mainApp = el('app'), loginForm = el('login-form'), loginError = el('login-error'), logoutBtn = el('logout-btn'), userDisplayName = el('user-display-name'), offlineIndicator = el('offline-indicator'), installPwaBtn = el('install-pwa-btn'), emailInput = el('email'), passwordInput = el('password'), pinVerificationModal = el('pin-verification-modal'), pinInputField = el('pin-input-field'), pinDashes = el('pin-dashes'), pinKeypadModal = el('pin-keypad-modal'), pinError = el('pin-error'), filterMapel = el('filter-mapel'), filterKelas = el('filter-kelas'), filterTanggal = el('filter-tanggal'), terapkanBtn = el('terapkan-filter-btn'), rekapFilterMapel = el('rekap-filter-mapel'), rekapFilterKelas = el('rekap-filter-kelas'), terapkanRekapBtn = el('terapkan-rekap-btn'), deleteDailyDataBtn = el('delete-daily-data-btn'), toggleModeBtn = el('toggle-mode-btn'), toggleModeSwitch = el('toggle-mode-switch'), modeLabel = el('mode-label'), contentArea = el('content-area'), kegiatanInput = el('kegiatan-pembelajaran'), studentListContainer = el('student-list-container'), saveAllBtn = el('save-all-btn'), kegiatanHistoryList = el('kegiatan-history-list'), kegiatanHistoryToggleMore = el('kegiatan-history-toggle-more'), presensiSearchContainer = el('presensi-search-container'), searchPresensiStudentInput = el('search-presensi-student'), addStudentForm = el('add-student-form'), studentNameInput = el('student-name'), studentClassInput = el('student-class'), allStudentsTable = el('all-students-table'), csvUploadInput = el('csv-upload'), downloadTemplateBtn = el('download-template-btn'), deleteAllStudentsBtn = el('delete-all-students-btn'), searchAllStudentsInput = el('search-all-students'), addMapelForm = el('add-mapel-form'), mapelNameInput = el('mapel-name'), mapelClassSelect = el('mapel-class'), mapelListContainer = el('mapel-list-container'), jadwalUploadInput = el('jadwal-upload'), jadwalUploadLabel = el('jadwal-upload-label'), jadwalImageContainer = el('jadwal-image-container'), jadwalImage = el('jadwal-image'), jadwalPlaceholder = el('jadwal-placeholder'), deleteJadwalBtn = el('delete-jadwal-btn'), imageViewerModal = el('image-viewer-modal'), closeImageViewerBtn = el('close-image-viewer-btn'), fullscreenImage = el('fullscreen-image'), rekapTableContainer = el('rekap-table-container'), rekapDownloadDropdownBtn = el('rekap-download-dropdown-btn'), rekapDownloadOptions = el('rekap-download-options'), downloadCsvBtn = el('download-csv-btn'), printRekapBtn = el('print-rekap-btn'), rekapSearchContainer = el('rekap-search-container'), searchRekapStudentInput = el('search-rekap-student'), rekapDynamicTableContent = el('rekap-dynamic-table-content'), addJadwalForm = el('add-jadwal-form'), jadwalHariSelect = el('jadwal-hari'), jadwalJamMulaiInput = el('jadwal-jam-mulai'), jadwalJamSelesaiInput = el('jadwal-jam-selesai'), jadwalMapelSelect = el('jadwal-mapel'), jadwalTerstrukturContainer = el('jadwal-terstruktur-container'), toggleJadwalModeBtn = el('toggle-jadwal-mode-btn'), toggleJadwalModeSwitch = el('toggle-jadwal-mode-switch'), jadwalModeLabel = el('jadwal-mode-label'), jadwalViewGambar = el('jadwal-view-gambar'), jadwalViewDinamis = el('jadwal-view-dinamis'), dashboardGreeting = el('dashboard-greeting'), dashboardDate = el('dashboard-date'), dashboardJadwalCerdas = el('dashboard-jadwal-cerdas'), modal = el('modal'), modalContent = el('modal-content');
@@ -487,14 +488,12 @@
                         await OneSignal.init({ appId: oneSignalAppId, serviceWorkerPath: "OneSignalSDKWorker.js", serviceWorkerUpdaterPath: "OneSignalSDKUpdaterWorker.js" });
                         isOneSignalInitialized = true;
                     }
-                    // This will now correctly show the prompt
                     await OneSignal.Notifications.requestPermission();
                 });
             } catch (error) {
                 console.error("Gagal meminta izin notifikasi:", error);
                 showAlertModal("Error Notifikasi", `Gagal mengaktifkan fitur notifikasi: ${error.message}`, true);
             } finally {
-                // Proceed to login regardless of permission status
                 await handleSuccessfulLogin(userKey);
             }
         }
@@ -514,7 +513,6 @@
 
                 mainApp.classList.remove('hidden');
 
-                // Lakukan setup OneSignal setelah login berhasil
                 await setOneSignalExternalId(currentUserKey);
                 await rescheduleRecurringNotifications();
                 
@@ -556,10 +554,34 @@
         async function updateUserDisplayName(userKey) { if (!userKey || !userDisplayName) return; try { const userName = allLoginData?.[userKey]?.nama || (await get(ref(db, `login/${userKey}/nama`))).val() || "Pengguna"; currentUserName = userName; userDisplayName.textContent = `Halo, ${userName.charAt(0).toUpperCase() + userName.slice(1)}`; } catch (error) { currentUserName = "UnknownUser"; userDisplayName.textContent = "Pengguna"; } }
         async function fetchGithubToken() { try { githubToken = (await get(ref(db, 'token/github'))).val(); if(!githubToken) showAlertModal("Konfigurasi Error", "Token GitHub tidak ditemukan.", true); } catch (error) { showAlertModal("Konfigurasi Error", "Gagal mengambil token GitHub.", true); } }
         
+        function resetAppState() {
+            // Hentikan interval update dasbor
+            if (dashboardUpdateInterval) clearInterval(dashboardUpdateInterval);
+            dashboardUpdateInterval = null;
+
+            // Lepaskan semua listener Firebase
+            firebaseListeners.forEach(unsubscribe => unsubscribe());
+            firebaseListeners = [];
+
+            // Reset semua variabel state global
+            currentUserKey = null;
+            currentUserName = null;
+            allStudents = {};
+            allMapel = {};
+            allJadwalTerstruktur = {};
+            allPresensiData = {};
+            allKegiatanData = {};
+            availableClasses.clear();
+            currentPresensiStudentsData = [];
+            currentRekapData = { presensi: {}, nilai: {}, kelas: '' };
+            hasUnsavedChanges = false;
+        }
+
         logoutBtn.addEventListener('click', async () => {
             if (hasUnsavedChanges) {
                 showUnsavedChangesModal('logout');
             } else {
+                resetAppState();
                 localStorage.removeItem('currentUserKey');
                 localStorage.removeItem('loginTimestamp');
                 try {
@@ -569,14 +591,24 @@
                     }
                 } catch(e) { console.error("Gagal logout dari OneSignal", e); }
                 sessionStorage.removeItem('lastUserKeyForOneSignal');
-                if (dashboardUpdateInterval) clearInterval(dashboardUpdateInterval);
                 signOut(auth);
             }
         });
 
         function switchPage(pageId, force = false) { if (!force && hasUnsavedChanges && !el('page-presensi').classList.contains('hidden')) { showUnsavedChangesModal('changePage', pageId); return; } document.querySelectorAll('.page-content').forEach(page => page.classList.add('hidden')); el(`page-${pageId}`).classList.remove('hidden'); document.querySelectorAll('.nav-link').forEach(nav => nav.classList.remove('active')); document.querySelector(`.nav-link[data-page="${pageId}"]`).classList.add('active'); if (pageId === 'hasil-rekap') handleTerapkanRekap(); }
         navLinks.forEach(link => { link.addEventListener('click', () => switchPage(link.dataset.page)); });
-        function initializeDataListeners() { if (!currentUserKey) return; const userPath = `users_data/${currentUserKey}`; onValue(ref(db, `${userPath}/siswa/`), (s) => { allStudents = s.val() || {}; renderStudentsTable(); updateClassFilters(); displayDashboard(); }); onValue(ref(db, `${userPath}/mapel/`), (s) => { allMapel = s.val() || {}; renderMapelList(); updateMapelFilter(); updateJadwalMapelFilter(); displayDashboard(); }); onValue(ref(db, `${userPath}/jadwal_terstruktur`), (s) => { allJadwalTerstruktur = s.val() || {}; renderJadwalTerstruktur(); displayDashboard(); }); onValue(ref(db, `${userPath}/jadwal`), (s) => { const d = s.val(); const hasImage = d && d.imageUrl; jadwalImage.src = hasImage ? d.imageUrl : ''; jadwalImage.classList.toggle('hidden', !hasImage); jadwalImage.classList.toggle('cursor-pointer', hasImage); jadwalPlaceholder.classList.toggle('hidden', hasImage); jadwalUploadLabel.classList.toggle('hidden', hasImage); deleteJadwalBtn.classList.toggle('hidden', !hasImage); }); onValue(ref(db, `${userPath}/presensi`), (s) => { allPresensiData = s.val() || {}; displayDashboard(); }); onValue(ref(db, `${userPath}/kegiatan`), (s) => { allKegiatanData = s.val() || {}; displayDashboard(); }); }
+        
+        function initializeDataListeners() { 
+            if (!currentUserKey) return; 
+            const userPath = `users_data/${currentUserKey}`;
+            firebaseListeners.push(onValue(ref(db, `${userPath}/siswa/`), (s) => { allStudents = s.val() || {}; renderStudentsTable(); updateClassFilters(); displayDashboard(); }));
+            firebaseListeners.push(onValue(ref(db, `${userPath}/mapel/`), (s) => { allMapel = s.val() || {}; renderMapelList(); updateMapelFilter(); updateJadwalMapelFilter(); displayDashboard(); }));
+            firebaseListeners.push(onValue(ref(db, `${userPath}/jadwal_terstruktur`), (s) => { allJadwalTerstruktur = s.val() || {}; renderJadwalTerstruktur(); displayDashboard(); }));
+            firebaseListeners.push(onValue(ref(db, `${userPath}/jadwal`), (s) => { const d = s.val(); const hasImage = d && d.imageUrl; jadwalImage.src = hasImage ? d.imageUrl : ''; jadwalImage.classList.toggle('hidden', !hasImage); jadwalImage.classList.toggle('cursor-pointer', hasImage); jadwalPlaceholder.classList.toggle('hidden', hasImage); jadwalUploadLabel.classList.toggle('hidden', hasImage); deleteJadwalBtn.classList.toggle('hidden', !hasImage); }));
+            firebaseListeners.push(onValue(ref(db, `${userPath}/presensi`), (s) => { allPresensiData = s.val() || {}; displayDashboard(); }));
+            firebaseListeners.push(onValue(ref(db, `${userPath}/kegiatan`), (s) => { allKegiatanData = s.val() || {}; displayDashboard(); }));
+        }
+
         const mapelColorPalette = [{ bg: 'bg-sky-100', text: 'text-sky-800' }, { bg: 'bg-amber-100', text: 'text-amber-800' }, { bg: 'bg-violet-100', text: 'text-violet-800' }, { bg: 'bg-lime-100', text: 'text-lime-800' }, { bg: 'bg-rose-100', text: 'text-rose-800' }, { bg: 'bg-teal-100', text: 'text-teal-800' }, { bg: 'bg-fuchsia-100', text: 'text-fuchsia-800' }, { bg: 'bg-indigo-100', text: 'text-indigo-800' }, { bg: 'bg-emerald-100', text: 'text-emerald-800' }, { bg: 'bg-cyan-100', text: 'text-cyan-800' }, { bg: 'bg-pink-100', text: 'text-pink-800' }, { bg: 'bg-green-100', text: 'text-green-800' }, { bg: 'bg-purple-100', text: 'text-purple-800' }];
         const kelasColorPalette = { 'A': { bg: 'bg-red-100', text: 'text-red-800' }, 'B': { bg: 'bg-orange-100', text: 'text-orange-800' }, 'C': { bg: 'bg-yellow-100', text: 'text-yellow-800' }, 'D': { bg: 'bg-green-100', text: 'text-green-800' }, 'E': { bg: 'bg-blue-100', text: 'text-blue-800' }, 'F': { bg: 'bg-purple-100', text: 'text-purple-800' }, 'DEFAULT': { bg: 'bg-gray-100', text: 'text-gray-800' } };
         function getDeterministicColor(str, type) { if (!str) return kelasColorPalette['DEFAULT']; if (type === 'kelas') { const rombel = str.charAt(str.length - 1).toUpperCase(); return kelasColorPalette[rombel] || kelasColorPalette['DEFAULT']; } if (type === 'mapel') { let hash = 0; for (let i = 0; i < str.length; i++) { hash += str.charCodeAt(i); } const index = hash % mapelColorPalette.length; return mapelColorPalette[index]; } return kelasColorPalette['DEFAULT']; }
