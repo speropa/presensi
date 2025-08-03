@@ -96,13 +96,13 @@
                     </div>
                 </div>
                 <div id="content-area" class="hidden">
-                    <div class="bg-white p-4 rounded-xl shadow-md mb-6">
-                        <label for="kegiatan-pembelajaran" class="text-sm font-bold text-gray-700">Kegiatan Hari Ini</label>
-                        <input type="text" id="kegiatan-pembelajaran" placeholder="Contoh: Mengerjakan Latihan Bab 3" class="w-full mt-2 p-2 border rounded-lg bg-gray-50">
-                        <div class="mt-4 pt-4 border-t">
-                            <h4 class="text-sm font-semibold mb-2">Riwayat Kegiatan</h4>
+                    <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl shadow-md mb-6">
+                        <label for="kegiatan-pembelajaran" class="text-sm font-bold text-amber-800">Kegiatan Pembelajaran Hari Ini</label>
+                        <input type="text" id="kegiatan-pembelajaran" placeholder="Ketikkan ringkasan kegiatan di sini..." class="w-full mt-2 p-2 border border-amber-300 rounded-lg bg-white focus:ring-amber-500 focus:border-amber-500">
+                        <div class="mt-4 pt-4 border-t border-amber-200">
+                            <h4 class="text-sm font-semibold mb-2 text-amber-700">Riwayat Kegiatan</h4>
                             <div id="kegiatan-history-list" class="space-y-3 text-xs"></div>
-                            <button id="kegiatan-history-toggle-more" data-state="partial" class="text-blue-600 text-xs font-semibold mt-2 hidden">Selengkapnya &darr;</button>
+                            <button id="kegiatan-history-toggle-more" data-state="partial" class="text-amber-600 text-xs font-semibold mt-2 hidden">Selengkapnya &darr;</button>
                         </div>
                     </div>
                     <div class="bg-white p-4 rounded-xl shadow-md mb-6" id="presensi-search-container">
@@ -358,18 +358,31 @@
         function sanitizeForPath(name) { if (!name) return 'unknown-user'; return name.trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, ''); }
         function getLocalISODate(date = new Date()) { const year = date.getFullYear(); const month = String(date.getMonth() + 1).padStart(2, '0'); const day = String(date.getDate()).padStart(2, '0'); return `${year}-${month}-${day}`; }
 
-        // --- Alur Login & Inisialisasi (MODIFIED) ---
+        // --- Alur Login & Inisialisasi (REVISED) ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 try {
-                    allLoginData = (await get(ref(db, 'login'))).val();
-                    await requestNotificationPermissionAndShowPin();
+                    const storedUserKey = localStorage.getItem('currentUserKey');
+                    const loginTimestamp = localStorage.getItem('loginTimestamp');
+                    const now = new Date().getTime();
+                    const twoHours = 2 * 60 * 60 * 1000;
+
+                    if (storedUserKey && loginTimestamp && (now - parseInt(loginTimestamp, 10) < twoHours)) {
+                        showLoader();
+                        allLoginData = (await get(ref(db, 'login'))).val();
+                        await handleSuccessfulLogin(storedUserKey, true);
+                    } else {
+                        localStorage.removeItem('currentUserKey');
+                        localStorage.removeItem('loginTimestamp');
+                        allLoginData = (await get(ref(db, 'login'))).val();
+                        showPinVerificationModal();
+                        hideLoader();
+                    }
                 } catch (error) {
                     showAlertModal("Error", "Gagal memuat data login awal.", true);
                     hideLoader();
                 }
             } else {
-                // Jika tidak ada user, coba login otomatis atau tampilkan halaman login
                 try {
                     showLoader();
                     await signInWithEmailAndPassword(auth, 'mdsr@gmail.com', '12345678');
@@ -382,41 +395,6 @@
                 }
             }
         });
-
-        async function requestNotificationPermissionAndShowPin() {
-            await window.OneSignalDeferred.push(async () => {
-                try {
-                    // Inisialisasi OneSignal terlebih dahulu
-                    if (!isOneSignalInitialized) {
-                        const oneSignalAppIdRef = ref(db, 'one/signal');
-                        const snapshot = await get(oneSignalAppIdRef);
-                        const oneSignalAppId = snapshot.val();
-                        if (!oneSignalAppId) throw new Error("OneSignal App ID tidak ditemukan.");
-                        await OneSignal.init({ appId: oneSignalAppId, serviceWorkerPath: "OneSignalSDKWorker.js", serviceWorkerUpdaterPath: "OneSignalSDKUpdaterWorker.js" });
-                        isOneSignalInitialized = true;
-                    }
-
-                    // Cek status izin
-                    const permission = await OneSignal.Notifications.getPermissionStatus();
-                    if (permission === 'default') {
-                        await OneSignal.Notifications.requestPermission();
-                        const newPermission = await OneSignal.Notifications.getPermissionStatus();
-                        if (newPermission === 'denied') {
-                            showToast("Notifikasi tidak akan aktif.", true);
-                        }
-                    } else if (permission === 'denied') {
-                        showToast("Notifikasi tidak aktif. Aktifkan di setelan browser.", true);
-                    }
-                } catch (error) {
-                    console.error("Gagal inisialisasi/meminta izin OneSignal:", error);
-                    showAlertModal("Error Notifikasi", `Gagal mengaktifkan fitur notifikasi: ${error.message}`, true);
-                } finally {
-                    // Tampilkan modal PIN setelah proses notifikasi selesai
-                    showPinVerificationModal();
-                    hideLoader();
-                }
-            });
-        }
         
         loginForm.addEventListener('submit', async (e) => { 
             e.preventDefault(); 
@@ -432,7 +410,6 @@
                 await signInWithEmailAndPassword(auth, email, password); 
                 loginError.classList.add('hidden'); 
                 passwordInput.value = ''; 
-                // onAuthStateChanged akan menangani sisanya
             } catch (error) { 
                 loginError.textContent = "Email atau Password salah."; 
                 loginError.classList.remove('hidden'); 
@@ -483,8 +460,10 @@
             }
             let foundUserKey = Object.keys(allLoginData).find(key => allLoginData[key].login && String(allLoginData[key].login) === enteredPin);
             if (foundUserKey) {
-                showLoader(); // Tampilkan spinner SEGERA setelah PIN valid
-                await handleSuccessfulLogin(foundUserKey);
+                localStorage.setItem('currentUserKey', foundUserKey);
+                localStorage.setItem('loginTimestamp', new Date().getTime().toString());
+                pinVerificationModal.classList.add('hidden');
+                await requestNotificationPermissionThenLogin(foundUserKey);
             } else {
                 pinError.textContent = "PIN salah";
                 pinError.classList.remove('hidden');
@@ -497,65 +476,104 @@
             }
         }
 
-        async function handleSuccessfulLogin(userKey) {
+        async function requestNotificationPermissionThenLogin(userKey) {
+            try {
+                await window.OneSignalDeferred.push(async () => {
+                    if (!isOneSignalInitialized) {
+                        const oneSignalAppIdRef = ref(db, 'one/signal');
+                        const snapshot = await get(oneSignalAppIdRef);
+                        const oneSignalAppId = snapshot.val();
+                        if (!oneSignalAppId) throw new Error("OneSignal App ID tidak ditemukan.");
+                        await OneSignal.init({ appId: oneSignalAppId, serviceWorkerPath: "OneSignalSDKWorker.js", serviceWorkerUpdaterPath: "OneSignalSDKUpdaterWorker.js" });
+                        isOneSignalInitialized = true;
+                    }
+                    // This will now correctly show the prompt
+                    await OneSignal.Notifications.requestPermission();
+                });
+            } catch (error) {
+                console.error("Gagal meminta izin notifikasi:", error);
+                showAlertModal("Error Notifikasi", `Gagal mengaktifkan fitur notifikasi: ${error.message}`, true);
+            } finally {
+                // Proceed to login regardless of permission status
+                await handleSuccessfulLogin(userKey);
+            }
+        }
+
+        async function handleSuccessfulLogin(userKey, isSessionRestore = false) {
+            showLoader();
             try {
                 currentUserKey = userKey;
-
-                // Jalankan semua proses inisialisasi secara paralel jika memungkinkan,
-                // atau secara sekuensial jika ada dependensi.
                 const initPromises = [
                     updateUserDisplayName(userKey),
                     fetchGithubToken(),
-                    setOneSignalExternalId(currentUserKey)
                 ];
                 await Promise.all(initPromises);
                 
-                // Setup listener setelah data dasar siap
                 setupEventListeners();
                 initializeDataListeners();
 
-                // Jadwalkan notifikasi dan tampilkan dasbor
+                mainApp.classList.remove('hidden');
+
+                // Lakukan setup OneSignal setelah login berhasil
+                await setOneSignalExternalId(currentUserKey);
                 await rescheduleRecurringNotifications();
+                
                 displayDashboard();
 
                 if (dashboardUpdateInterval) clearInterval(dashboardUpdateInterval);
                 dashboardUpdateInterval = setInterval(displayDashboard, 10000);
                 
-                // Tampilkan aplikasi setelah semua siap
-                pinVerificationModal.classList.add('hidden');
-                mainApp.classList.remove('hidden');
-                showToast("Verifikasi PIN berhasil!");
+                showToast(isSessionRestore ? "Sesi berhasil dipulihkan!" : "Verifikasi PIN berhasil!");
 
             } catch (error) {
                 console.error("Error detail saat login:", error);
                 showAlertModal("Error", `Terjadi kesalahan setelah login: ${error.message}`, true);
             } finally {
-                hideLoader(); // Sembunyikan spinner HANYA setelah semua selesai
+                hideLoader();
             }
         }
         
         async function setOneSignalExternalId(userId) {
-            try {
-                if (!isOneSignalInitialized || !userId) return;
-                const previousUserKey = sessionStorage.getItem('lastUserKeyForOneSignal');
-                if (previousUserKey && previousUserKey !== userId) {
-                    await removePlayerIdFromFirebase(previousUserKey, OneSignal.User.PushSubscription.id);
+            await window.OneSignalDeferred.push(async () => {
+                try {
+                    if (!isOneSignalInitialized || !userId) return;
+                    const previousUserKey = sessionStorage.getItem('lastUserKeyForOneSignal');
+                    if (previousUserKey && previousUserKey !== userId) {
+                        await removePlayerIdFromFirebase(previousUserKey, OneSignal.User.PushSubscription.id);
+                    }
+                    await OneSignal.login(userId);
+                    await savePlayerIdToFirebase(userId, OneSignal.User.PushSubscription.id);
+                    sessionStorage.setItem('lastUserKeyForOneSignal', userId);
+                } catch (error) {
+                    console.error("Gagal mengatur OneSignal External ID:", error);
                 }
-                await OneSignal.login(userId);
-                await savePlayerIdToFirebase(userId, OneSignal.User.PushSubscription.id);
-                sessionStorage.setItem('lastUserKeyForOneSignal', userId);
-            } catch (error) {
-                console.error("Gagal mengatur OneSignal External ID:", error);
-            }
+            });
         }
 
         async function savePlayerIdToFirebase(userId, playerId) { if(!playerId) return; const playerIdsRef = ref(db, `users_data/${userId}/playerIds/${playerId}`); try { await set(playerIdsRef, true); console.log(`Player ID ${playerId} disimpan untuk user ${userId}`); } catch (error) { console.error("Gagal menyimpan Player ID:", error); } }
         async function removePlayerIdFromFirebase(userId, playerId) { if (!userId || !playerId) return; const playerIdsRef = ref(db, `users_data/${userId}/playerIds/${playerId}`); try { await remove(playerIdsRef); console.log(`Player ID ${playerId} dihapus untuk user ${userId}`); } catch (error) { console.error("Gagal menghapus Player ID:", error); } }
 
-        // --- Sisanya adalah fungsi-fungsi aplikasi yang sudah ada ---
         async function updateUserDisplayName(userKey) { if (!userKey || !userDisplayName) return; try { const userName = allLoginData?.[userKey]?.nama || (await get(ref(db, `login/${userKey}/nama`))).val() || "Pengguna"; currentUserName = userName; userDisplayName.textContent = `Halo, ${userName.charAt(0).toUpperCase() + userName.slice(1)}`; } catch (error) { currentUserName = "UnknownUser"; userDisplayName.textContent = "Pengguna"; } }
         async function fetchGithubToken() { try { githubToken = (await get(ref(db, 'token/github'))).val(); if(!githubToken) showAlertModal("Konfigurasi Error", "Token GitHub tidak ditemukan.", true); } catch (error) { showAlertModal("Konfigurasi Error", "Gagal mengambil token GitHub.", true); } }
-        logoutBtn.addEventListener('click', async () => { if (hasUnsavedChanges) { showUnsavedChangesModal('logout'); } else { try { if (window.OneSignal) { await OneSignal.logout(); console.log("OneSignal user logged out."); } } catch(e) { console.error("Gagal logout dari OneSignal", e); } sessionStorage.removeItem('lastUserKeyForOneSignal'); if (dashboardUpdateInterval) clearInterval(dashboardUpdateInterval); signOut(auth); } });
+        
+        logoutBtn.addEventListener('click', async () => {
+            if (hasUnsavedChanges) {
+                showUnsavedChangesModal('logout');
+            } else {
+                localStorage.removeItem('currentUserKey');
+                localStorage.removeItem('loginTimestamp');
+                try {
+                    if (window.OneSignal) {
+                        await OneSignal.logout();
+                        console.log("OneSignal user logged out.");
+                    }
+                } catch(e) { console.error("Gagal logout dari OneSignal", e); }
+                sessionStorage.removeItem('lastUserKeyForOneSignal');
+                if (dashboardUpdateInterval) clearInterval(dashboardUpdateInterval);
+                signOut(auth);
+            }
+        });
+
         function switchPage(pageId, force = false) { if (!force && hasUnsavedChanges && !el('page-presensi').classList.contains('hidden')) { showUnsavedChangesModal('changePage', pageId); return; } document.querySelectorAll('.page-content').forEach(page => page.classList.add('hidden')); el(`page-${pageId}`).classList.remove('hidden'); document.querySelectorAll('.nav-link').forEach(nav => nav.classList.remove('active')); document.querySelector(`.nav-link[data-page="${pageId}"]`).classList.add('active'); if (pageId === 'hasil-rekap') handleTerapkanRekap(); }
         navLinks.forEach(link => { link.addEventListener('click', () => switchPage(link.dataset.page)); });
         function initializeDataListeners() { if (!currentUserKey) return; const userPath = `users_data/${currentUserKey}`; onValue(ref(db, `${userPath}/siswa/`), (s) => { allStudents = s.val() || {}; renderStudentsTable(); updateClassFilters(); displayDashboard(); }); onValue(ref(db, `${userPath}/mapel/`), (s) => { allMapel = s.val() || {}; renderMapelList(); updateMapelFilter(); updateJadwalMapelFilter(); displayDashboard(); }); onValue(ref(db, `${userPath}/jadwal_terstruktur`), (s) => { allJadwalTerstruktur = s.val() || {}; renderJadwalTerstruktur(); displayDashboard(); }); onValue(ref(db, `${userPath}/jadwal`), (s) => { const d = s.val(); const hasImage = d && d.imageUrl; jadwalImage.src = hasImage ? d.imageUrl : ''; jadwalImage.classList.toggle('hidden', !hasImage); jadwalImage.classList.toggle('cursor-pointer', hasImage); jadwalPlaceholder.classList.toggle('hidden', hasImage); jadwalUploadLabel.classList.toggle('hidden', hasImage); deleteJadwalBtn.classList.toggle('hidden', !hasImage); }); onValue(ref(db, `${userPath}/presensi`), (s) => { allPresensiData = s.val() || {}; displayDashboard(); }); onValue(ref(db, `${userPath}/kegiatan`), (s) => { allKegiatanData = s.val() || {}; displayDashboard(); }); }
@@ -582,7 +600,7 @@
         async function attachHistoryListeners(studentId) { const selectedMapelName = filterMapel.value, kelas = filterKelas.value; let mapelId = Object.keys(allMapel).find(id => allMapel[id].nama === selectedMapelName && allMapel[id].kelas === kelas); if (!mapelId) return; const [presensi, nilai] = await Promise.all([get(ref(db, `users_data/${currentUserKey}/presensi`)), get(ref(db, `users_data/${currentUserKey}/nilai`))]); const allPresensi = presensi.val() || {}, allNilai = nilai.val() || {}; const mergedHistory = {}; if (allPresensi[kelas]?.[mapelId]) { for (const t in allPresensi[kelas][mapelId]) { if (allPresensi[kelas][mapelId][t][studentId]) { if (!mergedHistory[t]) mergedHistory[t] = {}; mergedHistory[t] = { ...allPresensi[kelas][mapelId][t][studentId] }; } } } if (allNilai[kelas]?.[mapelId]) { for (const t in allNilai[kelas][mapelId]) { if (allNilai[kelas][mapelId][t][studentId]) { if (!mergedHistory[t]) mergedHistory[t] = {}; mergedHistory[t].nilai = allNilai[kelas][mapelId][t][studentId].nilai; } } } renderHistory(studentId, Object.entries(mergedHistory).map(([t, d]) => ({ tanggal: t, data: d })).sort((a,b) => b.tanggal.localeCompare(a.tanggal))); }
         function formatDateToIndonesian(date) { return date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); }
         function renderHistory(studentId, historyData) { const container = el(`history-${studentId}`), toggleBtn = el(`history-toggle-${studentId}`); if (!container) return; container.innerHTML = ''; if (historyData.length === 0) { container.innerHTML = '<p class="text-center text-gray-400">Tidak ada riwayat.</p>'; toggleBtn.classList.add('hidden'); return; } container.dataset.fullhistory = JSON.stringify(historyData); const isPartial = toggleBtn.dataset.state === 'partial'; const dataToShow = isPartial ? historyData.slice(0, 2) : historyData; const statusColors = { Sakit: 'text-orange-500', Izin: 'text-green-500', Alpa: 'text-red-500' }; dataToShow.forEach(item => { const [y,m,d] = item.tanggal.split('-'), date = new Date(y,m-1,d); const dateFormatted = date.toLocaleDateString('id-ID', {day: 'numeric', month: 'long'}); const status = item.data.status, nilai = item.data.nilai, catatan = item.data.catatan ? `<br><i class="text-gray-500">"${item.data.catatan}"</i>` : ''; let statusHtml = status ? `<span class="${statusColors[status] || ''}">${status}</span>` : ''; let displayText = statusHtml; if (nilai !== undefined && nilai !== null) displayText += (displayText ? ' - ' : '') + `<b>${nilai}</b>`; if (!displayText) displayText = 'Data tersimpan'; container.innerHTML += `<div class="flex justify-between"><p>${dateFormatted}</p><p class="font-semibold text-right">${displayText}${catatan}</p></div>`; }); toggleBtn.classList.toggle('hidden', historyData.length <= 2); toggleBtn.innerHTML = isPartial ? 'Lainnya &darr;' : 'Ringkas &uarr;'; }
-        function renderKegiatanHistory(historyData) { kegiatanHistoryList.innerHTML = ''; if (historyData.length === 0) { kegiatanHistoryList.innerHTML = '<p class="text-center text-gray-400">Tidak ada riwayat.</p>'; kegiatanHistoryToggleMore.classList.add('hidden'); return; } kegiatanHistoryList.dataset.fullhistory = JSON.stringify(historyData); const isPartial = kegiatanHistoryToggleMore.dataset.state === 'partial'; const dataToShow = isPartial ? historyData.slice(0, 2) : historyData; dataToShow.forEach(item => { const [y,m,d] = item.tanggal.split('-'), date = new Date(y,m-1,d); kegiatanHistoryList.innerHTML += `<div class="p-2 border-b"><p class="font-semibold">${formatDateToIndonesian(date)}</p><p class="text-gray-600">${item.deskripsi}</p></div>`; }); kegiatanHistoryToggleMore.classList.toggle('hidden', historyData.length <= 2); kegiatanHistoryToggleMore.innerHTML = isPartial ? 'Lainnya &darr;' : 'Ringkas &uarr;'; }
+        function renderKegiatanHistory(historyData) { kegiatanHistoryList.innerHTML = ''; if (historyData.length === 0) { kegiatanHistoryList.innerHTML = '<p class="text-center text-gray-400">Tidak ada riwayat.</p>'; kegiatanHistoryToggleMore.classList.add('hidden'); return; } kegiatanHistoryList.dataset.fullhistory = JSON.stringify(historyData); const isPartial = kegiatanHistoryToggleMore.dataset.state === 'partial'; const dataToShow = isPartial ? historyData.slice(0, 2) : historyData; dataToShow.forEach(item => { const [y,m,d] = item.tanggal.split('-'), date = new Date(y,m-1,d); kegiatanHistoryList.innerHTML += `<div class="p-2 border-b border-amber-200"><p class="font-semibold text-amber-900">${formatDateToIndonesian(date)}</p><p class="text-gray-600">${item.deskripsi}</p></div>`; }); kegiatanHistoryToggleMore.classList.toggle('hidden', historyData.length <= 2); kegiatanHistoryToggleMore.innerHTML = isPartial ? 'Lainnya &darr;' : 'Ringkas &uarr;'; }
         async function fetchAndRenderKegiatanHistory(kelas, mapelId) { kegiatanHistoryList.innerHTML = '<p>Memuat...</p>'; const allKegiatan = (await get(ref(db, `users_data/${currentUserKey}/kegiatan/${kelas}/${mapelId}`))).val() || {}; const historyList = Object.entries(allKegiatan).filter(([,d]) => d.deskripsi).map(([t,d]) => ({ tanggal: t, deskripsi: d.deskripsi })).sort((a,b) => b.tanggal.localeCompare(a.tanggal)); renderKegiatanHistory(historyList); }
         async function handleJadwalUpload(e) { const file = e.target.files[0]; if (!file || !currentUserKey || !currentUserName) return showAlertModal("Error", "Info pengguna tidak lengkap.", true); if (!githubToken) return showAlertModal("Error", "Token GitHub tidak ditemukan.", true); if (!file.type.startsWith('image/')) return showAlertModal("Error", "Pilih file gambar.", true); showLoader(); const sanitizedUserName = sanitizeForPath(currentUserName); const filePath = `schedules/${currentUserKey}/${sanitizedUserName}/schedule.jpg`; const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${filePath}`; try { const content = await fileToBase64(file); let sha = null; try { const res = await fetch(apiUrl, { headers: { 'Authorization': `token ${githubToken}` } }); if (res.ok) sha = (await res.json()).sha; } catch (e) {} const payload = { message: `Update jadwal ${new Date().toISOString()}`, content, sha }; const res = await fetch(apiUrl, { method: 'PUT', headers: { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); if (!res.ok) throw new Error((await res.json()).message); const data = await res.json(); await set(ref(db, `users_data/${currentUserKey}/jadwal`), { imageUrl: data.content.download_url }); showToast("Jadwal berhasil diunggah."); } catch (error) { showAlertModal("Gagal", `Gagal mengunggah: ${error.message}`, true); } finally { jadwalUploadInput.value = ''; hideLoader(); } }
         function showDeleteJadwalConfirmation() { openModal(`<h3 class="text-lg font-bold mb-2 text-red-600">Hapus Jadwal?</h3><p class="mb-6">Yakin ingin menghapus gambar jadwal?</p><div class="flex justify-end space-x-2"><button onclick="window.closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.handleDeleteJadwal()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Hapus</button></div>`); }
@@ -816,7 +834,6 @@
                     const kegiatanData = allKegiatanData[item.kelas]?.[item.mapelId]?.[todayDateString];
                     let presensiHTML = '', presensiDetailHTML = '', buttonHTML = '', kegiatanHTML = '';
                     
-                    // --- MODIFIED BUTTON LOGIC ---
                     if (isCurrent || isPast) {
                         let buttonText = "Presensi";
                         let buttonClass = "bg-blue-600 hover:bg-blue-700";
@@ -830,7 +847,6 @@
                         }
                         buttonHTML = `<button onclick="window.handlePresensiShortcut('${item.mapelId}', '${item.kelas}')" class="${buttonClass} text-white font-semibold py-1.5 px-4 rounded-md transition text-sm">${buttonText}</button>`;
                     }
-                    // --- END OF MODIFIED BUTTON LOGIC ---
 
                     if (presensiData) { let h = 0, s = 0, i = 0, a = 0; let sakitList = [], izinList = [], alpaList = [], hadirDenganCatatanList = []; Object.entries(presensiData).forEach(([studentId, p]) => { const studentName = allStudents[studentId]?.nama || 'Siswa Dihapus'; switch(p.status) { case 'Hadir': h++; if(p.catatan) hadirDenganCatatanList.push({name: studentName, note: p.catatan}); break; case 'Sakit': s++; sakitList.push({name: studentName, note: p.catatan}); break; case 'Izin': i++; izinList.push({name: studentName, note: p.catatan}); break; case 'Alpa': a++; alpaList.push({name: studentName, note: p.catatan}); break; } }); presensiHTML = `<div class="mt-4 pt-4 border-t"><p class="text-sm font-bold mb-2">Rekap Presensi</p><div class="flex justify-around text-center text-sm"><div><strong>${h}</strong><p>Hadir</p></div><div><strong class="text-orange-600">${s}</strong><p>Sakit</p></div><div><strong class="text-green-600">${i}</strong><p>Izin</p></div><div><strong class="text-red-600">${a}</strong><p>Alpa</p></div></div></div>`; if (sakitList.length > 0 || izinList.length > 0 || alpaList.length > 0 || hadirDenganCatatanList.length > 0) { presensiDetailHTML += '<div class="mt-3 text-xs space-y-1">'; const createList = (title, list) => { if(list.length > 0) presensiDetailHTML += `<div><strong>${title}:</strong> ${list.map(item => `${item.name}<span class="italic text-gray-500">${item.note ? ` (${item.note})` : ''}</span>`).join(', ')}</div>`; }; createList('Sakit', sakitList); createList('Izin', izinList); createList('Alpa', alpaList); createList('Hadir (dgn catatan)', hadirDenganCatatanList); presensiDetailHTML += '</div>'; } } 
                     if (kegiatanData?.deskripsi) { kegiatanHTML = `<div class="mt-4 pt-4 border-t"><p class="text-sm font-bold mb-1">Kegiatan</p><p class="text-sm bg-gray-100 p-2 rounded">${kegiatanData.deskripsi}</p></div>`; } else if (hasPresensi) { kegiatanHTML = `<div class="mt-4 pt-4 border-t"><p class="text-sm font-bold mb-1">Kegiatan</p><p class="text-sm text-orange-600 font-semibold">Belum diisi.</p></div>`; } 
