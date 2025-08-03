@@ -555,15 +555,12 @@
         async function fetchGithubToken() { try { githubToken = (await get(ref(db, 'token/github'))).val(); if(!githubToken) showAlertModal("Konfigurasi Error", "Token GitHub tidak ditemukan.", true); } catch (error) { showAlertModal("Konfigurasi Error", "Gagal mengambil token GitHub.", true); } }
         
         function resetAppState() {
-            // Hentikan interval update dasbor
             if (dashboardUpdateInterval) clearInterval(dashboardUpdateInterval);
             dashboardUpdateInterval = null;
 
-            // Lepaskan semua listener Firebase
             firebaseListeners.forEach(unsubscribe => unsubscribe());
             firebaseListeners = [];
 
-            // Reset semua variabel state global
             currentUserKey = null;
             currentUserName = null;
             allStudents = {};
