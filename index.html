@@ -358,7 +358,7 @@
         function sanitizeForPath(name) { if (!name) return 'unknown-user'; return name.trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, ''); }
         function getLocalISODate(date = new Date()) { const year = date.getFullYear(); const month = String(date.getMonth() + 1).padStart(2, '0'); const day = String(date.getDate()).padStart(2, '0'); return `${year}-${month}-${day}`; }
 
-        // --- Alur Login & Inisialisasi (MODIFIED with Session) ---
+        // --- Alur Login & Inisialisasi (REVISED) ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 try {
@@ -462,8 +462,8 @@
             if (foundUserKey) {
                 localStorage.setItem('currentUserKey', foundUserKey);
                 localStorage.setItem('loginTimestamp', new Date().getTime().toString());
-                showLoader();
-                await handleSuccessfulLogin(foundUserKey);
+                pinVerificationModal.classList.add('hidden');
+                await requestNotificationPermissionThenLogin(foundUserKey);
             } else {
                 pinError.textContent = "PIN salah";
                 pinError.classList.remove('hidden');
@@ -476,7 +476,29 @@
             }
         }
 
+        async function requestNotificationPermissionThenLogin(userKey) {
+            try {
+                await window.OneSignalDeferred.push(async () => {
+                    if (!isOneSignalInitialized) {
+                        const oneSignalAppIdRef = ref(db, 'one/signal');
+                        const snapshot = await get(oneSignalAppIdRef);
+                        const oneSignalAppId = snapshot.val();
+                        if (!oneSignalAppId) throw new Error("OneSignal App ID tidak ditemukan.");
+                        await OneSignal.init({ appId: oneSignalAppId, serviceWorkerPath: "OneSignalSDKWorker.js", serviceWorkerUpdaterPath: "OneSignalSDKUpdaterWorker.js" });
+                        isOneSignalInitialized = true;
+                    }
+                    await OneSignal.Notifications.requestPermission();
+                });
+            } catch (error) {
+                console.error("Gagal meminta izin notifikasi:", error);
+                showAlertModal("Error Notifikasi", `Gagal mengaktifkan fitur notifikasi: ${error.message}`, true);
+            } finally {
+                await handleSuccessfulLogin(userKey);
+            }
+        }
+
         async function handleSuccessfulLogin(userKey, isSessionRestore = false) {
+            showLoader();
             try {
                 currentUserKey = userKey;
                 const initPromises = [
@@ -488,11 +510,9 @@
                 setupEventListeners();
                 initializeDataListeners();
 
-                pinVerificationModal.classList.add('hidden');
                 mainApp.classList.remove('hidden');
 
-                // Inisialisasi notifikasi setelah UI utama terlihat
-                await initializeNotifications();
+                // Lakukan setup OneSignal setelah login berhasil
                 await setOneSignalExternalId(currentUserKey);
                 await rescheduleRecurringNotifications();
                 
@@ -510,49 +530,22 @@
                 hideLoader();
             }
         }
-
-        async function initializeNotifications() {
-            await window.OneSignalDeferred.push(async () => {
-                try {
-                    if (!isOneSignalInitialized) {
-                        const oneSignalAppIdRef = ref(db, 'one/signal');
-                        const snapshot = await get(oneSignalAppIdRef);
-                        const oneSignalAppId = snapshot.val();
-                        if (!oneSignalAppId) throw new Error("OneSignal App ID tidak ditemukan.");
-                        await OneSignal.init({ appId: oneSignalAppId, serviceWorkerPath: "OneSignalSDKWorker.js", serviceWorkerUpdaterPath: "OneSignalSDKUpdaterWorker.js" });
-                        isOneSignalInitialized = true;
-                    }
-                    // --- FIXED NOTIFICATION PERMISSION CHECK ---
-                    const permission = await OneSignal.Notifications.getPermission();
-                    if (permission === 'default') {
-                        await OneSignal.Notifications.requestPermission();
-                        const newPermission = await OneSignal.Notifications.getPermission();
-                        if (newPermission === 'denied') {
-                            showToast("Notifikasi tidak akan aktif.", true);
-                        }
-                    } else if (permission === 'denied') {
-                        showToast("Notifikasi tidak aktif. Aktifkan di setelan browser.", true);
-                    }
-                } catch (error) {
-                    console.error("Gagal inisialisasi/meminta izin OneSignal:", error);
-                    showAlertModal("Error Notifikasi", `Gagal mengaktifkan fitur notifikasi: ${error.message}`, true);
-                }
-            });
-        }
         
         async function setOneSignalExternalId(userId) {
-            try {
-                if (!isOneSignalInitialized || !userId) return;
-                const previousUserKey = sessionStorage.getItem('lastUserKeyForOneSignal');
-                if (previousUserKey && previousUserKey !== userId) {
-                    await removePlayerIdFromFirebase(previousUserKey, OneSignal.User.PushSubscription.id);
+            await window.OneSignalDeferred.push(async () => {
+                try {
+                    if (!isOneSignalInitialized || !userId) return;
+                    const previousUserKey = sessionStorage.getItem('lastUserKeyForOneSignal');
+                    if (previousUserKey && previousUserKey !== userId) {
+                        await removePlayerIdFromFirebase(previousUserKey, OneSignal.User.PushSubscription.id);
+                    }
+                    await OneSignal.login(userId);
+                    await savePlayerIdToFirebase(userId, OneSignal.User.PushSubscription.id);
+                    sessionStorage.setItem('lastUserKeyForOneSignal', userId);
+                } catch (error) {
+                    console.error("Gagal mengatur OneSignal External ID:", error);
                 }
-                await OneSignal.login(userId);
-                await savePlayerIdToFirebase(userId, OneSignal.User.PushSubscription.id);
-                sessionStorage.setItem('lastUserKeyForOneSignal', userId);
-            } catch (error) {
-                console.error("Gagal mengatur OneSignal External ID:", error);
-            }
+            });
         }
 
         async function savePlayerIdToFirebase(userId, playerId) { if(!playerId) return; const playerIdsRef = ref(db, `users_data/${userId}/playerIds/${playerId}`); try { await set(playerIdsRef, true); console.log(`Player ID ${playerId} disimpan untuk user ${userId}`); } catch (error) { console.error("Gagal menyimpan Player ID:", error); } }
