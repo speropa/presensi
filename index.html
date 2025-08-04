@@ -329,6 +329,7 @@
         }
 
         async function callCloudflareWorker(action, payload) {
+            console.log(`Calling Cloudflare Worker with action: ${action}`, payload);
             if (CLOUDFLARE_WORKER_URL === "URL_WORKER_ANDA_DI_SINI") {
                 console.error("URL Cloudflare Worker belum diatur!");
                 return null;
@@ -340,7 +341,8 @@
                     body: JSON.stringify({ action, payload })
                 });
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
                 }
                 return await response.json();
             } catch (error) {
@@ -369,7 +371,6 @@
                     const twoHours = 2 * 60 * 60 * 1000;
 
                     if (storedUserKey && loginTimestamp && (now - parseInt(loginTimestamp, 10) < twoHours)) {
-                        showLoader();
                         allLoginData = (await get(ref(db, 'login'))).val();
                         await handleSuccessfulLogin(storedUserKey, true);
                     } else {
@@ -464,7 +465,7 @@
                 localStorage.setItem('currentUserKey', foundUserKey);
                 localStorage.setItem('loginTimestamp', new Date().getTime().toString());
                 pinVerificationModal.classList.add('hidden');
-                await requestNotificationPermissionThenLogin(foundUserKey);
+                await handleSuccessfulLogin(foundUserKey);
             } else {
                 pinError.textContent = "PIN salah";
                 pinError.classList.remove('hidden');
@@ -477,42 +478,25 @@
             }
         }
 
-        async function requestNotificationPermissionThenLogin(userKey) {
-            try {
-                await window.OneSignalDeferred.push(async () => {
-                    if (!isOneSignalInitialized) {
-                        const oneSignalAppIdRef = ref(db, 'one/signal');
-                        const snapshot = await get(oneSignalAppIdRef);
-                        const oneSignalAppId = snapshot.val();
-                        if (!oneSignalAppId) throw new Error("OneSignal App ID tidak ditemukan.");
-                        await OneSignal.init({ appId: oneSignalAppId, serviceWorkerPath: "OneSignalSDKWorker.js", serviceWorkerUpdaterPath: "OneSignalSDKUpdaterWorker.js" });
-                        isOneSignalInitialized = true;
-                    }
-                    await OneSignal.Notifications.requestPermission();
-                });
-            } catch (error) {
-                console.error("Gagal meminta izin notifikasi:", error);
-                showAlertModal("Error Notifikasi", `Gagal mengaktifkan fitur notifikasi: ${error.message}`, true);
-            } finally {
-                await handleSuccessfulLogin(userKey);
-            }
-        }
-
         async function handleSuccessfulLogin(userKey, isSessionRestore = false) {
             showLoader();
+            mainApp.classList.remove('hidden'); // Tampilkan shell aplikasi segera
             try {
                 currentUserKey = userKey;
-                const initPromises = [
+
+                // Proses yang tidak bergantung pada data lain bisa dimulai
+                const preDataPromises = [
                     updateUserDisplayName(userKey),
                     fetchGithubToken(),
+                    initializeNotifications() // Mulai inisialisasi OneSignal
                 ];
-                await Promise.all(initPromises);
+                await Promise.all(preDataPromises);
                 
+                // Setup listener dan event UI
                 setupEventListeners();
-                initializeDataListeners();
+                initializeDataListeners(); // Ini akan mulai memuat data dan memperbarui UI
 
-                mainApp.classList.remove('hidden');
-
+                // Proses yang bergantung pada data (seperti jadwal) dijalankan setelahnya
                 await setOneSignalExternalId(currentUserKey);
                 await rescheduleRecurringNotifications();
                 
@@ -529,6 +513,25 @@
             } finally {
                 hideLoader();
             }
+        }
+
+        async function initializeNotifications() {
+            await window.OneSignalDeferred.push(async () => {
+                try {
+                    if (!isOneSignalInitialized) {
+                        const oneSignalAppIdRef = ref(db, 'one/signal');
+                        const snapshot = await get(oneSignalAppIdRef);
+                        const oneSignalAppId = snapshot.val();
+                        if (!oneSignalAppId) throw new Error("OneSignal App ID tidak ditemukan.");
+                        await OneSignal.init({ appId: oneSignalAppId, serviceWorkerPath: "OneSignalSDKWorker.js", serviceWorkerUpdaterPath: "OneSignalSDKUpdaterWorker.js" });
+                        isOneSignalInitialized = true;
+                    }
+                    await OneSignal.Notifications.requestPermission();
+                } catch (error) {
+                    console.error("Gagal inisialisasi/meminta izin OneSignal:", error);
+                    showAlertModal("Error Notifikasi", `Gagal mengaktifkan fitur notifikasi: ${error.message}`, true);
+                }
+            });
         }
         
         async function setOneSignalExternalId(userId) {
@@ -717,15 +720,18 @@
             showLoader();
             const mapelData = allMapel[mapelId];
             const newScheduleData = { jam_mulai, jam_selesai, mapelId, mapelNama: mapelData.nama, kelas: mapelData.kelas };
-            const newScheduleRef = push(ref(db, `users_data/${currentUserKey}/jadwal_terstruktur/${hari}`));
-
+            
             try {
                 const newNotificationData = await scheduleNewNotification({ ...newScheduleData, hari });
-                if (newNotificationData) {
-                    newScheduleData.notificationId = newNotificationData.notificationId;
-                    newScheduleData.notificationScheduledUntil = newNotificationData.notificationScheduledUntil;
+                if (!newNotificationData) {
+                    throw new Error("Gagal menjadwalkan notifikasi di server.");
                 }
+                newScheduleData.notificationId = newNotificationData.notificationId;
+                newScheduleData.notificationScheduledUntil = newNotificationData.notificationScheduledUntil;
+                
+                const newScheduleRef = push(ref(db, `users_data/${currentUserKey}/jadwal_terstruktur/${hari}`));
                 await set(newScheduleRef, newScheduleData);
+
                 showToast("Jadwal berhasil ditambahkan.");
                 addJadwalForm.reset();
             } catch (err) {
@@ -743,18 +749,19 @@
 
             showLoader();
             try {
-                const originalSchedule = allJadwalTerstruktur[originalDay]?.[scheduleId];
-                if (originalSchedule?.notificationId) {
-                    await cancelScheduledNotification(originalSchedule.notificationId);
-                }
-
                 const mapelData = allMapel[newMapelId];
                 const updatedData = { jam_mulai: newStart, jam_selesai: newEnd, mapelId: newMapelId, mapelNama: mapelData.nama, kelas: mapelData.kelas };
 
                 const newNotificationData = await scheduleNewNotification({ ...updatedData, hari: newDay });
-                if (newNotificationData) {
-                    updatedData.notificationId = newNotificationData.notificationId;
-                    updatedData.notificationScheduledUntil = newNotificationData.notificationScheduledUntil;
+                if (!newNotificationData) {
+                    throw new Error("Gagal memperbarui notifikasi di server.");
+                }
+                updatedData.notificationId = newNotificationData.notificationId;
+                updatedData.notificationScheduledUntil = newNotificationData.notificationScheduledUntil;
+                
+                const originalSchedule = allJadwalTerstruktur[originalDay]?.[scheduleId];
+                if (originalSchedule?.notificationId) {
+                    await cancelScheduledNotification(originalSchedule.notificationId);
                 }
 
                 const updates = {};
