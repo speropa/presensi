@@ -6,9 +6,6 @@ const urlsToCache = [
     './',
     './index.html',
     './manifest.json',
-    // File-file OneSignal sekarang bagian dari proyek, jadi kita bisa cache
-    './OneSignalSDKWorker.js',
-    './OneSignalSDKUpdaterWorker.js',
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
     'https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
