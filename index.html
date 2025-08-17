@@ -465,35 +465,55 @@
         // --- Logika Autentikasi & Inisialisasi Aplikasi ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                try {
-                    const storedUserKey = localStorage.getItem('currentUserKey');
-                    const loginTimestamp = localStorage.getItem('loginTimestamp');
-                    const now = new Date().getTime();
-                    const twoHours = 2 * 60 * 60 * 1000;
+                // Pengguna sudah login di Firebase, lanjutkan ke verifikasi PIN
+                const storedUserKey = localStorage.getItem('currentUserKey');
+                const loginTimestamp = localStorage.getItem('loginTimestamp');
+                const now = new Date().getTime();
+                const twoHours = 2 * 60 * 60 * 1000;
 
+                // Coba ambil data login dari Firebase dulu
+                if (navigator.onLine) {
+                    try {
+                        const loginSnapshot = await get(ref(db, 'login'));
+                        allLoginData = loginSnapshot.val();
+                        if (allLoginData) {
+                            localStorage.setItem('allLoginData', JSON.stringify(allLoginData));
+                        }
+                    } catch (e) {
+                        console.warn("Gagal mengambil data login dari Firebase, mencoba dari cache lokal.");
+                    }
+                }
+                
+                // Jika masih belum ada data, coba dari localStorage
+                if (!allLoginData) {
+                    const localLoginData = localStorage.getItem('allLoginData');
+                    if (localLoginData) {
+                        allLoginData = JSON.parse(localLoginData);
+                    }
+                }
+
+                if (allLoginData) {
                     if (storedUserKey && loginTimestamp && (now - parseInt(loginTimestamp, 10) < twoHours)) {
-                        allLoginData = (await get(ref(db, 'login'))).val();
                         await handleSuccessfulLogin(storedUserKey, true);
                     } else {
-                        localStorage.removeItem('currentUserKey');
-                        localStorage.removeItem('loginTimestamp');
-                        allLoginData = (await get(ref(db, 'login'))).val();
                         showPinVerificationModal();
-                        hideLoader();
                     }
-                } catch (error) {
-                    showAlertModal("Error", "Gagal memuat data login awal.", true);
-                    hideLoader();
+                } else {
+                    // Kasus darurat: offline saat pertama kali buka dan tidak ada cache login
+                    showAlertModal("Koneksi Diperlukan", "Anda perlu terhubung ke internet setidaknya sekali untuk menggunakan aplikasi ini.", true);
                 }
+                hideLoader();
             } else {
+                // Jika tidak ada user auth, coba login otomatis
                 try {
                     showLoader();
                     await signInWithEmailAndPassword(auth, 'mdsr@gmail.com', '12345678');
+                    // onAuthStateChanged akan terpanggil lagi setelah ini berhasil
                 } catch (error) {
+                    // Jika login otomatis gagal, tampilkan halaman login manual
                     loginPage.classList.remove('hidden');
                     mainApp.classList.add('hidden');
                     pinVerificationModal.classList.add('hidden');
-                } finally {
                     hideLoader();
                 }
             }
@@ -742,7 +762,7 @@
             firebaseListeners.push(onValue(ref(db, `${userPath}/siswa/`), (s) => { allStudents = s.val() || {}; renderStudentsTable(); updateClassFilters(); displayDashboard(); }));
             firebaseListeners.push(onValue(ref(db, `${userPath}/mapel/`), (s) => { allMapel = s.val() || {}; renderMapelList(); updateMapelFilter(); updateJadwalMapelFilter(); displayDashboard(); }));
             firebaseListeners.push(onValue(ref(db, `${userPath}/jadwal_terstruktur`), (s) => { allJadwalTerstruktur = s.val() || {}; renderJadwalTerstruktur(); displayDashboard(); }));
-            firebaseListeners.push(onValue(ref(db, `${userPath}/jadwal`), (s) => { const d = s.val(); const hasImage = d && d.imageUrl; jadwalImage.src = hasImage ? d.imageUrl : ''; jadwalImage.classList.toggle('hidden', !hasImage); el('jadwal-placeholder').classList.toggle('hidden', hasImage); el('jadwal-upload-label').classList.toggle('hidden', hasImage); deleteJadwalBtn.classList.toggle('hidden', !hasImage); }));
+            firebaseListeners.push(onValue(ref(db, `${userPath}/jadwal`), (s) => { const d = s.val(); const hasImage = d && d.imageUrl; jadwalImage.src = hasImage ? d.imageUrl : ''; el('jadwal-placeholder').classList.toggle('hidden', hasImage); el('jadwal-upload-label').classList.toggle('hidden', hasImage); deleteJadwalBtn.classList.toggle('hidden', !hasImage); }));
             firebaseListeners.push(onValue(ref(db, `${userPath}/presensi`), (s) => { allPresensiData = s.val() || {}; displayDashboard(); }));
             firebaseListeners.push(onValue(ref(db, `${userPath}/kegiatan`), (s) => { allKegiatanData = s.val() || {}; displayDashboard(); }));
         }
