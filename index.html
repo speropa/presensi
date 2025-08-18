@@ -231,11 +231,12 @@
                         <h3 class="text-xl font-bold">Jadwal Pelajaran</h3>
                         <div class="flex items-center space-x-3">
                             <span id="jadwal-mode-label" class="text-sm font-medium text-gray-600">Mode: Gambar</span>
-                            <button id="toggle-jadwal-mode-btn" class="relative inline-flex items-center h-6 rounded-full w-11 transition-colors bg-blue-600 focus:outline-none"><span id="toggle-jadwal-mode-switch" class="inline-block w-4 h-4 transform bg-white rounded-full transition-transform translate-x-5"></span></button>
+                            <button id="toggle-jadwal-mode-btn" class="relative inline-flex items-center h-6 rounded-full w-11 transition-colors bg-gray-200 focus:outline-none"><span id="toggle-jadwal-mode-switch" class="inline-block w-4 h-4 transform bg-white rounded-full transition-transform"></span></button>
                         </div>
                     </div>
                 </div>
-                <div id="jadwal-view-gambar" class="hidden">
+                <!-- Perubahan di sini: class 'hidden' dihapus dari jadwal-view-gambar -->
+                <div id="jadwal-view-gambar">
                      <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-lg font-bold">Jadwal (Gambar)</h3>
@@ -251,7 +252,8 @@
                         </div>
                     </div>
                 </div>
-                <div id="jadwal-view-dinamis">
+                 <!-- Perubahan di sini: class 'hidden' ditambahkan ke jadwal-view-dinamis -->
+                <div id="jadwal-view-dinamis" class="hidden">
                     <div class="bg-white p-4 rounded-xl shadow-md mb-6">
                         <h3 class="text-lg font-bold mb-4">Buat Jadwal Pelajaran</h3>
                         <form id="add-jadwal-form" class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
@@ -359,7 +361,7 @@
         const db = getDatabase(app);
 
         // --- Variabel Global & State Aplikasi ---
-        let currentMode = 'presensi', allStudents = {}, allMapel = {}, allJadwalTerstruktur = {}, hasUnsavedChanges = false, pendingAction = null, pendingPage = null, currentUserKey = null, currentUserName = null, githubToken = null, deferredPrompt, allLoginData = null, currentJadwalMode = 'dinamis', dashboardUpdateInterval = null;
+        let currentMode = 'presensi', allStudents = {}, allMapel = {}, allJadwalTerstruktur = {}, hasUnsavedChanges = false, pendingAction = null, pendingPage = null, currentUserKey = null, currentUserName = null, githubToken = null, deferredPrompt, allLoginData = null, currentJadwalMode = 'gambar', dashboardUpdateInterval = null; // Diubah ke 'gambar'
         let availableClasses = new Set(), currentPresensiStudentsData = [], currentRekapData = { presensi: {}, nilai: {}, kelas: '' };
         let allPresensiData = {}, allKegiatanData = {};
         let firebaseListeners = [];
@@ -762,7 +764,7 @@
             firebaseListeners.push(onValue(ref(db, `${userPath}/siswa/`), (s) => { allStudents = s.val() || {}; renderStudentsTable(); updateClassFilters(); displayDashboard(); }));
             firebaseListeners.push(onValue(ref(db, `${userPath}/mapel/`), (s) => { allMapel = s.val() || {}; renderMapelList(); updateMapelFilter(); updateJadwalMapelFilter(); displayDashboard(); }));
             firebaseListeners.push(onValue(ref(db, `${userPath}/jadwal_terstruktur`), (s) => { allJadwalTerstruktur = s.val() || {}; renderJadwalTerstruktur(); displayDashboard(); }));
-            firebaseListeners.push(onValue(ref(db, `${userPath}/jadwal`), (s) => { const d = s.val(); const hasImage = d && d.imageUrl; jadwalImage.src = hasImage ? d.imageUrl : ''; el('jadwal-placeholder').classList.toggle('hidden', hasImage); el('jadwal-upload-label').classList.toggle('hidden', hasImage); deleteJadwalBtn.classList.toggle('hidden', !hasImage); }));
+            firebaseListeners.push(onValue(ref(db, `${userPath}/jadwal`), (s) => { const d = s.val(); const hasImage = d && d.imageUrl; jadwalImage.src = hasImage ? d.imageUrl : ''; jadwalImage.classList.toggle('hidden', !hasImage); el('jadwal-placeholder').classList.toggle('hidden', hasImage); el('jadwal-upload-label').classList.toggle('hidden', hasImage); deleteJadwalBtn.classList.toggle('hidden', !hasImage); }));
             firebaseListeners.push(onValue(ref(db, `${userPath}/presensi`), (s) => { allPresensiData = s.val() || {}; displayDashboard(); }));
             firebaseListeners.push(onValue(ref(db, `${userPath}/kegiatan`), (s) => { allKegiatanData = s.val() || {}; displayDashboard(); }));
         }
