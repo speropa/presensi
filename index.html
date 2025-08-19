@@ -235,7 +235,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- Perubahan di sini: class 'hidden' dihapus dari jadwal-view-gambar -->
                 <div id="jadwal-view-gambar">
                      <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md">
                         <div class="flex justify-between items-center mb-4">
@@ -252,7 +251,6 @@
                         </div>
                     </div>
                 </div>
-                 <!-- Perubahan di sini: class 'hidden' ditambahkan ke jadwal-view-dinamis -->
                 <div id="jadwal-view-dinamis" class="hidden">
                     <div class="bg-white p-4 rounded-xl shadow-md mb-6">
                         <h3 class="text-lg font-bold mb-4">Buat Jadwal Pelajaran</h3>
@@ -853,18 +851,22 @@
         setupEventListeners();
         applyTheme(userPreferences.theme);
         if(filterTanggal) filterTanggal.value = getLocalISODate();
+        handleToggleJadwalMode(); // Panggil setelah elemennya pasti ada di DOM
         switchPage('dashboard');
         
         // --- Membuat fungsi global yang bisa diakses dari HTML ---
         window.handlePresensiShortcut = async (mapelId, kelas) => { 
-            const mapelData = Object.values(allMapel).find(m => m.id === mapelId && m.kelas === kelas);
             let mapelName = '';
-            if (!mapelData) {
-                const fallbackMapel = Object.values(allMapel).find(m => m.kelas === kelas);
-                if(fallbackMapel) mapelName = fallbackMapel.nama;
-                else return showAlertModal("Error", "Mapel tidak ditemukan.", true);
-            } else {
-                 mapelName = mapelData.nama;
+            // Mencari nama mapel dari ID dan kelas
+            for (const id in allMapel) {
+                if (id === mapelId && allMapel[id].kelas === kelas) {
+                    mapelName = allMapel[id].nama;
+                    break;
+                }
+            }
+
+            if (!mapelName) {
+                return showAlertModal("Error", "Data Mapel tidak ditemukan untuk pintasan ini.", true);
             }
             
             switchPage('presensi');
