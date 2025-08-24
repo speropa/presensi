@@ -13,11 +13,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Cropper.js for image cropping -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
     <style>
-        /* General Styles */
         :root {
             --bg-primary: #f0f2f5; --bg-secondary: #ffffff; --bg-tertiary: #f9fafb;
             --text-primary: #1f2937; --text-secondary: #6b7280; --border-color: #e5e7eb;
@@ -28,8 +26,6 @@
             --text-primary: #f9fafb; --text-secondary: #9ca3af; --border-color: #4b5563;
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-primary); color: var(--text-primary); transition: background-color 0.3s, color 0.3s; }
-        
-        /* Custom component styles */
         .app-bg { background-color: var(--bg-primary); }
         .card-bg { background-color: var(--bg-secondary); border: 1px solid var(--border-color); }
         .input-bg { background-color: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); }
@@ -39,7 +35,6 @@
         .border-main { border-color: var(--border-color); }
         .btn-primary { background-color: var(--accent-color); color: white; }
         .btn-primary:hover { background-color: var(--accent-hover); }
-
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         .dark ::-webkit-scrollbar-track { background: #2d3748; }
@@ -47,8 +42,6 @@
         .dark ::-webkit-scrollbar-thumb { background: #555; }
         ::-webkit-scrollbar-thumb:hover { background: #555; }
         .dark ::-webkit-scrollbar-thumb:hover { background: #444; }
-
-        /* Animations */
         .hidden { display: none; }
         .fade-in { animation: fadeIn 0.3s ease-out; }
         .fade-out { animation: fadeOut 0.3s ease-in forwards; }
@@ -56,8 +49,6 @@
         @keyframes fadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.95); } }
         @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
         .animate-shake { animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both; }
-        
-        /* UI Elements */
         .nav-link.active { color: var(--accent-color); transform: scale(1.1); }
         .vertical-th { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; padding-bottom: 8px; padding-top: 8px; }
         button:disabled, select:disabled { background-color: #e5e7eb; cursor: not-allowed; color: #9ca3af; }
@@ -67,7 +58,6 @@
         .dark .pin-input-dashes .pin-dash { background-color: #4b5563; }
         .pin-input-dashes .pin-dash.filled { background-color: #1f2937; }
         .dark .pin-input-dashes .pin-dash.filled { background-color: #f9fafb; }
-        
         .ios-keypad-button { 
             display: flex; align-items: center; justify-content: center; 
             width: 75px; height: 75px; border-radius: 50%; 
@@ -79,7 +69,6 @@
         .ios-keypad-button:active { background-color: #d1d5db; }
         .dark .ios-keypad-button:active { background-color: #6b7280; }
         .ios-keypad-button.functional { background-color: transparent; border: none; }
-
         .dashboard-card { transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
         .dashboard-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
         .highlight-card { border-left: 5px solid #2563eb; }
@@ -142,7 +131,6 @@
             </div>
         </header>
         <main class="container mx-auto p-4 pb-24">
-            <!-- All page content will be injected here as before -->
             <div id="page-dashboard" class="page-content">
                 <div id="dashboard-container" class="mb-6">
                     <div class="mb-4">
@@ -357,7 +345,7 @@
         const auth = getAuth(app);
         const db = getDatabase(app);
 
-        let currentMode = 'presensi', allStudents = {}, allMapel = {}, allJadwalTerstruktur = {}, hasUnsavedChanges = false, pendingAction = null, pendingPage = null, currentUserKey = null, currentUserName = null, githubToken = null, deferredPrompt, allLoginData = null, currentJadwalMode = 'dinamis', dashboardUpdateInterval = null, isBebasPresensi = false, cropper = null, currentUserProfile = {};
+        let currentMode = 'presensi', allStudents = {}, allMapel = {}, allJadwalTerstruktur = {}, hasUnsavedChanges = false, pendingAction = null, pendingPage = null, currentUserKey = null, currentUserName = null, githubToken = null, deferredPrompt, allLoginData = null, registrationPin = null, currentJadwalMode = 'dinamis', dashboardUpdateInterval = null, isBebasPresensi = false, cropper = null, currentUserProfile = {};
         let availableClasses = new Set(), currentPresensiStudentsData = [], currentRekapData = { presensi: {}, nilai: {}, kelas: '' };
         let allPresensiData = {}, allKegiatanData = {};
 
@@ -365,42 +353,11 @@
         const loadingSpinner = el('loading-spinner'), loginPage = el('login-page'), mainApp = el('app'), userDisplayName = el('user-display-name'), offlineIndicator = el('offline-indicator'), installPwaBtn = el('install-pwa-btn'), pinVerificationModal = el('pin-verification-modal'), pinInputField = el('pin-input-field'), pinDashes = el('pin-dashes'), pinError = el('pin-error'), filterMapel = el('filter-mapel'), filterKelas = el('filter-kelas'), filterTanggal = el('filter-tanggal'), terapkanBtn = el('terapkan-filter-btn'), rekapFilterMapel = el('rekap-filter-mapel'), rekapFilterKelas = el('rekap-filter-kelas'), terapkanRekapBtn = el('terapkan-rekap-btn'), deleteDailyDataBtn = el('delete-daily-data-btn'), toggleModeBtn = el('toggle-mode-btn'), toggleModeSwitch = el('toggle-mode-switch'), modeLabel = el('mode-label'), contentArea = el('content-area'), kegiatanInput = el('kegiatan-pembelajaran'), studentListContainer = el('student-list-container'), saveAllBtn = el('save-all-btn'), kegiatanHistoryList = el('kegiatan-history-list'), kegiatanHistoryToggleMore = el('kegiatan-history-toggle-more'), presensiSearchContainer = el('presensi-search-container'), searchPresensiStudentInput = el('search-presensi-student'), addStudentForm = el('add-student-form'), allStudentsTable = el('all-students-table'), csvUploadInput = el('csv-upload'), downloadTemplateBtn = el('download-template-btn'), deleteAllStudentsBtn = el('delete-all-students-btn'), searchAllStudentsInput = el('search-all-students'), addMapelForm = el('add-mapel-form'), mapelListContainer = el('mapel-list-container'), jadwalUploadInput = el('jadwal-upload'), jadwalUploadLabel = el('jadwal-upload-label'), jadwalImageContainer = el('jadwal-image-container'), jadwalImage = el('jadwal-image'), jadwalPlaceholder = el('jadwal-placeholder'), deleteJadwalBtn = el('delete-jadwal-btn'), imageViewerModal = el('image-viewer-modal'), closeImageViewerBtn = el('close-image-viewer-btn'), fullscreenImage = el('fullscreen-image'), rekapTableContainer = el('rekap-table-container'), rekapDownloadDropdownBtn = el('rekap-download-dropdown-btn'), rekapDownloadOptions = el('rekap-download-options'), downloadCsvBtn = el('download-csv-btn'), printRekapBtn = el('print-rekap-btn'), rekapSearchContainer = el('rekap-search-container'), searchRekapStudentInput = el('search-rekap-student'), rekapDynamicTableContent = el('rekap-dynamic-table-content'), addJadwalForm = el('add-jadwal-form'), jadwalTerstrukturContainer = el('jadwal-terstruktur-container'), toggleJadwalModeBtn = el('toggle-jadwal-mode-btn'), toggleJadwalModeSwitch = el('toggle-jadwal-mode-switch'), jadwalModeLabel = el('jadwal-mode-label'), jadwalViewGambar = el('jadwal-view-gambar'), jadwalViewDinamis = el('jadwal-view-dinamis'), dashboardGreeting = el('dashboard-greeting'), dashboardDate = el('dashboard-date'), dashboardJadwalCerdas = el('dashboard-jadwal-cerdas'), modal = el('modal'), modalContent = el('modal-content'), burgerMenuBtn = el('burger-menu-btn'), dropdownMenu = el('dropdown-menu'), headerProfilePic = el('header-profile-pic');
         const navLinks = document.querySelectorAll('.nav-link'), pages = document.querySelectorAll('.page-content');
         
-        // --- LOCAL STORAGE HELPERS ---
-        const saveToLocal = (key, data) => {
-            try {
-                localStorage.setItem(key, JSON.stringify(data));
-            } catch (e) {
-                console.error("Gagal menyimpan ke localStorage:", e);
-            }
-        };
-
-        const loadFromLocal = (key) => {
-            try {
-                const data = localStorage.getItem(key);
-                return data ? JSON.parse(data) : null;
-            } catch (e) {
-                console.error("Gagal memuat dari localStorage:", e);
-                return null;
-            }
-        };
-
-        // --- THEME MANAGEMENT ---
-        function applyTheme(theme) {
-            const themeToggle = el('theme-toggle');
-            if (theme === 'dark') {
-                document.documentElement.classList.add('dark');
-                if(themeToggle) themeToggle.checked = true;
-            } else {
-                document.documentElement.classList.remove('dark');
-                if(themeToggle) themeToggle.checked = false;
-            }
-        }
-        function toggleTheme() {
-            const currentTheme = localStorage.getItem('theme') || 'light';
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-            localStorage.setItem('theme', newTheme);
-            applyTheme(newTheme);
-        }
+        const saveToLocal = (key, data) => { try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) { console.error("Gagal menyimpan ke localStorage:", e); } };
+        const loadFromLocal = (key) => { try { const data = localStorage.getItem(key); return data ? JSON.parse(data) : null; } catch (e) { console.error("Gagal memuat dari localStorage:", e); return null; } };
+        
+        function applyTheme(theme) { const themeToggle = el('theme-toggle'); if (theme === 'dark') { document.documentElement.classList.add('dark'); if(themeToggle) themeToggle.checked = true; } else { document.documentElement.classList.remove('dark'); if(themeToggle) themeToggle.checked = false; } }
+        function toggleTheme() { const currentTheme = localStorage.getItem('theme') || 'light'; const newTheme = currentTheme === 'light' ? 'dark' : 'light'; localStorage.setItem('theme', newTheme); applyTheme(newTheme); }
 
         const mapelColorPalette = [{ bg: 'bg-sky-100', text: 'text-sky-800' }, { bg: 'bg-amber-100', text: 'text-amber-800' }, { bg: 'bg-violet-100', text: 'text-violet-800' }, { bg: 'bg-lime-100', text: 'text-lime-800' }, { bg: 'bg-rose-100', text: 'text-rose-800' }, { bg: 'bg-teal-100', text: 'text-teal-800' }, { bg: 'bg-fuchsia-100', text: 'text-fuchsia-800' }, { bg: 'bg-indigo-100', text: 'text-indigo-800' }, { bg: 'bg-emerald-100', text: 'text-emerald-800' }, { bg: 'bg-cyan-100', text: 'text-cyan-800' }, { bg: 'bg-pink-100', text: 'text-pink-800' }, { bg: 'bg-green-100', text: 'text-green-800' }, { bg: 'bg-purple-100', text: 'text-purple-800' }];
         const kelasColorPalette = { 'A': { bg: 'bg-red-100', text: 'text-red-800' }, 'B': { bg: 'bg-orange-100', text: 'text-orange-800' }, 'C': { bg: 'bg-yellow-100', text: 'text-yellow-800' }, 'D': { bg: 'bg-green-100', text: 'text-green-800' }, 'E': { bg: 'bg-blue-100', text: 'text-blue-800' }, 'F': { bg: 'bg-purple-100', text: 'text-purple-800' }, 'DEFAULT': { bg: 'bg-gray-100', text: 'text-gray-800' } };
@@ -410,14 +367,24 @@
         
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // User is signed in, now verify PIN
                 allLoginData = loadFromLocal('allLoginData');
                 if (allLoginData) {
-                    showPinVerificationModal();
-                    hideLoader();
+                    try {
+                        registrationPin = (await get(ref(db, 'loginregister/pin'))).val();
+                        showPinVerificationModal();
+                    } catch (error) {
+                        showAlertModal("Error", "Gagal memuat konfigurasi registrasi.", true);
+                    } finally {
+                        hideLoader();
+                    }
                 } else {
                     try {
-                        allLoginData = (await get(ref(db, 'login'))).val();
+                        const [loginSnapshot, regPinSnapshot] = await Promise.all([
+                            get(ref(db, 'login')),
+                            get(ref(db, 'loginregister/pin'))
+                        ]);
+                        allLoginData = loginSnapshot.val();
+                        registrationPin = regPinSnapshot.val();
                         saveToLocal('allLoginData', allLoginData);
                         showPinVerificationModal();
                     } catch (error) {
@@ -427,11 +394,9 @@
                     }
                 }
             } else {
-                // User is signed out, try to auto-login or show login page
                 try {
                     showLoader();
                     await signInWithEmailAndPassword(auth, 'mdsr@gmail.com', '12345678');
-                    // onAuthStateChanged will be triggered again
                 } catch (error) {
                     loginPage.classList.remove('hidden');
                     mainApp.classList.add('hidden');
@@ -449,26 +414,15 @@
                 pinVerificationModal.classList.add('hidden');
                 mainApp.classList.remove('hidden');
                 showToast("Verifikasi PIN berhasil!");
-                
-                // Load all data from local storage first for instant UI
                 loadAllDataFromLocal();
-                
-                // Then, set up listeners to get fresh data from Firebase
                 initializeDataListeners(); 
-                
                 setupEventListeners();
-                
-                // UI initializations that depend on login
                 el('filter-tanggal').value = getLocalISODate();
                 handleToggleJadwalMode();
                 switchPage('dashboard');
-
                 if (dashboardUpdateInterval) clearInterval(dashboardUpdateInterval);
                 dashboardUpdateInterval = setInterval(displayDashboard, 10000);
-
-                // Fetch GitHub token in the background
                 fetchGithubToken();
-
             } catch (error) {
                 console.error("Error detail saat login:", error);
                 showAlertModal("Error", `Terjadi kesalahan setelah login: ${error.message}`, true);
@@ -478,7 +432,96 @@
         }
 
         function showPinVerificationModal() { el('login-page').classList.add('hidden'); el('app').classList.add('hidden'); pinVerificationModal.classList.remove('hidden'); pinInputField.value = ''; updatePinDashes(); pinError.classList.add('hidden'); }
-        function checkPin() { const enteredPin = pinInputField.value; if (!allLoginData) { pinError.textContent = "Data login belum siap."; pinError.classList.remove('hidden'); return; } let foundUserKey = Object.keys(allLoginData).find(key => allLoginData[key].login && String(allLoginData[key].login) === enteredPin); if (foundUserKey) { handleSuccessfulLogin(foundUserKey); } else { pinError.textContent = "PIN salah"; pinError.classList.remove('hidden'); pinDashes.classList.add('animate-shake'); setTimeout(() => { pinDashes.classList.remove('animate-shake'); pinInputField.value = ''; updatePinDashes(); }, 800); } }
+        
+        function checkPin() {
+            const enteredPin = pinInputField.value;
+            if (registrationPin && enteredPin === String(registrationPin)) {
+                showNewUserRegistrationModal();
+                return;
+            }
+            if (!allLoginData) { pinError.textContent = "Data login belum siap."; pinError.classList.remove('hidden'); return; } 
+            let foundUserKey = Object.keys(allLoginData).find(key => allLoginData[key].login && String(allLoginData[key].login) === enteredPin); 
+            if (foundUserKey) { 
+                handleSuccessfulLogin(foundUserKey); 
+            } else { 
+                pinError.textContent = "PIN salah"; 
+                pinError.classList.remove('hidden'); 
+                pinDashes.classList.add('animate-shake'); 
+                setTimeout(() => { pinDashes.classList.remove('animate-shake'); pinInputField.value = ''; updatePinDashes(); }, 800); 
+            } 
+        }
+
+        function showNewUserRegistrationModal() {
+            pinVerificationModal.classList.add('hidden');
+            const modalHTML = `
+                <h3 class="text-lg font-bold mb-4">Registrasi Guru Baru</h3>
+                <p class="text-sub text-sm mb-6">Buat akun baru dengan mengisi form di bawah ini.</p>
+                <div class="space-y-4">
+                    <div>
+                        <label for="new-reg-username" class="block text-sm font-medium text-sub mb-1">Nama Pengguna (maks 10 karakter)</label>
+                        <input type="text" id="new-reg-username" maxlength="10" class="w-full mt-1 p-2 input-bg rounded-lg">
+                    </div>
+                    <div>
+                        <label for="new-reg-pin" class="block text-sm font-medium text-sub mb-1">PIN Baru (6 digit)</label>
+                        <input type="password" id="new-reg-pin" maxlength="6" class="w-full mt-1 p-2 input-bg rounded-lg" inputmode="numeric">
+                    </div>
+                    <div>
+                        <label for="confirm-new-reg-pin" class="block text-sm font-medium text-sub mb-1">Konfirmasi PIN Baru</label>
+                        <input type="password" id="confirm-new-reg-pin" maxlength="6" class="w-full mt-1 p-2 input-bg rounded-lg" inputmode="numeric">
+                    </div>
+                    <p id="reg-error" class="text-red-500 text-sm h-5 text-center"></p>
+                </div>
+                <div class="flex justify-end space-x-2 mt-6">
+                    <button onclick="window.closeRegistrationModal()" class="bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-main font-bold py-2 px-4 rounded-lg">Batal</button>
+                    <button onclick="window.handleNewUserRegistration()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Simpan</button>
+                </div>
+            `;
+            openModal(modalHTML);
+        }
+
+        function closeRegistrationModal() { closeModal(); showPinVerificationModal(); }
+
+        async function handleNewUserRegistration() {
+            const username = el('new-reg-username').value.trim();
+            const newPin = el('new-reg-pin').value;
+            const confirmPin = el('confirm-new-reg-pin').value;
+            const errorEl = el('reg-error');
+            errorEl.textContent = '';
+
+            if (!username || !newPin || !confirmPin) { errorEl.textContent = "Semua kolom wajib diisi."; return; }
+            if (username.length > 10) { errorEl.textContent = "Nama pengguna maksimal 10 karakter."; return; }
+            if (newPin.length !== 6) { errorEl.textContent = "PIN baru harus 6 digit."; return; }
+            if (newPin !== confirmPin) { errorEl.textContent = "Konfirmasi PIN tidak cocok."; return; }
+            if (newPin === String(registrationPin)) { errorEl.textContent = "PIN ini tidak dapat digunakan untuk akun baru."; return; }
+
+            const pinExists = Object.values(allLoginData).some(user => String(user.login) === newPin);
+            if (pinExists) { errorEl.textContent = "PIN ini sudah digunakan. Coba yang lain."; return; }
+
+            showLoader();
+            try {
+                const existingUserKeys = Object.keys(allLoginData || {}).filter(k => k.startsWith('user'));
+                let maxUserNum = 0;
+                if (existingUserKeys.length > 0) {
+                    maxUserNum = Math.max(...existingUserKeys.map(k => parseInt(k.replace('user', ''), 10) || 0));
+                }
+                const newUserId = `user${maxUserNum + 1}`;
+                
+                await set(ref(db, `login/${newUserId}`), { nama: username, login: newPin });
+                
+                if (!allLoginData) allLoginData = {};
+                allLoginData[newUserId] = { nama: username, login: newPin };
+                saveToLocal('allLoginData', allLoginData);
+
+                showToast("Pengguna baru berhasil dibuat!");
+                closeModal();
+                showPinVerificationModal();
+            } catch (error) {
+                showAlertModal("Gagal", `Gagal menyimpan pengguna baru: ${error.message}`, true);
+            } finally {
+                hideLoader();
+            }
+        }
+
         function updatePinDashes() { const dashes = pinDashes.querySelectorAll('.pin-dash'); const pinLength = pinInputField.value.length; dashes.forEach((dash, index) => { dash.classList.toggle('filled', index < pinLength); }); }
         async function updateHeaderUI() { if (!currentUserKey) return; currentUserName = allLoginData?.[currentUserKey]?.nama || "Pengguna"; userDisplayName.textContent = `Halo, ${currentUserName.charAt(0).toUpperCase() + currentUserName.slice(1)}`; headerProfilePic.src = currentUserProfile.imageUrl || `https://placehold.co/40x40/E2E8F0/A0AEC0?text=${currentUserName.charAt(0).toUpperCase()}`; }
         async function fetchGithubToken() { try { const token = (await get(ref(db, 'token/github'))).val(); if(token) { githubToken = token; saveToLocal('githubToken', token); } else if (!githubToken) { showAlertModal("Konfigurasi Error", "Token GitHub tidak ditemukan.", true); } } catch (error) { if (!githubToken) showAlertModal("Konfigurasi Error", "Gagal mengambil token GitHub.", true); } }
@@ -488,16 +531,13 @@
         function loadAllDataFromLocal() {
             if (!currentUserKey) return;
             const userKeyPrefix = `user_${currentUserKey}_`;
-            
             currentUserProfile = loadFromLocal(userKeyPrefix + 'profil') || {};
             allStudents = loadFromLocal(userKeyPrefix + 'siswa') || {};
             allMapel = loadFromLocal(userKeyPrefix + 'mapel') || {};
             allJadwalTerstruktur = loadFromLocal(userKeyPrefix + 'jadwal_terstruktur') || {};
             allPresensiData = loadFromLocal(userKeyPrefix + 'presensi') || {};
             allKegiatanData = loadFromLocal(userKeyPrefix + 'kegiatan') || {};
-            githubToken = loadFromLocal('githubToken'); // Not user-specific
-
-            // Render UI with cached data immediately
+            githubToken = loadFromLocal('githubToken');
             updateHeaderUI();
             renderStudentsTable();
             updateClassFilters();
@@ -512,7 +552,6 @@
             if (!currentUserKey) return;
             const userPath = `users_data/${currentUserKey}`;
             const userKeyPrefix = `user_${currentUserKey}_`;
-
             onValue(ref(db, `${userPath}/profil`), (s) => { currentUserProfile = s.val() || {}; saveToLocal(userKeyPrefix + 'profil', currentUserProfile); updateHeaderUI(); });
             onValue(ref(db, `${userPath}/siswa/`), (s) => { allStudents = s.val() || {}; saveToLocal(userKeyPrefix + 'siswa', allStudents); renderStudentsTable(); updateClassFilters(); displayDashboard(); });
             onValue(ref(db, `${userPath}/mapel/`), (s) => { allMapel = s.val() || {}; saveToLocal(userKeyPrefix + 'mapel', allMapel); renderMapelList(); updateMapelFilter(); updateJadwalMapelFilter(); displayDashboard(); });
@@ -528,14 +567,12 @@
         function updateJadwalMapelFilter() { const mapelOptions = Object.entries(allMapel).map(([id, m]) => ({ id, nama: m.nama, kelas: m.kelas })).sort((a, b) => a.nama.localeCompare(b.nama) || a.kelas.localeCompare(b.kelas)); el('jadwal-mapel').innerHTML = '<option value="">Pilih Mapel & Kelas...</option>' + mapelOptions.map(m => `<option value="${m.id}">${m.nama} - ${m.kelas}</option>`).join(''); }
         function updateClassFilter(prefix) { const mapelSelect = el(prefix === 'presensi' ? 'filter-mapel' : 'rekap-filter-mapel'); const kelasSelect = el(prefix === 'presensi' ? 'filter-kelas' : 'rekap-filter-kelas'); if (!mapelSelect || !kelasSelect) return; const selectedMapel = mapelSelect.value; kelasSelect.innerHTML = '<option value="">Pilih Kelas...</option>'; if (!selectedMapel) { kelasSelect.disabled = true; return; } const classes = new Set(Object.values(allMapel).filter(m => m.nama === selectedMapel).map(m => m.kelas)); kelasSelect.innerHTML += Array.from(classes).sort().map(k => `<option value="${k}">${k}</option>`).join(''); kelasSelect.disabled = false; }
         
-        // --- SETUP EVENT LISTENERS ---
         function setupPreLoginEventListeners() {
             el('login-form').addEventListener('submit', async (e) => { e.preventDefault(); showLoader(); const email = el('email').value, password = el('password').value; if (!email || !password) { el('login-error').textContent = "Email & Password wajib diisi."; el('login-error').classList.remove('hidden'); hideLoader(); return; } try { await signInWithEmailAndPassword(auth, email, password); el('login-error').classList.add('hidden'); el('password').value = ''; } catch (error) { el('login-error').textContent = "Email atau Password salah."; el('login-error').classList.remove('hidden'); } finally { hideLoader(); } });
             el('pin-keypad-modal').addEventListener('click', (e) => { const target = e.target.closest('.ios-keypad-button'); if (!target) return; const value = target.dataset.value; let currentPin = pinInputField.value; if (value === 'backspace') { pinInputField.value = currentPin.slice(0, -1); } else if (currentPin.length < 6) { pinInputField.value = currentPin + value; } updatePinDashes(); pinError.classList.add('hidden'); if (pinInputField.value.length === 6) checkPin(); });
         }
 
         function setupEventListeners() {
-            // Burger Menu
             burgerMenuBtn.addEventListener('click', () => dropdownMenu.classList.toggle('hidden'));
             document.addEventListener('click', (e) => { if (!burgerMenuBtn.contains(e.target) && !dropdownMenu.contains(e.target)) dropdownMenu.classList.add('hidden'); });
             el('menu-profil').addEventListener('click', (e) => { e.preventDefault(); showProfileModal(); dropdownMenu.classList.add('hidden'); });
@@ -543,11 +580,7 @@
             el('menu-logout').addEventListener('click', (e) => { e.preventDefault(); if (hasUnsavedChanges) { showUnsavedChangesModal('logout'); } else { sessionStorage.removeItem('lastUserKey'); if (dashboardUpdateInterval) clearInterval(dashboardUpdateInterval); signOut(auth); } dropdownMenu.classList.add('hidden'); });
             el('bebas-presensi-toggle').addEventListener('change', (e) => { isBebasPresensi = e.target.checked; displayDashboard(); });
             el('theme-toggle').addEventListener('change', toggleTheme);
-
-            // Page Navigation
             navLinks.forEach(link => { link.addEventListener('click', () => switchPage(link.dataset.page)); });
-
-            // Other forms and buttons
             addStudentForm.addEventListener('submit', handleAddStudent);
             csvUploadInput.addEventListener('change', handleCsvUpload);
             downloadTemplateBtn.addEventListener('click', handleDownloadTemplate);
@@ -629,31 +662,14 @@
         function handleOnlineStatus() { offlineIndicator.classList.add('hidden'); syncOfflineData(); }
         function handleOfflineStatus() { offlineIndicator.classList.remove('hidden'); showToast("Anda offline.", true); }
         
-        // PWA Install Logic
         if (installPwaBtn) {
-            window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                deferredPrompt = e;
-                installPwaBtn.classList.remove('hidden');
-            });
-
-            installPwaBtn.addEventListener('click', async () => {
-                installPwaBtn.classList.add('hidden');
-                deferredPrompt.prompt();
-                await deferredPrompt.userChoice;
-                deferredPrompt = null;
-            });
-
-            window.addEventListener('appinstalled', () => {
-                installPwaBtn.classList.add('hidden');
-                deferredPrompt = null;
-                showToast("Aplikasi berhasil diinstal!");
-            });
+            window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; installPwaBtn.classList.remove('hidden'); });
+            installPwaBtn.addEventListener('click', async () => { installPwaBtn.classList.add('hidden'); deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; });
+            window.addEventListener('appinstalled', () => { installPwaBtn.classList.add('hidden'); deferredPrompt = null; showToast("Aplikasi berhasil diinstal!"); });
         }
 
         if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration failed: ', err)); }); }
         
-        // --- NEW MODAL & PROFILE FUNCTIONS ---
         function showProfileModal() {
             const modalHTML = `
                 <h3 class="text-lg font-bold mb-4">Profil Pengguna</h3>
@@ -682,8 +698,7 @@
         }
 
         function handleProfilePicSelect(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+            const file = e.target.files[0]; if (!file) return;
             const reader = new FileReader();
             reader.onload = (event) => {
                 el('modal-profile-pic').classList.add('hidden');
@@ -691,12 +706,7 @@
                 const imageToCrop = el('image-to-crop');
                 imageToCrop.src = event.target.result;
                 if (cropper) cropper.destroy();
-                cropper = new Cropper(imageToCrop, {
-                    aspectRatio: 1,
-                    viewMode: 1,
-                    background: false,
-                    autoCropArea: 0.8,
-                });
+                cropper = new Cropper(imageToCrop, { aspectRatio: 1, viewMode: 1, background: false, autoCropArea: 0.8 });
             };
             reader.readAsDataURL(file);
         }
@@ -704,42 +714,29 @@
         async function handleSaveProfile() {
             showLoader();
             const newUsername = el('edit-username').value.trim();
-
-            if (newUsername.length === 0) {
-                hideLoader();
-                return showToast("Nama pengguna tidak boleh kosong.", true);
-            }
-
+            if (newUsername.length === 0) { hideLoader(); return showToast("Nama pengguna tidak boleh kosong.", true); }
             try {
-                // Update username
                 if (newUsername !== currentUserName) {
                     await update(ref(db, `login/${currentUserKey}`), { nama: newUsername });
-                    allLoginData[currentUserKey].nama = newUsername; // Update local cache
+                    allLoginData[currentUserKey].nama = newUsername;
                     saveToLocal('allLoginData', allLoginData);
                     currentUserName = newUsername;
                 }
-
-                // Update profile picture if cropper is active
                 if (cropper) {
                     const canvas = cropper.getCroppedCanvas({ width: 256, height: 256 });
                     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg'));
                     const base64Content = await fileToBase64(blob);
-                    
                     const sanitizedUserName = sanitizeForPath(currentUserName);
                     const filePath = `profiles/${currentUserKey}/${sanitizedUserName}/profile.jpg`;
                     const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${filePath}`;
-                    
                     let sha = null;
                     try { const res = await fetch(apiUrl, { headers: { 'Authorization': `token ${githubToken}` } }); if (res.ok) sha = (await res.json()).sha; } catch (e) {}
-                    
                     const payload = { message: `Update profil ${new Date().toISOString()}`, content: base64Content, sha };
                     const res = await fetch(apiUrl, { method: 'PUT', headers: { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify(payload) });
                     if (!res.ok) throw new Error((await res.json()).message);
-                    
                     const data = await res.json();
                     await set(ref(db, `users_data/${currentUserKey}/profil`), { imageUrl: data.content.download_url + `?t=${new Date().getTime()}` });
                 }
-
                 await updateHeaderUI();
                 showToast("Profil berhasil diperbarui.");
                 closeModal();
@@ -806,24 +803,14 @@
             const currentPin = el('current-pin').value;
             const newPin = el('new-pin').value;
             const confirmNewPin = el('confirm-new-pin').value;
-
-            if (!currentPin || !newPin || !confirmNewPin) {
-                return showToast("Semua kolom wajib diisi.", true);
-            }
-            if (newPin.length !== 6) {
-                return showToast("PIN baru harus 6 digit.", true);
-            }
-            if (newPin !== confirmNewPin) {
-                return showToast("Konfirmasi PIN baru tidak cocok.", true);
-            }
-            if (String(allLoginData[currentUserKey].login) !== currentPin) {
-                return showToast("PIN saat ini salah.", true);
-            }
-
+            if (!currentPin || !newPin || !confirmNewPin) { return showToast("Semua kolom wajib diisi.", true); }
+            if (newPin.length !== 6) { return showToast("PIN baru harus 6 digit.", true); }
+            if (newPin !== confirmNewPin) { return showToast("Konfirmasi PIN baru tidak cocok.", true); }
+            if (String(allLoginData[currentUserKey].login) !== currentPin) { return showToast("PIN saat ini salah.", true); }
             showLoader();
             try {
                 await update(ref(db, `login/${currentUserKey}`), { login: newPin });
-                allLoginData[currentUserKey].login = newPin; // Update local cache
+                allLoginData[currentUserKey].login = newPin;
                 saveToLocal('allLoginData', allLoginData);
                 showToast("PIN berhasil diganti.");
                 closeModal();
@@ -835,8 +822,8 @@
         }
 
         window.handleDeleteDailyData = handleDeleteDailyData; window.handleDeleteJadwal = handleDeleteJadwal; window.handleDeleteMapel = handleDeleteMapel; window.handleDeleteStudent = handleDeleteStudent; window.handleEditMapel = handleEditMapel; window.handleEditStudent = handleEditStudent; window.selectOption = selectOption; window.showDeleteMapelModal = showDeleteMapelModal; window.showDeleteStudentModal = showDeleteStudentModal; window.showEditMapelModal = showEditMapelModal; window.showEditStudentModal = showEditStudentModal; window.toggleCatatan = toggleCatatan; window.toggleDropdown = toggleDropdown; window.toggleHistory = toggleHistory; window.updateCatatanValue = updateCatatanValue; window.updateNilaiValue = updateNilaiValue; window.handleDeleteJadwalEntry = handleDeleteJadwalEntry; window.confirmDeleteJadwalEntry = confirmDeleteJadwalEntry; window.goToBuatJadwal = goToBuatJadwal; window.handlePresensiShortcut = handlePresensiShortcut; window.showEditJadwalModal = showEditJadwalModal; window.handleEditJadwal = handleEditJadwal;
+        window.handleNewUserRegistration = handleNewUserRegistration; window.closeRegistrationModal = closeRegistrationModal;
         
-        // Initial script execution
         applyTheme(loadFromLocal('theme'));
         setupPreLoginEventListeners();
 
