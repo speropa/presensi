@@ -21,16 +21,16 @@
             --accent-color: #2563eb; --accent-hover: #1d4ed8;
         }
 
-        /* PERUBAHAN: Mengatur ukuran font dasar */
+        
         html {
-            /* Ukuran font dasar untuk desktop (14px) */
+            
             font-size: 14px;
         }
 
         @media (max-width: 720px) {
             html {
-                /* PERUBAHAN: Ukuran font HP diperkecil lagi (10px) */
-                /* Ini akan memperkecil semua elemen 'rem' secara proporsional */
+                
+                
                 font-size: 12px;
             }
         }
@@ -127,7 +127,7 @@
                                 <div class="flex items-center"><i class="fa-solid fa-unlock-alt w-6"></i><span>Bebas Presensi</span></div>
                                 <label for="bebas-presensi-toggle" class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="bebas-presensi-toggle" class="sr-only peer"><div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div></label>
                             </div>
-                            <!-- PERUBAHAN: Tombol Keluar dan divider dihapus -->
+                            
                         </div>
                     </div>
                 </div>
@@ -329,7 +329,7 @@
 
         
         let currentMode = 'presensi', allStudents = {}, allMapel = {}, allJadwalTerstruktur = {}, hasUnsavedChanges = false, pendingAction = null, pendingPage = null, currentUserKey = null, currentUserName = null, githubToken = null, deferredPrompt, allLoginData = null, currentJadwalMode = 'dinamis', dashboardUpdateInterval = null, isBebasPresensi = false;
-        let cropper = null; // FIX: Deklarasikan variabel cropper di scope global
+        let cropper = null; 
         let availableClasses = new Set(), unsavedChanges = {}, currentPresensiStudentsData = [], currentRekapData = { presensi: {}, nilai: {}, kegiatan: {}, kelas: '' };
         let allPresensiData = {}, allKegiatanData = {};
 
@@ -346,9 +346,9 @@
         function getLocalISODate(date = new Date()) { const year = date.getFullYear(); const month = String(date.getMonth() + 1).padStart(2, '0'); const day = String(date.getDate()).padStart(2, '0'); return `${year}-${month}-${day}`; }
         function formatDateToIndonesian(date) { return date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); }
         
-        // FIX: Definisikan fungsi formatReadableDate
+        
         function formatReadableDate(isoDate, formatType = 'long') {
-            const date = new Date(isoDate + 'T00:00:00'); // Pastikan parsing sebagai tanggal lokal
+            const date = new Date(isoDate + 'T00:00:00'); 
             if (formatType === 'long') {
                 return date.toLocaleDateString('id-ID', { 
                     weekday: 'long', 
@@ -357,23 +357,23 @@
                     year: 'numeric' 
                 });
             }
-            return date.toLocaleDateString('id-ID'); // Fallback
+            return date.toLocaleDateString('id-ID'); 
         }
     
         const showLoader = () => loadingSpinner.classList.remove('hidden'); const hideLoader = () => loadingSpinner.classList.add('hidden'); const showToast = (message, isError = false) => { const toast = el('toast'); el('toast-message').textContent = message; toast.className = `fixed top-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg fade-in z-[100] ${isError ? 'bg-red-500' : 'bg-green-500'}`; toast.classList.remove('hidden'); setTimeout(() => { toast.classList.add('fade-out'); setTimeout(() => toast.classList.add('hidden'), 300); }, 3000); }; const openModal = (content) => { modalContent.innerHTML = content; modal.classList.remove('hidden'); }; window.closeModal = () => { if (cropper) { cropper.destroy(); cropper = null; } modalContent.classList.add('fade-out'); setTimeout(() => { modal.classList.add('hidden'); modalContent.classList.remove('fade-out'); modalContent.innerHTML = ''; }, 300); }; const showAlertModal = (title, message, isError = false) => { const titleColorClass = isError ? 'text-red-600' : 'text-gray-800'; const content = `<h3 class="text-lg font-bold mb-2 ${titleColorClass}">${title}</h3><p class="text-sub mb-6">${message}</p><div class="flex justify-end"><button onclick="window.closeModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg">Oke</button></div>`; openModal(content); }; const fileToBase64 = (file) => new Promise((resolve, reject) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = error => reject(error); }); function sanitizeForPath(name) { if (!name) return 'unknown-user'; return name.trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, ''); } const showUnsavedChangesModal = (action, targetPage = null) => { pendingAction = action; pendingPage = targetPage; const content = `<h3 class="text-lg font-bold mb-2">Perubahan Belum Disimpan</h3><p class="text-sub mb-6">Ada perubahan presensi atau nilai yang belum disimpan. Apakah Anda ingin menyimpannya?</p><div class="flex justify-end space-x-2"><button onclick="window.handleUnsavedChangesAction('cancel')" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.handleUnsavedChangesAction('save')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Simpan</button></div>`; openModal(content); };
         
-        // PERUBAHAN: Logika 'logout' dihapus dari handleUnsavedChangesAction
+        
         window.handleUnsavedChangesAction = async (action) => { closeModal(); if (action === 'save') { await handleSaveAllData(); if (pendingAction === 'applyFilter') { handleTerapkanFilter(true); } else if (pendingAction === 'changePage' && pendingPage) { switchPage(pendingPage, true); } } pendingAction = null; pendingPage = null; }; 
         
         function filterAllStudentsTable() { allStudentsTable.innerHTML = ''; const query = searchAllStudentsInput.value.toLowerCase(); const fullStudents = JSON.parse(allStudentsTable.dataset.fullStudents || '[]'); const filteredStudents = fullStudents.filter(student => student.nama.toLowerCase().includes(query) || student.kelas.toLowerCase().includes(query)); let tableRowsHtml = ''; if (filteredStudents.length === 0) { tableRowsHtml = `<tr><td colspan="4" class="text-center p-4 text-sub">Belum ada data siswa.</td></tr>`; } else { filteredStudents.forEach((student, index) => { tableRowsHtml += `<tr class="border-b border-main hover:bg-gray-50 dark:hover:bg-gray-700"><td class="p-3 text-center">${index + 1}</td><td class="p-3 font-medium">${student.nama}</td><td class="p-3">${student.kelas}</td><td class="p-3 text-center"><div class="flex justify-center items-center space-x-2"><button onclick="window.showEditStudentModal('${student.id}')" class="p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button><button onclick="window.showDeleteStudentModal('${student.id}', '${student.nama}')" class="p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div></td></tr>`; }); } allStudentsTable.innerHTML = tableRowsHtml; } 
         
-        // PERUBAHAN: filterRekapTable dimodifikasi untuk header 2 baris
+        
         function filterRekapTable() {
             const query = searchRekapStudentInput.value.toLowerCase();
-            // PERUBAHAN: Ambil 'kegiatanData'
+            
             const { presensi: presensiData, nilai: nilaiData, kegiatan: kegiatanData, kelas } = currentRekapData;
             
-            // PERUBAHAN: Cek 'kegiatanData' juga
+            
             if (!presensiData && !nilaiData && !kegiatanData) {
                 rekapDynamicTableContent.innerHTML = '<p class="text-center text-sub">Tidak ada data.</p>';
                 return;
@@ -383,25 +383,25 @@
                 return;
             }
 
-            // --- PERBAIKAN DIMULAI ---
-            // Menambahkan definisi sortedDates yang hilang
+            
+            
             const dateSet = new Set([
                 ...Object.keys(presensiData),
                 ...Object.keys(nilaiData),
                 ...Object.keys(kegiatanData)
             ]);
-            const sortedDates = Array.from(dateSet).sort(); // Mengurutkan tanggal (YYYY-MM-DD)
+            const sortedDates = Array.from(dateSet).sort(); 
 
             if (sortedDates.length === 0) {
                 rekapDynamicTableContent.innerHTML = '<p class="text-center text-sub">Tidak ada data.</p>';
                 return;
             }
-            // --- PERBAIKAN SELESAI ---
             
-            // PERUBAHAN: Header diubah menjadi 2 baris untuk kolom "Jumlah"
+            
+            
             let tableHTML = `<table class="w-full text-xs text-left whitespace-nowrap"><thead style="background-color: #F0F8FF;" class="text-black">`;
             
-            // Baris 1: Judul Utama
+            
             tableHTML += `<tr>`;
             tableHTML += `<th class="p-2 border border-main text-center w-10" rowspan="2">No</th>`;
             tableHTML += `<th class="p-2 border border-main text-center" rowspan="2">Nama</th>`;
@@ -409,11 +409,11 @@
                 const [y, m, d] = date.split('-');
                 tableHTML += `<th class="vertical-th border border-main" rowspan="2">${d}/${m}/${y.slice(-2)}</th>`;
             });
-            // Kolom "Jumlah" yang di-merge
+            
             tableHTML += `<th class="p-2 border border-main text-center font-bold" colspan="3">Jumlah</th>`;
             tableHTML += `</tr>`;
 
-            // Baris 2: Sub-judul untuk S, I, A
+            
             tableHTML += `<tr>`;
             tableHTML += `<th class="p-2 border border-main text-center font-bold" style="background-color: #FFFACD;">S</th>`;
             tableHTML += `<th class="p-2 border border-main text-center font-bold" style="background-color: #E0FEE0;">I</th>`;
@@ -426,33 +426,33 @@
             let filteredCount = 0;
             Object.entries(allStudents).filter(([id, student]) => student.kelas === kelas).sort(([, a], [, b]) => a.nama.localeCompare(b.nama)).forEach(([studentId, student]) => {
                 if (student.nama.toLowerCase().includes(query)) {
-                    // PERUBAHAN: Inisialisasi penghitung S, I, A per siswa
+                    
                     let countS = 0, countI = 0, countA = 0;
                     
                     tableHTML += `<tr class="border-b border-main"><td class="p-2 border border-main text-center">${filteredCount + 1}</td><td class="p-2 border border-main font-medium">${student.nama}</td>`;
                     sortedDates.forEach(date => {
                         const status = presensiData[date]?.[studentId]?.status, nilai = nilaiData[date]?.[studentId]?.nilai;
                         
-                        // PERUBAHAN: Hitung jumlah S, I, A
+                        
                         if (status === 'Sakit') countS++;
                         else if (status === 'Izin') countI++;
                         else if (status === 'Alpa') countA++;
 
                         let cellContent = '-';
-                        let cellBgClass = ''; // <-- Tambahkan ini
+                        let cellBgClass = ''; 
                         if (status || nilai || nilai === 0) {
                             const symbol = status ? statusSymbols[status] || '?' : '•', colorClass = status ? statusColors[status] || '' : '', nilaiHtml = (nilai || nilai === 0) ? `<br><span class="font-bold">${nilai}</span>` : '';
                             cellContent = `<span class="${colorClass}">${symbol}</span>${nilaiHtml}`;
                             
-                            // <-- Tambahkan logika ini
+                            
                             if (status === 'Sakit') cellBgClass = 'bg-orange-100';
                             else if (status === 'Izin') cellBgClass = 'bg-green-100';
                             else if (status === 'Alpa') cellBgClass = 'bg-red-100';
                         }
-                        tableHTML += `<td class="p-2 border border-main text-center ${cellBgClass}">${cellContent}</td>`; // <-- Tambahkan ${cellBgClass}
+                        tableHTML += `<td class="p-2 border border-main text-center ${cellBgClass}">${cellContent}</td>`; 
                     });
 
-                    // PERUBAHAN: Tambahkan sel untuk jumlah S, I, A
+                    
                     tableHTML += `<td class="p-2 border border-main text-center font-bold" style="background-color: #FFFACD;">${countS}</td>`;
                     tableHTML += `<td class="p-2 border border-main text-center font-bold" style="background-color: #E0FEE0;">${countI}</td>`;
                     tableHTML += `<td class="p-2 border border-main text-center font-bold" style="background-color: #FFEEEE;">${countA}</td>`;
@@ -462,15 +462,15 @@
                 }
             });
 
-            // PERBAIKAN: Tambahkan baris kegiatan di akhir tbody
+            
             tableHTML += `<tr class="border-b border-main" style="background-color: #f9fafb; font-weight: bold;">`;
             tableHTML += `<td class="p-2 border border-main text-left" colspan="2">Kegiatan Pembelajaran</td>`;
             sortedDates.forEach(date => {
                 const kegiatan = kegiatanData[date]?.deskripsi || '-';
-                // PERUBAHAN: Terapkan class 'vertical-th' dan hapus style inline yang konflik
+                
                 tableHTML += `<td class="vertical-th border border-main" style="font-weight: 500;">${kegiatan}</td>`;
             });
-            // PERUBAHAN: Tambahkan 3 sel kosong agar sejajar dengan kolom S, I, A
+            
             tableHTML += `<td class="p-2 border border-main text-center">-</td>`;
             tableHTML += `<td class="p-2 border border-main text-center">-</td>`;
             tableHTML += `<td class="p-2 border border-main text-center">-</td>`;
@@ -598,7 +598,7 @@
                 }
             });
             
-            // PERUBAHAN: Event listener untuk 'menu-logout' dihapus
+            
             
             el('bebas-presensi-toggle').addEventListener('change', (e) => { isBebasPresensi = e.target.checked; displayDashboard(); });
             
@@ -734,17 +734,17 @@
             const dateSet = new Set(Object.keys(allHistoricalPresensi));
             Object.keys(allHistoricalNilai).forEach(d => dateSet.add(d));
             
-            // PERUBAHAN: Urutkan tanggal sesuai permintaan
-            // 1. Tanggal yang dipilih (mainDate) selalu diletakkan pertama
+            
+            
             const dateHeaders = [tanggal]; 
             
-            // 2. Ambil semua tanggal LAINNYA, urutkan dari terbaru (descending)
-            const otherDates = Array.from(dateSet)
-                .filter(d => d !== tanggal) // Ambil semua KECUALI tanggal yang dipilih
-                .sort()
-                .reverse(); // Urutkan terbaru ke terlama
             
-            // 3. Gabungkan
+            const otherDates = Array.from(dateSet)
+                .filter(d => d !== tanggal) 
+                .sort()
+                .reverse(); 
+            
+            
             dateHeaders.push(...otherDates);
 
             renderPresensiTable(studentsInClass, dateHeaders, allHistoricalPresensi, allHistoricalNilai);
@@ -892,14 +892,13 @@
         };
 
         window.updateNilai = (input, studentId, date) => {
-            // PERBAIKAN: Cek kekosongan di sini.
-            // Jika input kosong, kita kirim 'null' secara eksplisit.
-            // Jika tidak, kirim string nilainya.
+            
+            
             const nVal = input.value.trim();
             if (nVal === '') {
-                updateChange(studentId, date, { nilai: null }); // Kirim null
+                updateChange(studentId, date, { nilai: null }); 
             } else {
-                updateChange(studentId, date, { nilai: nVal }); // Kirim string nilainya
+                updateChange(studentId, date, { nilai: nVal }); 
             }
         };
         
@@ -929,14 +928,14 @@
                     if (changes.hasOwnProperty('nilai')) {
                         const nilaiPath = `users_data/${currentUserKey}/nilai/${kelas}/${mapelId}/${date}/${studentId}`;
                         
-                        // PERBAIKAN: Logika disesuaikan dengan 'updateNilai'
-                        // 'changes.nilai' sekarang bisa 'null' (jika kosong) atau string angka
+                        
+                        
                         if (changes.nilai === null) {
-                            // Input dikosongkan, jadi hapus data
+                            
                             updates[nilaiPath] = null;
                         } else {
-                            // Input berisi sesuatu, validasi sebagai angka
-                            const nVal = String(changes.nilai).trim(); // (misal: "0" or "50")
+                            
+                            const nVal = String(changes.nilai).trim(); 
                             const n = parseFloat(nVal.replace(',', '.'));
                             if (!isNaN(n) && n >= 0 && n <= 100) {
                                 updates[nilaiPath] = { nilai: n };
@@ -990,10 +989,10 @@
         function renderKegiatanHistory(historyData) { kegiatanHistoryList.innerHTML = ''; if (historyData.length === 0) { kegiatanHistoryList.innerHTML = '<p class="text-center text-gray-400">Tidak ada riwayat.</p>'; kegiatanHistoryToggleMore.classList.add('hidden'); return; } kegiatanHistoryList.dataset.fullhistory = JSON.stringify(historyData); const isPartial = kegiatanHistoryToggleMore.dataset.state === 'partial'; const dataToShow = isPartial ? historyData.slice(0, 2) : historyData; dataToShow.forEach(item => { const [y,m,d] = item.tanggal.split('-'), date = new Date(y,m-1,d); kegiatanHistoryList.innerHTML += `<div class="p-2 border-b border-yellow-200 dark:border-yellow-800"><p class="font-semibold">${formatDateToIndonesian(date)}</p><p class="text-sub">${item.deskripsi}</p></div>`; }); kegiatanHistoryToggleMore.classList.toggle('hidden', historyData.length <= 2); kegiatanHistoryToggleMore.innerHTML = isPartial ? 'Lainnya &darr;' : 'Ringkas &uarr;'; }
         async function fetchAndRenderKegiatanHistory(kelas, mapelId) { kegiatanHistoryList.innerHTML = '<p>Memuat...</p>'; const allKegiatan = (await get(ref(db, `users_data/${currentUserKey}/kegiatan/${kelas}/${mapelId}`))).val() || {}; const historyList = Object.entries(allKegiatan).filter(([,d]) => d.deskripsi).map(([t,d]) => ({ tanggal: t, deskripsi: d.deskripsi })).sort((a,b) => b.tanggal.localeCompare(a.tanggal)); renderKegiatanHistory(historyList); }
         
-        // PERUBAHAN: handleTerapkanRekap dimodifikasi
+        
         async function handleTerapkanRekap() {
             const selectedMapelName = rekapFilterMapel.value, kelas = rekapFilterKelas.value;
-            if (!selectedMapelName || !kelas) {
+            if (!selectedMapapelselectedMapelName || !kelas) {
                 rekapDynamicTableContent.innerHTML = '<p class="text-center text-sub">Pilih Mapel & Kelas.</p>';
                 rekapSearchContainer.classList.add('hidden');
                 rekapDownloadDropdownBtn.classList.add('hidden');
@@ -1005,25 +1004,25 @@
             showLoader();
             rekapDynamicTableContent.innerHTML = '<p class="text-center text-sub">Memuat...</p>';
             
-            // PERUBAHAN: Ambil data 'kegiatan' juga
+            
             const [presensi, nilai, kegiatan] = await Promise.all([
                 get(ref(db, `users_data/${currentUserKey}/presensi/${kelas}/${mapelId}`)),
                 get(ref(db, `users_data/${currentUserKey}/nilai/${kelas}/${mapelId}`)),
-                get(ref(db, `users_data/${currentUserKey}/kegiatan/${kelas}/${mapelId}`)) // <-- Ditambahkan
+                get(ref(db, `users_data/${currentUserKey}/kegiatan/${kelas}/${mapelId}`)) 
             ]);
             
-            // PERUBAHAN: Simpan 'kegiatan' ke currentRekapData
+            
             currentRekapData = {
                 presensi: presensi.val() || {},
                 nilai: nilai.val() || {},
-                kegiatan: kegiatan.val() || {}, // <-- Ditambahkan
+                kegiatan: kegiatan.val() || {}, 
                 kelas
             };
             
             rekapSearchContainer.classList.remove('hidden');
             rekapDownloadDropdownBtn.classList.remove('hidden');
             searchRekapStudentInput.value = '';
-            filterRekapTable(); // Fungsi ini sekarang punya data kegiatan
+            filterRekapTable(); 
             hideLoader();
         }
         
@@ -1033,64 +1032,63 @@
             const table = rekapDynamicTableContent.querySelector('table');
             if (!table) return showToast("Tidak ada data.", true);
             
-            // PERBAIKAN: Ambil header Row 1
+            
             const headerRow1Els = table.rows[0].querySelectorAll('th');
             const headerRow1 = Array.from(headerRow1Els)
                                     .map(th => `"${th.textContent.trim()}"`).join(';');
 
-            // PERBAIKAN: Buat padding untuk Row 2
-            const paddingCount = headerRow1Els.length > 0 ? headerRow1Els.length - 1 : 0; // -1 untuk kolom 'Jumlah'
-            const header2Padding = Array(paddingCount).fill('""').join(';'); // Sel kosong untuk No, Nama, Tgl...
+            
+            const paddingCount = headerRow1Els.length > 0 ? headerRow1Els.length - 1 : 0; 
+            const header2Padding = Array(paddingCount).fill('""').join(';'); 
 
-            // PERBAIKAN: Ambil data header Row 2 (S, I, A)
+            
             const headerRow2Data = Array.from(table.rows[1].querySelectorAll('th'))
                                     .map(th => `"${th.textContent.trim()}"`).join(';');
             
-            // PERBAIKAN: Gabungkan padding dan data Row 2
+            
             const finalHeaderRow2 = header2Padding + (paddingCount > 0 ? ';' : '') + headerRow2Data;
 
-            // PERBAIKAN: Inisialisasi CSV dengan KEDUA baris header
+            
             let csv = [headerRow1, finalHeaderRow2];
             
-            // PERBAIKAN: Mulai loop dari i = 2 (melewati 2 baris header)
+            
             for (let i = 2; i < table.rows.length; i++) {
                 const rowData = Array.from(table.rows[i].querySelectorAll('td')).map(td => {
-                    // 1. Dapatkan teks mentah, ganti newline dengan spasi (untuk "• \n 64" -> "• 64")
+                    
                     let cellText = td.textContent.trim().replace(/\s*\n\s*/g, ' ').trim();
                     
-                    // 2. PERBAIKAN: Cek apakah ini baris terakhir (baris kegiatan)
+                    
                     const isKegiatanRow = (i === table.rows.length - 1);
 
-                    // 3. JIKA BUKAN baris kegiatan (ini baris siswa), proses nilainya
+                    
                     if (!isKegiatanRow) {
-                        // Cek apakah sel berisi angka di bagian akhir (e.g., "• 64", "S 64", "64")
+                        
                         const gradeMatch = cellText.match(/([\d\.]+)$/);
                         
                         if (gradeMatch) {
-                            // Jika ada nilai, ambil nilainya saja (e.g., "64")
+                            
                             cellText = gradeMatch[1];
                         } else if (cellText === '•') {
-                            // Jika hanya Hadir (•), ganti jadi strip (-)
+                            
                             cellText = '-';
                         }
                     }
-                    // 4. JIKA INI BARIS KEGIATAN, biarkan 'cellText' apa adanya
-                    // (e.g., "mengerjakan halaman 24" akan tetap utuh)
                     
-                    // 5. Bungkus dengan tanda kutip untuk CSV
+                    
+                    
                     return `"${cellText}"`;
                 });
                 
                 csv.push(rowData.join(';'));
             }
             
-            // Tambahkan BOM (Byte Order Mark) agar Excel membaca UTF-8 dengan benar
+            
             const blob = new Blob(["\uFEFF" + csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             
-            // PERBAIKAN: Ambil nama file dari nilai filter yang dipilih
+            
             const mapelName = rekapFilterMapel.value;
             const kelasName = rekapFilterKelas.value;
             a.download = `rekap_${mapelName.replace(/\s/g, '_')}_${kelasName}.csv` || 'rekap.csv';
@@ -1105,7 +1103,7 @@
             if (!content || content.includes('Tidak ada data')) return showToast("Tidak ada data.", true); 
             const pW = window.open('', '', 'height=600,width=800'); 
             
-            // PERBAIKAN: Menambahkan font-size: 9px; pada body & table, dan padding: 4px; pada th,td
+            
             pW.document.write(`<html><head><title>Cetak Rekap</title><style>body{font-family:Inter,sans-serif;margin:20px;font-size:9px;}h1{font-size:16px;}table{width:100%;border-collapse:collapse;margin-top:15px;font-size:9px;}th,td{border:1px solid #e2e8f0;padding:4px;}th{background-color:#f1f5f9}.vertical-th{writing-mode:vertical-rl;transform:rotate(180deg)}@media print{body{-webkit-print-color-adjust:exact}th{background-color:#f1f5f9!important}}</style></head><body><h1>Rekapitulasi</h1>`); 
             
             pW.document.write(content); 
@@ -1130,7 +1128,7 @@
                 allStudents = {}; allMapel = {}; allJadwalTerstruktur = {};
                 availableClasses.clear();
                 currentPresensiStudentsData = [];
-                // PERUBAHAN: Reset 'kegiatan' juga
+                
                 currentRekapData = { presensi: {}, nilai: {}, kegiatan: {}, kelas: '' };
                 renderStudentsTable(); renderMapelList(); updateMapelFilter(); updateClassFilters();
                 studentTableContainer.innerHTML = '';
@@ -1197,16 +1195,14 @@
             
             const todaySchedule = allJadwalTerstruktur[todayName] ? Object.values(allJadwalTerstruktur[todayName]).map(item => ({ ...item, date: todayDateString })) : [];
             todaySchedule.forEach(item => {
-                 /* PERUBAHAN: Menghapus filter 'if' di sini.
-                    Sekarang SEMUA jadwal hari ini akan didorong ke 'cardsToRender'
-                    dan akan diurutkan nanti. */
+                 
                  cardsToRender.push(item);
             });
 
 
             const enrichedCards = cardsToRender.map(item => {
                 if (item.isPastIncomplete) {
-                    return { ...item, sortOrder: 0 }; // 0: Kemarin (Perlu)
+                    return { ...item, sortOrder: 0 }; 
                 }
                 const isPast = currentTime >= item.jam_selesai;
                 const isCurrent = currentTime >= item.jam_mulai && currentTime < item.jam_selesai;
@@ -1215,16 +1211,16 @@
                 const isComplete = hasPresensi && hasKegiatan;
                 
                 let sortOrder;
-                // PERUBAHAN: Logika pengurutan baru
+                
                 if (isPast && !isComplete) { 
-                    sortOrder = 1; // 1: Tadi (Perlu Dilengkapi) - NAIK KE ATAS
+                    sortOrder = 1; 
                 } else if (isCurrent) { 
-                    sortOrder = 2; // 2: Sekarang (Sedang Berlangsung)
+                    sortOrder = 2; 
                 } else if (!isPast && !isCurrent) { 
-                    sortOrder = 3; // 3: Nanti (Akan Datang)
+                    sortOrder = 3; 
                 } else { 
-                    // Ini mencakup (isPast && isComplete)
-                    sortOrder = 4; // 4: Tadi (Selesai)
+                    
+                    sortOrder = 4; 
                 }
                 return { ...item, sortOrder };
             });
@@ -1238,29 +1234,29 @@
             let dashboardHTML = '';
             if (enrichedCards.length > 0) {
                 enrichedCards.forEach(item => {
-                    // PERUBAHAN: Pindahkan 'isComplete' ke atas agar bisa dipakai di logika header
+                    
                     const hasPresensi = !!allPresensiData[item.kelas]?.[item.mapelId]?.[item.date];
                     const hasKegiatan = !!allKegiatanData[item.kelas]?.[item.mapelId]?.[item.date]?.deskripsi;
                     const isComplete = hasPresensi && hasKegiatan;
                     
                     let cardHeader, cardHeaderColor, cardBorderColor, cardIcon, dateDisplay = '';
 
-                    // PERUBAHAN: Logika header kartu disesuaikan dengan sortOrder baru
+                    
                     if (item.isPastIncomplete) {
                         cardHeader = "PERLU DILENGKAPI"; cardHeaderColor = "text-yellow-600"; cardBorderColor = "persistent-card"; cardIcon = `<i class="fa-solid fa-exclamation-triangle text-xl ${cardHeaderColor}"></i>`;
                         const pastDate = new Date(item.date + 'T00:00:00');
                         dateDisplay = `<p class="text-xs font-semibold text-yellow-700 bg-yellow-100 px-2 py-1 rounded-full">${formatDateToIndonesian(pastDate)}</p>`;
                     
-                    } else if (item.sortOrder === 1) { // 1: Tadi (Perlu)
+                    } else if (item.sortOrder === 1) { 
                         cardHeader = "PERLU DILENGKAPI"; cardHeaderColor = "text-yellow-600"; cardBorderColor = "persistent-card"; cardIcon = `<i class="fa-solid fa-exclamation-triangle text-xl ${cardHeaderColor}"></i>`;
                     
-                    } else if (item.sortOrder === 2) { // 2: Sekarang (Berlangsung)
+                    } else if (item.sortOrder === 2) { 
                         cardHeader = "SEDANG BERLANGSUNG"; cardHeaderColor = "text-blue-600"; cardBorderColor = "highlight-card"; cardIcon = `<i class="fa-solid fa-person-chalkboard text-xl ${cardHeaderColor}"></i>`;
                     
-                    } else if (item.sortOrder === 3) { // 3: Nanti (Akan Datang)
+                    } else if (item.sortOrder === 3) { 
                         cardHeader = "SELANJUTNYA"; cardHeaderColor = "text-gray-500"; cardBorderColor = "future-card"; cardIcon = `<i class="fa-solid fa-hourglass-start text-xl ${cardHeaderColor}"></i>`;
                     
-                    } else { // 4: Tadi (Selesai)
+                    } else { 
                         cardHeader = "SELESAI"; cardHeaderColor = "text-green-600"; cardBorderColor = "completed-card"; cardIcon = `<i class="fa-solid fa-check-circle text-xl ${cardHeaderColor}"></i>`;
                     }
 
@@ -1270,7 +1266,7 @@
                     const kegiatanData = allKegiatanData[item.kelas]?.[item.mapelId]?.[item.date];
                     let presensiHTML = '', presensiDetailHTML = '', buttonHTML = '', kegiatanHTML = '';
                     
-                    // PERUBAHAN: Logika 'canAccess' disesuaikan ke sortOrder 3 (Nanti)
+                    
                     const canAccess = item.sortOrder !== 3 || isBebasPresensi;
 
                     if (canAccess) {
@@ -1282,8 +1278,6 @@
 
                     if (presensiData) { let h = 0, s = 0, i = 0, a = 0; let sakitList = [], izinList = [], alpaList = [], hadirDenganCatatanList = []; Object.entries(presensiData).forEach(([studentId, p]) => { const studentName = allStudents[studentId]?.nama || 'Siswa Dihapus'; switch(p.status) { case 'Hadir': h++; if(p.catatan) hadirDenganCatatanList.push({name: studentName, note: p.catatan}); break; case 'Sakit': s++; sakitList.push({name: studentName, note: p.catatan}); break; case 'Izin': i++; izinList.push({name: studentName, note: p.catatan}); break; case 'Alpa': a++; alpaList.push({name: studentName, note: p.catatan}); break; } }); presensiHTML = `<div class="mt-4 pt-4 border-t border-main"><p class="text-sm font-bold mb-2">Rekap Presensi</p><div class="flex justify-around text-center text-sm"><div><strong>${h}</strong><p>Hadir</p></div><div><strong class="text-orange-600">${s}</strong><p>Sakit</p></div><div><strong class="text-green-600">${i}</strong><p>Izin</p></div><div><strong class="text-red-600">${a}</strong><p>Alpa</p></div></div></div>`; if (sakitList.length > 0 || izinList.length > 0 || alpaList.length > 0 || hadirDenganCatatanList.length > 0) { presensiDetailHTML += '<div class="mt-3 text-xs space-y-1">'; const createList = (title, list) => { if(list.length > 0) presensiDetailHTML += `<div><strong>${title}:</strong> ${list.map(item => `${item.name}${item.note ? ` (<span class="italic text-sub">${item.note}</span>)` : ''}`).join(', ')}</div>`; }; createList('Sakit', sakitList); createList('Izin', izinList); createList('Alpa', alpaList); createList('Hadir (dgn catatan)', hadirDenganCatatanList); presensiDetailHTML += '</div>'; } }
                     
-                    // PERUBAHAN BARU: Logika Catatan Kegiatan Cerdas
-                    // 1. Cek apakah kegiatan HARI INI (sesuai tanggal kartu) sudah diisi
                     if (kegiatanData?.deskripsi) {
                         const label = item.date === todayDateString ? "Kegiatan Hari Ini" : "Kegiatan Tercatat";
                         kegiatanHTML = `<div class="mt-4 pt-4 border-t border-main">
@@ -1291,12 +1285,10 @@
                                             <p class="text-sm p-2 rounded text-black" style="background-color: #F0F8FF;">${kegiatanData.deskripsi}</p>
                                         </div>`;
                     } 
-                    // 2. JIKA HARI INI KOSONG, cari catatan pertemuan SEBELUMNYA sebagai pengingat
                     else {
                         const mapelKegiatan = allKegiatanData[item.kelas]?.[item.mapelId];
                         let lastKegiatanFound = false;
                         if (mapelKegiatan) {
-                            // Cari semua tanggal SEBELUM hari ini yg memiliki deskripsi, urutkan terbaru
                             const previousDates = Object.keys(mapelKegiatan)
                                                       .filter(d => d < item.date && mapelKegiatan[d]?.deskripsi) 
                                                       .sort()
@@ -1305,9 +1297,8 @@
                             if (previousDates.length > 0) {
                                 const lastDate = previousDates[0];
                                 const lastKegiatan = mapelKegiatan[lastDate];
-                                const formattedDate = formatReadableDate(lastDate, 'long'); // (e.g., "Rabu, 20 Nov 2025")
+                                const formattedDate = formatReadableDate(lastDate, 'long');
                                 
-                                // Tampilkan sebagai "Pengingat" dengan latar kuning
                                 kegiatanHTML = `<div class="mt-4 pt-4 border-t border-main">
                                                     <p class="text-sm font-bold mb-1 text-yellow-800">Pengingat: Pertemuan Lalu (${formattedDate})</p>
                                                     <p class="text-sm p-2 rounded text-black" style="background-color: #FFFACD;">${lastKegiatan.deskripsi}</p>
@@ -1316,7 +1307,6 @@
                             }
                         }
                         
-                        // 3. Jika hari ini kosong, dan pertemuan lalu juga kosong, tampilkan status "Belum diisi"
                         if (!lastKegiatanFound && hasPresensi && (item.isPastIncomplete || item.sortOrder === 3 || item.sortOrder === 1)) {
                             kegiatanHTML = `<div class="mt-4 pt-4 border-t border-main">
                                                 <p class="text-sm font-bold mb-1">Kegiatan</p>
@@ -1325,8 +1315,7 @@
                         }
                     }
                     
-                    
-                    // Urutan 'detailContent' tetap (kegiatan di atas presensi)
+                
                     const detailContent = (kegiatanHTML + presensiHTML + presensiDetailHTML);
                     dashboardHTML += ` <div class="card-bg dashboard-card rounded-xl shadow-md ${cardBorderColor} mb-4 p-4"> <div class="flex justify-between items-center mb-2"> <div class="flex items-center space-x-3"> ${cardIcon} <p class="text-sm font-bold ${cardHeaderColor}">${cardHeader}</p> </div> ${dateDisplay || `<p class="font-mono text-sm text-black px-2 py-1 rounded" style="background-color: #F0F8FF;">${item.jam_mulai} - ${item.jam_selesai}</p>`} </div> <div class="flex justify-between items-start"> <div> <h4 class="text-2xl font-bold mb-1"> <span class="px-2 py-1 rounded-md text-xl ${mapelColor.bg} ${mapelColor.text}"> ${item.mapelNama} </span> </h4> <p class="text-lg text-sub"> <span class="font-semibold px-2 py-1 rounded-md text-base ${kelasColor.bg} ${kelasColor.text}"> Kelas ${item.kelas} </span> </p> </div> ${buttonHTML ? `<div class="mt-2 sm:mt-0">${buttonHTML}</div>` : ''} </div> ${(hasPresensi || kegiatanHTML) ? `${detailContent}` : ''} </div>`;
                 });
