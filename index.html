@@ -13,18 +13,28 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    
     <style>
         :root {
             --bg-primary: #f0f2f5; --bg-secondary: #ffffff; --bg-tertiary: #f9fafb;
             --text-primary: #1f2937; --text-secondary: #6b7280; --border-color: #e5e7eb;
             --accent-color: #2563eb; --accent-hover: #1d4ed8;
         }
-        html.dark {
-            --bg-primary: #111827; --bg-secondary: #1f2937; --bg-tertiary: #374151;
-            --text-primary: #f9fafb; --text-secondary: #9ca3af; --border-color: #4b5563;
+
+        /* PERUBAHAN: Mengatur ukuran font dasar */
+        html {
+            /* Ukuran font dasar untuk desktop (14px) */
+            font-size: 14px;
         }
+
+        @media (max-width: 720px) {
+            html {
+                /* PERUBAHAN: Ukuran font HP diperkecil lagi (10px) */
+                /* Ini akan memperkecil semua elemen 'rem' secara proporsional */
+                font-size: 12px;
+            }
+        }
+        
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-primary); color: var(--text-primary); transition: background-color 0.3s, color 0.3s; }
         .app-bg { background-color: var(--bg-primary); }
         .card-bg { background-color: var(--bg-secondary); border: 1px solid var(--border-color); }
@@ -37,11 +47,11 @@
         .btn-primary:hover { background-color: var(--accent-hover); }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
-        .dark ::-webkit-scrollbar-track { background: #2d3748; }
+        
         ::-webkit-scrollbar-thumb { background: #888; border-radius: 3px; }
-        .dark ::-webkit-scrollbar-thumb { background: #555; }
+        
         ::-webkit-scrollbar-thumb:hover { background: #555; }
-        .dark ::-webkit-scrollbar-thumb:hover { background: #444; }
+        
         .hidden { display: none; }
         .fade-in { animation: fadeIn 0.3s ease-out; }
         .fade-out { animation: fadeOut 0.3s ease-in forwards; }
@@ -52,16 +62,16 @@
         .nav-link.active { color: var(--accent-color); transform: scale(1.1); }
         .vertical-th { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; padding-bottom: 8px; padding-top: 8px; }
         button:disabled, select:disabled { background-color: #e5e7eb; cursor: not-allowed; color: #9ca3af; }
-        .dark button:disabled, .dark select:disabled { background-color: #374151; color: #6b7280; }
+        
         .pin-input-dashes { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 4rem; }
         .pin-input-dashes .pin-dash { width: 16px; height: 16px; border-radius: 50%; background-color: #d1d5db; transition: background-color 0.2s ease; }
-        .dark .pin-input-dashes .pin-dash { background-color: #4b5563; }
+        
         .pin-input-dashes .pin-dash.filled { background-color: #1f2937; }
-        .dark .pin-input-dashes .pin-dash.filled { background-color: #f9fafb; }
+        
         .ios-keypad-button { display: flex; align-items: center; justify-content: center; width: 75px; height: 75px; border-radius: 50%; font-size: 2rem; font-weight: 400; transition: background-color 0.2s ease; cursor: pointer; background-color: #e5e7eb; color: #1f2937; }
-        .dark .ios-keypad-button { background-color: #4b5563; color: #f9fafb; }
+        
         .ios-keypad-button:active { background-color: #d1d5db; }
-        .dark .ios-keypad-button:active { background-color: #6b7280; }
+        
         .ios-keypad-button.functional { background-color: transparent; border: none; }
         .dashboard-card { transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
         .dashboard-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
@@ -69,8 +79,8 @@
         .persistent-card { border-left: 5px solid #f59e0b; }
         .completed-card { border-left: 5px solid #22c55e; }
         .future-card { border-left: 5px solid #9ca3af; }
-        #profile-pic-container img, #header-profile-pic { object-fit: cover; }
-        .cropper-container { max-height: 40vh; }
+        
+        
         .presensi-table select, .presensi-table input {
             width: 100%; text-align: center; padding: 4px; border-radius: 6px;
             background-color: var(--bg-tertiary); border: 1px solid var(--border-color);
@@ -101,8 +111,7 @@
         <div id="offline-indicator" class="bg-yellow-500 text-center text-white p-2 text-sm hidden fixed top-0 w-full z-[90]">Anda sedang offline. Perubahan akan disinkronkan saat kembali online.</div>
         <header class="w-full">
             <div class="container mx-auto px-4 py-3 flex justify-between items-center card-bg shadow-md rounded-b-xl">
-                <div class="flex items-center space-x-3">
-                    <img id="header-profile-pic" src="https://placehold.co/40x40/E2E8F0/A0AEC0?text=GU" alt="Foto Profil" class="w-10 h-10 rounded-full border-2 border-main">
+                <div class="flex items-center">
                     <h1 id="user-display-name" class="text-xl font-bold text-main">Memuat...</h1>
                 </div>
                 <div class="relative flex items-center">
@@ -114,18 +123,11 @@
                     </button>
                     <div id="dropdown-menu" class="hidden absolute right-0 top-full mt-2 w-56 card-bg rounded-lg shadow-xl z-20">
                         <div class="p-2">
-                            <a href="#" id="menu-profil" class="flex items-center px-3 py-2 text-sub hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"><i class="fa-solid fa-user w-6"></i><span>Profil</span></a>
-                            <a href="#" id="menu-ganti-pin" class="flex items-center px-3 py-2 text-sub hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"><i class="fa-solid fa-key w-6"></i><span>Ganti PIN</span></a>
                             <div class="flex items-center justify-between px-3 py-2 text-sub">
                                 <div class="flex items-center"><i class="fa-solid fa-unlock-alt w-6"></i><span>Bebas Presensi</span></div>
                                 <label for="bebas-presensi-toggle" class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="bebas-presensi-toggle" class="sr-only peer"><div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div></label>
                             </div>
-                            <div class="flex items-center justify-between px-3 py-2 text-sub">
-                                <div class="flex items-center"><i class="fa-solid fa-palette w-6"></i><span>Tema Gelap</span></div>
-                                <label for="theme-toggle" class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="theme-toggle" class="sr-only peer"><div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div></label>
-                            </div>
-                            <div class="border-t border-main my-1"></div>
-                            <a href="#" id="menu-logout" class="flex items-center px-3 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md"><i class="fa-solid fa-right-from-bracket w-6"></i><span>Keluar</span></a>
+                            <!-- PERUBAHAN: Tombol Keluar dan divider dihapus -->
                         </div>
                     </div>
                 </div>
@@ -158,11 +160,9 @@
                     </div>
                 </div>
                 <div id="content-area" class="hidden">
-                    <!-- MODIFICATION: Added bg-yellow-50 and border classes for styling -->
                     <div class="p-4 rounded-xl shadow-md mb-6 bg-yellow-50 dark:bg-yellow-900/50 border border-yellow-200 dark:border-yellow-800">
                         <div class="flex items-center">
                             <label for="kegiatan-pembelajaran" class="text-sm font-bold text-main">Kegiatan Hari Ini</label>
-                            <!-- MODIFICATION: Added span for save status -->
                             <span id="kegiatan-save-status" class="text-xs text-green-700 dark:text-green-400 font-medium ml-2 hidden"></span>
                         </div>
                         <input type="text" id="kegiatan-pembelajaran" placeholder="Contoh: Mengerjakan Latihan Bab 3" class="w-full mt-2 p-2 input-bg rounded-lg">
@@ -177,7 +177,6 @@
                         <input type="text" id="search-presensi-student" placeholder="Cari berdasarkan nama..." class="w-full px-4 py-2 input-bg rounded-lg focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <div id="student-table-container" class="card-bg p-4 rounded-xl shadow-md overflow-x-auto"></div>
-                    <!-- MODIFICATION: Added disabled attribute and styling for it -->
                     <div id="save-all-container" class="mt-6 text-center"><button id="save-all-btn" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition duration-300 shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed dark:disabled:bg-gray-600" disabled>Simpan Semua Perubahan</button></div>
                 </div>
             </div>
@@ -308,30 +307,6 @@
             </nav>
         </div>
     </div>
-    <div id="pin-verification-modal" class="fixed inset-0 app-bg flex flex-col items-center justify-center z-50 hidden p-8">
-        <div class="w-full max-w-xs text-center flex-grow flex flex-col justify-center">
-            <h3 class="text-2xl font-semibold text-main mb-4">Masukkan PIN</h3>
-            <div id="pin-dashes" class="pin-input-dashes">
-                <div class="pin-dash"></div><div class="pin-dash"></div><div class="pin-dash"></div><div class="pin-dash"></div><div class="pin-dash"></div><div class="pin-dash"></div>
-            </div>
-            <input type="hidden" id="pin-input-field" value="" maxlength="6">
-            <p id="pin-error" class="text-red-500 text-sm h-5 mb-6 hidden"></p>
-            <div id="pin-keypad-modal" class="grid grid-cols-3 gap-x-6 gap-y-4 mx-auto">
-                <button type="button" class="ios-keypad-button" data-value="1">1</button>
-                <button type="button" class="ios-keypad-button" data-value="2">2</button>
-                <button type="button" class="ios-keypad-button" data-value="3">3</button>
-                <button type="button" class="ios-keypad-button" data-value="4">4</button>
-                <button type="button" class="ios-keypad-button" data-value="5">5</button>
-                <button type="button" class="ios-keypad-button" data-value="6">6</button>
-                <button type="button" class="ios-keypad-button" data-value="7">7</button>
-                <button type="button" class="ios-keypad-button" data-value="8">8</button>
-                <button type="button" class="ios-keypad-button" data-value="9">9</button>
-                <div class="functional"></div> 
-                <button type="button" class="ios-keypad-button" data-value="0">0</button>
-                <button type="button" class="ios-keypad-button functional" data-value="backspace"><i class="fa-solid fa-delete-left text-3xl text-sub"></i></button>
-            </div>
-        </div>
-    </div>
 
     <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-[60] hidden p-4"><div id="modal-content" class="card-bg rounded-xl shadow-lg p-6 w-full max-w-md fade-in"></div></div>
 
@@ -352,56 +327,179 @@
         const auth = getAuth(app);
         const db = getDatabase(app);
 
-        let currentMode = 'presensi', allStudents = {}, allMapel = {}, allJadwalTerstruktur = {}, hasUnsavedChanges = false, pendingAction = null, pendingPage = null, currentUserKey = null, currentUserName = null, githubToken = null, deferredPrompt, allLoginData = null, registrationPin = null, currentJadwalMode = 'dinamis', dashboardUpdateInterval = null, isBebasPresensi = false, cropper = null, currentUserProfile = {};
-        let availableClasses = new Set(), unsavedChanges = {}, currentPresensiStudentsData = [], currentRekapData = { presensi: {}, nilai: {}, kelas: '' };
+        
+        let currentMode = 'presensi', allStudents = {}, allMapel = {}, allJadwalTerstruktur = {}, hasUnsavedChanges = false, pendingAction = null, pendingPage = null, currentUserKey = null, currentUserName = null, githubToken = null, deferredPrompt, allLoginData = null, currentJadwalMode = 'dinamis', dashboardUpdateInterval = null, isBebasPresensi = false;
+        let cropper = null; // FIX: Deklarasikan variabel cropper di scope global
+        let availableClasses = new Set(), unsavedChanges = {}, currentPresensiStudentsData = [], currentRekapData = { presensi: {}, nilai: {}, kegiatan: {}, kelas: '' };
         let allPresensiData = {}, allKegiatanData = {};
 
         const el = id => document.getElementById(id);
-        const loadingSpinner = el('loading-spinner'), loginPage = el('login-page'), mainApp = el('app'), userDisplayName = el('user-display-name'), offlineIndicator = el('offline-indicator'), installPwaBtn = el('install-pwa-btn'), pinVerificationModal = el('pin-verification-modal'), pinInputField = el('pin-input-field'), pinDashes = el('pin-dashes'), pinError = el('pin-error'), filterMapel = el('filter-mapel'), filterKelas = el('filter-kelas'), filterTanggal = el('filter-tanggal'), terapkanBtn = el('terapkan-filter-btn'), rekapFilterMapel = el('rekap-filter-mapel'), rekapFilterKelas = el('rekap-filter-kelas'), terapkanRekapBtn = el('terapkan-rekap-btn'), deleteDailyDataBtn = el('delete-daily-data-btn'), toggleModeBtn = el('toggle-mode-btn'), toggleModeSwitch = el('toggle-mode-switch'), modeLabel = el('mode-label'), contentArea = el('content-area'), kegiatanInput = el('kegiatan-pembelajaran'), studentTableContainer = el('student-table-container'), saveAllBtn = el('save-all-btn'), kegiatanHistoryList = el('kegiatan-history-list'), kegiatanHistoryToggleMore = el('kegiatan-history-toggle-more'), presensiSearchContainer = el('presensi-search-container'), searchPresensiStudentInput = el('search-presensi-student'), addStudentForm = el('add-student-form'), allStudentsTable = el('all-students-table'), csvUploadInput = el('csv-upload'), downloadTemplateBtn = el('download-template-btn'), deleteAllStudentsBtn = el('delete-all-students-btn'), searchAllStudentsInput = el('search-all-students'), addMapelForm = el('add-mapel-form'), mapelListContainer = el('mapel-list-container'), jadwalUploadInput = el('jadwal-upload'), jadwalUploadLabel = el('jadwal-upload-label'), jadwalImageContainer = el('jadwal-image-container'), jadwalImage = el('jadwal-image'), jadwalPlaceholder = el('jadwal-placeholder'), deleteJadwalBtn = el('delete-jadwal-btn'), imageViewerModal = el('image-viewer-modal'), closeImageViewerBtn = el('close-image-viewer-btn'), fullscreenImage = el('fullscreen-image'), rekapTableContainer = el('rekap-table-container'), rekapDownloadDropdownBtn = el('rekap-download-dropdown-btn'), rekapDownloadOptions = el('rekap-download-options'), downloadCsvBtn = el('download-csv-btn'), printRekapBtn = el('print-rekap-btn'), rekapSearchContainer = el('rekap-search-container'), searchRekapStudentInput = el('search-rekap-student'), rekapDynamicTableContent = el('rekap-dynamic-table-content'), addJadwalForm = el('add-jadwal-form'), jadwalTerstrukturContainer = el('jadwal-terstruktur-container'), toggleJadwalModeBtn = el('toggle-jadwal-mode-btn'), toggleJadwalModeSwitch = el('toggle-jadwal-mode-switch'), jadwalModeLabel = el('jadwal-mode-label'), jadwalViewGambar = el('jadwal-view-gambar'), jadwalViewDinamis = el('jadwal-view-dinamis'), dashboardGreeting = el('dashboard-greeting'), dashboardDate = el('dashboard-date'), dashboardJadwalCerdas = el('dashboard-jadwal-cerdas'), modal = el('modal'), modalContent = el('modal-content'), burgerMenuBtn = el('burger-menu-btn'), dropdownMenu = el('dropdown-menu'), headerProfilePic = el('header-profile-pic');
+        const loadingSpinner = el('loading-spinner'), loginPage = el('login-page'), mainApp = el('app'), userDisplayName = el('user-display-name'), offlineIndicator = el('offline-indicator'), installPwaBtn = el('install-pwa-btn'), filterMapel = el('filter-mapel'), filterKelas = el('filter-kelas'), filterTanggal = el('filter-tanggal'), terapkanBtn = el('terapkan-filter-btn'), rekapFilterMapel = el('rekap-filter-mapel'), rekapFilterKelas = el('rekap-filter-kelas'), terapkanRekapBtn = el('terapkan-rekap-btn'), deleteDailyDataBtn = el('delete-daily-data-btn'), toggleModeBtn = el('toggle-mode-btn'), toggleModeSwitch = el('toggle-mode-switch'), modeLabel = el('mode-label'), contentArea = el('content-area'), kegiatanInput = el('kegiatan-pembelajaran'), studentTableContainer = el('student-table-container'), saveAllBtn = el('save-all-btn'), kegiatanHistoryList = el('kegiatan-history-list'), kegiatanHistoryToggleMore = el('kegiatan-history-toggle-more'), presensiSearchContainer = el('presensi-search-container'), searchPresensiStudentInput = el('search-presensi-student'), addStudentForm = el('add-student-form'), allStudentsTable = el('all-students-table'), csvUploadInput = el('csv-upload'), downloadTemplateBtn = el('download-template-btn'), deleteAllStudentsBtn = el('delete-all-students-btn'), searchAllStudentsInput = el('search-all-students'), addMapelForm = el('add-mapel-form'), mapelListContainer = el('mapel-list-container'), jadwalUploadInput = el('jadwal-upload'), jadwalUploadLabel = el('jadwal-upload-label'), jadwalImageContainer = el('jadwal-image-container'), jadwalImage = el('jadwal-image'), jadwalPlaceholder = el('jadwal-placeholder'), deleteJadwalBtn = el('delete-jadwal-btn'), imageViewerModal = el('image-viewer-modal'), closeImageViewerBtn = el('close-image-viewer-btn'), fullscreenImage = el('fullscreen-image'), rekapTableContainer = el('rekap-table-container'), rekapDownloadDropdownBtn = el('rekap-download-dropdown-btn'), rekapDownloadOptions = el('rekap-download-options'), downloadCsvBtn = el('download-csv-btn'), printRekapBtn = el('print-rekap-btn'), rekapSearchContainer = el('rekap-search-container'), searchRekapStudentInput = el('search-rekap-student'), rekapDynamicTableContent = el('rekap-dynamic-table-content'), addJadwalForm = el('add-jadwal-form'), jadwalTerstrukturContainer = el('jadwal-terstruktur-container'), toggleJadwalModeBtn = el('toggle-jadwal-mode-btn'), toggleJadwalModeSwitch = el('toggle-jadwal-mode-switch'), jadwalModeLabel = el('jadwal-mode-label'), jadwalViewGambar = el('jadwal-view-gambar'), jadwalViewDinamis = el('jadwal-view-dinamis'), dashboardGreeting = el('dashboard-greeting'), dashboardDate = el('dashboard-date'), dashboardJadwalCerdas = el('dashboard-jadwal-cerdas'), modal = el('modal'), modalContent = el('modal-content'), burgerMenuBtn = el('burger-menu-btn'), dropdownMenu = el('dropdown-menu');
         const navLinks = document.querySelectorAll('.nav-link'), pages = document.querySelectorAll('.page-content');
         
         const saveToLocal = (key, data) => { try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) { console.error("Gagal menyimpan ke localStorage:", e); } };
         const loadFromLocal = (key) => { try { const data = localStorage.getItem(key); return data ? JSON.parse(data) : null; } catch (e) { console.error("Gagal memuat dari localStorage:", e); return null; } };
         
-        function applyTheme(theme) { const themeToggle = el('theme-toggle'); if (theme === 'dark') { document.documentElement.classList.add('dark'); if(themeToggle) themeToggle.checked = true; } else { document.documentElement.classList.remove('dark'); if(themeToggle) themeToggle.checked = false; } }
-        function toggleTheme() { const currentTheme = localStorage.getItem('theme') || 'light'; const newTheme = currentTheme === 'light' ? 'dark' : 'light'; localStorage.setItem('theme', newTheme); applyTheme(newTheme); }
-
         const mapelColorPalette = [{ bg: 'bg-sky-100', text: 'text-sky-800' }, { bg: 'bg-amber-100', text: 'text-amber-800' }, { bg: 'bg-violet-100', text: 'text-violet-800' }, { bg: 'bg-lime-100', text: 'text-lime-800' }, { bg: 'bg-rose-100', text: 'text-rose-800' }, { bg: 'bg-teal-100', text: 'text-teal-800' }, { bg: 'bg-fuchsia-100', text: 'text-fuchsia-800' }, { bg: 'bg-indigo-100', text: 'text-indigo-800' }, { bg: 'bg-emerald-100', text: 'text-emerald-800' }, { bg: 'bg-cyan-100', text: 'text-cyan-800' }, { bg: 'bg-pink-100', text: 'text-pink-800' }, { bg: 'bg-green-100', text: 'text-green-800' }, { bg: 'bg-purple-100', text: 'text-purple-800' }];
         const kelasColorPalette = { 'A': { bg: 'bg-red-100', text: 'text-red-800' }, 'B': { bg: 'bg-orange-100', text: 'text-orange-800' }, 'C': { bg: 'bg-yellow-100', text: 'text-yellow-800' }, 'D': { bg: 'bg-green-100', text: 'text-green-800' }, 'E': { bg: 'bg-blue-100', text: 'text-blue-800' }, 'F': { bg: 'bg-purple-100', text: 'text-purple-800' }, 'DEFAULT': { bg: 'bg-gray-100', text: 'text-gray-800' } };
         function getDeterministicColor(str, type) { if (!str) return kelasColorPalette['DEFAULT']; if (type === 'kelas') { const rombel = str.charAt(str.length - 1).toUpperCase(); return kelasColorPalette[rombel] || kelasColorPalette['DEFAULT']; } if (type === 'mapel') { let hash = 0; for (let i = 0; i < str.length; i++) { hash += str.charCodeAt(i); } const index = hash % mapelColorPalette.length; return mapelColorPalette[index]; } return kelasColorPalette['DEFAULT']; }
         function getLocalISODate(date = new Date()) { const year = date.getFullYear(); const month = String(date.getMonth() + 1).padStart(2, '0'); const day = String(date.getDate()).padStart(2, '0'); return `${year}-${month}-${day}`; }
         function formatDateToIndonesian(date) { return date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); }
-        const showLoader = () => loadingSpinner.classList.remove('hidden'); const hideLoader = () => loadingSpinner.classList.add('hidden'); const showToast = (message, isError = false) => { const toast = el('toast'); el('toast-message').textContent = message; toast.className = `fixed top-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg fade-in z-[100] ${isError ? 'bg-red-500' : 'bg-green-500'}`; toast.classList.remove('hidden'); setTimeout(() => { toast.classList.add('fade-out'); setTimeout(() => toast.classList.add('hidden'), 300); }, 3000); }; const openModal = (content) => { modalContent.innerHTML = content; modal.classList.remove('hidden'); }; window.closeModal = () => { if (cropper) { cropper.destroy(); cropper = null; } modalContent.classList.add('fade-out'); setTimeout(() => { modal.classList.add('hidden'); modalContent.classList.remove('fade-out'); modalContent.innerHTML = ''; }, 300); }; const showAlertModal = (title, message, isError = false) => { const titleColorClass = isError ? 'text-red-600' : 'text-gray-800'; const content = `<h3 class="text-lg font-bold mb-2 ${titleColorClass}">${title}</h3><p class="text-sub mb-6">${message}</p><div class="flex justify-end"><button onclick="window.closeModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg">Oke</button></div>`; openModal(content); }; const fileToBase64 = (file) => new Promise((resolve, reject) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = error => reject(error); }); function sanitizeForPath(name) { if (!name) return 'unknown-user'; return name.trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, ''); } const showUnsavedChangesModal = (action, targetPage = null) => { pendingAction = action; pendingPage = targetPage; const content = `<h3 class="text-lg font-bold mb-2">Perubahan Belum Disimpan</h3><p class="text-sub mb-6">Ada perubahan presensi atau nilai yang belum disimpan. Apakah Anda ingin menyimpannya?</p><div class="flex justify-end space-x-2"><button onclick="window.handleUnsavedChangesAction('cancel')" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.handleUnsavedChangesAction('save')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Simpan</button></div>`; openModal(content); }; window.handleUnsavedChangesAction = async (action) => { closeModal(); if (action === 'save') { await handleSaveAllData(); if (pendingAction === 'applyFilter') { handleTerapkanFilter(true); } else if (pendingAction === 'changePage' && pendingPage) { switchPage(pendingPage, true); } else if (pendingAction === 'logout') { el('menu-logout').click(); } } pendingAction = null; pendingPage = null; }; 
+        
+        // FIX: Definisikan fungsi formatReadableDate
+        function formatReadableDate(isoDate, formatType = 'long') {
+            const date = new Date(isoDate + 'T00:00:00'); // Pastikan parsing sebagai tanggal lokal
+            if (formatType === 'long') {
+                return date.toLocaleDateString('id-ID', { 
+                    weekday: 'long', 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                });
+            }
+            return date.toLocaleDateString('id-ID'); // Fallback
+        }
+    
+        const showLoader = () => loadingSpinner.classList.remove('hidden'); const hideLoader = () => loadingSpinner.classList.add('hidden'); const showToast = (message, isError = false) => { const toast = el('toast'); el('toast-message').textContent = message; toast.className = `fixed top-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg fade-in z-[100] ${isError ? 'bg-red-500' : 'bg-green-500'}`; toast.classList.remove('hidden'); setTimeout(() => { toast.classList.add('fade-out'); setTimeout(() => toast.classList.add('hidden'), 300); }, 3000); }; const openModal = (content) => { modalContent.innerHTML = content; modal.classList.remove('hidden'); }; window.closeModal = () => { if (cropper) { cropper.destroy(); cropper = null; } modalContent.classList.add('fade-out'); setTimeout(() => { modal.classList.add('hidden'); modalContent.classList.remove('fade-out'); modalContent.innerHTML = ''; }, 300); }; const showAlertModal = (title, message, isError = false) => { const titleColorClass = isError ? 'text-red-600' : 'text-gray-800'; const content = `<h3 class="text-lg font-bold mb-2 ${titleColorClass}">${title}</h3><p class="text-sub mb-6">${message}</p><div class="flex justify-end"><button onclick="window.closeModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg">Oke</button></div>`; openModal(content); }; const fileToBase64 = (file) => new Promise((resolve, reject) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = error => reject(error); }); function sanitizeForPath(name) { if (!name) return 'unknown-user'; return name.trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, ''); } const showUnsavedChangesModal = (action, targetPage = null) => { pendingAction = action; pendingPage = targetPage; const content = `<h3 class="text-lg font-bold mb-2">Perubahan Belum Disimpan</h3><p class="text-sub mb-6">Ada perubahan presensi atau nilai yang belum disimpan. Apakah Anda ingin menyimpannya?</p><div class="flex justify-end space-x-2"><button onclick="window.handleUnsavedChangesAction('cancel')" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.handleUnsavedChangesAction('save')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Simpan</button></div>`; openModal(content); };
+        
+        // PERUBAHAN: Logika 'logout' dihapus dari handleUnsavedChangesAction
+        window.handleUnsavedChangesAction = async (action) => { closeModal(); if (action === 'save') { await handleSaveAllData(); if (pendingAction === 'applyFilter') { handleTerapkanFilter(true); } else if (pendingAction === 'changePage' && pendingPage) { switchPage(pendingPage, true); } } pendingAction = null; pendingPage = null; }; 
+        
         function filterAllStudentsTable() { allStudentsTable.innerHTML = ''; const query = searchAllStudentsInput.value.toLowerCase(); const fullStudents = JSON.parse(allStudentsTable.dataset.fullStudents || '[]'); const filteredStudents = fullStudents.filter(student => student.nama.toLowerCase().includes(query) || student.kelas.toLowerCase().includes(query)); let tableRowsHtml = ''; if (filteredStudents.length === 0) { tableRowsHtml = `<tr><td colspan="4" class="text-center p-4 text-sub">Belum ada data siswa.</td></tr>`; } else { filteredStudents.forEach((student, index) => { tableRowsHtml += `<tr class="border-b border-main hover:bg-gray-50 dark:hover:bg-gray-700"><td class="p-3 text-center">${index + 1}</td><td class="p-3 font-medium">${student.nama}</td><td class="p-3">${student.kelas}</td><td class="p-3 text-center"><div class="flex justify-center items-center space-x-2"><button onclick="window.showEditStudentModal('${student.id}')" class="p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button><button onclick="window.showDeleteStudentModal('${student.id}', '${student.nama}')" class="p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div></td></tr>`; }); } allStudentsTable.innerHTML = tableRowsHtml; } 
-        function filterRekapTable() { const query = searchRekapStudentInput.value.toLowerCase(); const { presensi: presensiData, nilai: nilaiData, kelas } = currentRekapData; if (!presensiData && !nilaiData) { rekapDynamicTableContent.innerHTML = '<p class="text-center text-sub">Tidak ada data.</p>'; return; } if (Object.values(allStudents).filter(s => s.kelas === kelas).length === 0) { rekapDynamicTableContent.innerHTML = '<p class="text-center text-sub">Tidak ada siswa.</p>'; return; } const sortedDates = Array.from(new Set([...Object.keys(presensiData), ...Object.keys(nilaiData)])).sort(); if (sortedDates.length === 0) { rekapDynamicTableContent.innerHTML = '<p class="text-center text-sub">Tidak ada data.</p>'; return; } let tableHTML = `<table class="w-full text-xs text-left whitespace-nowrap"><thead style="background-color: #F0F8FF;" class="text-black"><tr><th class="p-2 border border-main text-center w-10">No</th><th class="p-2 border border-main text-center">Nama</th>`; sortedDates.forEach(date => { const [y, m, d] = date.split('-'); tableHTML += `<th class="vertical-th border border-main">${d}/${m}/${y.slice(-2)}</th>`; }); tableHTML += `</tr></thead><tbody>`; const statusSymbols = { Hadir: '•', Sakit: 'S', Izin: 'I', Alpa: 'A' }, statusColors = { S: 'text-orange-600', I: 'text-green-600', A: 'text-red-600' }; let filteredCount = 0; Object.entries(allStudents).filter(([id, student]) => student.kelas === kelas).sort(([, a], [, b]) => a.nama.localeCompare(b.nama)).forEach(([studentId, student]) => { if (student.nama.toLowerCase().includes(query)) { tableHTML += `<tr class="border-b border-main"><td class="p-2 border border-main text-center">${filteredCount + 1}</td><td class="p-2 border border-main font-medium">${student.nama}</td>`; sortedDates.forEach(date => { const status = presensiData[date]?.[studentId]?.status, nilai = nilaiData[date]?.[studentId]?.nilai; let cellContent = '-'; if (status || nilai || nilai === 0) { const symbol = status ? statusSymbols[status] || '?' : '•', colorClass = status ? statusColors[status] || '' : '', nilaiHtml = (nilai || nilai === 0) ? `<br><span class="font-bold">${nilai}</span>` : ''; cellContent = `<span class="${colorClass}">${symbol}</span>${nilaiHtml}`; } tableHTML += `<td class="p-2 border border-main text-center">${cellContent}</td>`; }); tableHTML += `</tr>`; filteredCount++; } }); tableHTML += `</tbody></table>`; rekapDynamicTableContent.innerHTML = tableHTML; if (filteredCount === 0 && query !== '') { rekapDynamicTableContent.innerHTML = `<p class="text-center text-sub">Siswa tidak ditemukan.</p>`; } }
+        
+        // PERUBAHAN: filterRekapTable dimodifikasi untuk header 2 baris
+        function filterRekapTable() {
+            const query = searchRekapStudentInput.value.toLowerCase();
+            // PERUBAHAN: Ambil 'kegiatanData'
+            const { presensi: presensiData, nilai: nilaiData, kegiatan: kegiatanData, kelas } = currentRekapData;
+            
+            // PERUBAHAN: Cek 'kegiatanData' juga
+            if (!presensiData && !nilaiData && !kegiatanData) {
+                rekapDynamicTableContent.innerHTML = '<p class="text-center text-sub">Tidak ada data.</p>';
+                return;
+            }
+            if (Object.values(allStudents).filter(s => s.kelas === kelas).length === 0) {
+                rekapDynamicTableContent.innerHTML = '<p class="text-center text-sub">Tidak ada siswa.</p>';
+                return;
+            }
+
+            // --- PERBAIKAN DIMULAI ---
+            // Menambahkan definisi sortedDates yang hilang
+            const dateSet = new Set([
+                ...Object.keys(presensiData),
+                ...Object.keys(nilaiData),
+                ...Object.keys(kegiatanData)
+            ]);
+            const sortedDates = Array.from(dateSet).sort(); // Mengurutkan tanggal (YYYY-MM-DD)
+
+            if (sortedDates.length === 0) {
+                rekapDynamicTableContent.innerHTML = '<p class="text-center text-sub">Tidak ada data.</p>';
+                return;
+            }
+            // --- PERBAIKAN SELESAI ---
+            
+            // PERUBAHAN: Header diubah menjadi 2 baris untuk kolom "Jumlah"
+            let tableHTML = `<table class="w-full text-xs text-left whitespace-nowrap"><thead style="background-color: #F0F8FF;" class="text-black">`;
+            
+            // Baris 1: Judul Utama
+            tableHTML += `<tr>`;
+            tableHTML += `<th class="p-2 border border-main text-center w-10" rowspan="2">No</th>`;
+            tableHTML += `<th class="p-2 border border-main text-center" rowspan="2">Nama</th>`;
+            sortedDates.forEach(date => {
+                const [y, m, d] = date.split('-');
+                tableHTML += `<th class="vertical-th border border-main" rowspan="2">${d}/${m}/${y.slice(-2)}</th>`;
+            });
+            // Kolom "Jumlah" yang di-merge
+            tableHTML += `<th class="p-2 border border-main text-center font-bold" colspan="3">Jumlah</th>`;
+            tableHTML += `</tr>`;
+
+            // Baris 2: Sub-judul untuk S, I, A
+            tableHTML += `<tr>`;
+            tableHTML += `<th class="p-2 border border-main text-center font-bold" style="background-color: #FFFACD;">S</th>`;
+            tableHTML += `<th class="p-2 border border-main text-center font-bold" style="background-color: #E0FEE0;">I</th>`;
+            tableHTML += `<th class="p-2 border border-main text-center font-bold" style="background-color: #FFEEEE;">A</th>`;
+            tableHTML += `</tr>`;
+            
+            tableHTML += `</thead><tbody>`;
+            
+            const statusSymbols = { Hadir: '•', Sakit: 'S', Izin: 'I', Alpa: 'A' }, statusColors = { S: 'text-orange-600', I: 'text-green-600', A: 'text-red-600' };
+            let filteredCount = 0;
+            Object.entries(allStudents).filter(([id, student]) => student.kelas === kelas).sort(([, a], [, b]) => a.nama.localeCompare(b.nama)).forEach(([studentId, student]) => {
+                if (student.nama.toLowerCase().includes(query)) {
+                    // PERUBAHAN: Inisialisasi penghitung S, I, A per siswa
+                    let countS = 0, countI = 0, countA = 0;
+                    
+                    tableHTML += `<tr class="border-b border-main"><td class="p-2 border border-main text-center">${filteredCount + 1}</td><td class="p-2 border border-main font-medium">${student.nama}</td>`;
+                    sortedDates.forEach(date => {
+                        const status = presensiData[date]?.[studentId]?.status, nilai = nilaiData[date]?.[studentId]?.nilai;
+                        
+                        // PERUBAHAN: Hitung jumlah S, I, A
+                        if (status === 'Sakit') countS++;
+                        else if (status === 'Izin') countI++;
+                        else if (status === 'Alpa') countA++;
+
+                        let cellContent = '-';
+                        let cellBgClass = ''; // <-- Tambahkan ini
+                        if (status || nilai || nilai === 0) {
+                            const symbol = status ? statusSymbols[status] || '?' : '•', colorClass = status ? statusColors[status] || '' : '', nilaiHtml = (nilai || nilai === 0) ? `<br><span class="font-bold">${nilai}</span>` : '';
+                            cellContent = `<span class="${colorClass}">${symbol}</span>${nilaiHtml}`;
+                            
+                            // <-- Tambahkan logika ini
+                            if (status === 'Sakit') cellBgClass = 'bg-orange-100';
+                            else if (status === 'Izin') cellBgClass = 'bg-green-100';
+                            else if (status === 'Alpa') cellBgClass = 'bg-red-100';
+                        }
+                        tableHTML += `<td class="p-2 border border-main text-center ${cellBgClass}">${cellContent}</td>`; // <-- Tambahkan ${cellBgClass}
+                    });
+
+                    // PERUBAHAN: Tambahkan sel untuk jumlah S, I, A
+                    tableHTML += `<td class="p-2 border border-main text-center font-bold" style="background-color: #FFFACD;">${countS}</td>`;
+                    tableHTML += `<td class="p-2 border border-main text-center font-bold" style="background-color: #E0FEE0;">${countI}</td>`;
+                    tableHTML += `<td class="p-2 border border-main text-center font-bold" style="background-color: #FFEEEE;">${countA}</td>`;
+                    
+                    tableHTML += `</tr>`;
+                    filteredCount++;
+                }
+            });
+
+            // PERBAIKAN: Tambahkan baris kegiatan di akhir tbody
+            tableHTML += `<tr class="border-b border-main" style="background-color: #f9fafb; font-weight: bold;">`;
+            tableHTML += `<td class="p-2 border border-main text-left" colspan="2">Kegiatan Pembelajaran</td>`;
+            sortedDates.forEach(date => {
+                const kegiatan = kegiatanData[date]?.deskripsi || '-';
+                // PERUBAHAN: Terapkan class 'vertical-th' dan hapus style inline yang konflik
+                tableHTML += `<td class="vertical-th border border-main" style="font-weight: 500;">${kegiatan}</td>`;
+            });
+            // PERUBAHAN: Tambahkan 3 sel kosong agar sejajar dengan kolom S, I, A
+            tableHTML += `<td class="p-2 border border-main text-center">-</td>`;
+            tableHTML += `<td class="p-2 border border-main text-center">-</td>`;
+            tableHTML += `<td class="p-2 border border-main text-center">-</td>`;
+            tableHTML += `</tr>`;
+
+            tableHTML += `</tbody></table>`;
+            rekapDynamicTableContent.innerHTML = tableHTML;
+            if (filteredCount === 0 && query !== '') {
+                rekapDynamicTableContent.innerHTML = `<p class="text-center text-sub">Siswa tidak ditemukan.</p>`;
+            }
+        }
         
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                allLoginData = loadFromLocal('allLoginData');
-                if (allLoginData) {
-                    try {
-                        registrationPin = (await get(ref(db, 'loginregister/pin'))).val();
-                        showPinVerificationModal();
-                    } catch (error) {
-                        showAlertModal("Error", "Gagal memuat konfigurasi registrasi.", true);
-                    } finally {
-                        hideLoader();
+                try {
+                    const namaSnapshot = await get(ref(db, 'users_data/user1/nama'));
+                    const namaData = namaSnapshot.val();
+                    
+                    if (!namaData || !namaData.name) {
+                        throw new Error("Data 'nama' untuk 'user1' tidak ditemukan.");
                     }
-                } else {
-                    try {
-                        const [loginSnapshot, regPinSnapshot] = await Promise.all([
-                            get(ref(db, 'login')),
-                            get(ref(db, 'loginregister/pin'))
-                        ]);
-                        allLoginData = loginSnapshot.val();
-                        registrationPin = regPinSnapshot.val();
-                        saveToLocal('allLoginData', allLoginData);
-                        showPinVerificationModal();
-                    } catch (error) {
-                        showAlertModal("Error", "Gagal memuat data login. Cek koneksi internet Anda.", true);
-                    } finally {
-                        hideLoader();
-                    }
+                    
+                    currentUserName = namaData.name; 
+                    
+                    handleSuccessfulLogin('user1'); 
+                } catch (error) {
+                    showAlertModal("Error", `Gagal memuat data nama: ${error.message}`, true);
+                    hideLoader();
+                    return;
                 }
             } else {
                 try {
@@ -410,7 +508,6 @@
                 } catch (error) {
                     loginPage.classList.remove('hidden');
                     mainApp.classList.add('hidden');
-                    pinVerificationModal.classList.add('hidden');
                     hideLoader();
                 }
             }
@@ -421,9 +518,8 @@
             try {
                 sessionStorage.setItem('lastUserKey', userKey);
                 currentUserKey = userKey;
-                pinVerificationModal.classList.add('hidden');
                 mainApp.classList.remove('hidden');
-                showToast("Verifikasi PIN berhasil!");
+                showToast("Login berhasil!");
                 loadAllDataFromLocal();
                 initializeDataListeners(); 
                 setupEventListeners();
@@ -441,99 +537,7 @@
             }
         }
 
-        function showPinVerificationModal() { el('login-page').classList.add('hidden'); el('app').classList.add('hidden'); pinVerificationModal.classList.remove('hidden'); pinInputField.value = ''; updatePinDashes(); pinError.classList.add('hidden'); }
-        
-        function checkPin() {
-            const enteredPin = pinInputField.value;
-            if (registrationPin && enteredPin === String(registrationPin)) {
-                showNewUserRegistrationModal();
-                return;
-            }
-            if (!allLoginData) { pinError.textContent = "Data login belum siap."; pinError.classList.remove('hidden'); return; } 
-            let foundUserKey = Object.keys(allLoginData).find(key => allLoginData[key].login && String(allLoginData[key].login) === enteredPin); 
-            if (foundUserKey) { 
-                handleSuccessfulLogin(foundUserKey); 
-            } else { 
-                pinError.textContent = "PIN salah"; 
-                pinError.classList.remove('hidden'); 
-                pinDashes.classList.add('animate-shake'); 
-                setTimeout(() => { pinDashes.classList.remove('animate-shake'); pinInputField.value = ''; updatePinDashes(); }, 800); 
-            } 
-        }
-
-        function showNewUserRegistrationModal() {
-            pinVerificationModal.classList.add('hidden');
-            const modalHTML = `
-                <h3 class="text-lg font-bold mb-4">Registrasi Guru Baru</h3>
-                <p class="text-sub text-sm mb-6">Buat akun baru dengan mengisi form di bawah ini.</p>
-                <div class="space-y-4">
-                    <div>
-                        <label for="new-reg-username" class="block text-sm font-medium text-sub mb-1">Nama Pengguna (maks 10 karakter)</label>
-                        <input type="text" id="new-reg-username" maxlength="10" class="w-full mt-1 p-2 input-bg rounded-lg">
-                    </div>
-                    <div>
-                        <label for="new-reg-pin" class="block text-sm font-medium text-sub mb-1">PIN Baru (6 digit)</label>
-                        <input type="password" id="new-reg-pin" maxlength="6" class="w-full mt-1 p-2 input-bg rounded-lg" inputmode="numeric">
-                    </div>
-                    <div>
-                        <label for="confirm-new-reg-pin" class="block text-sm font-medium text-sub mb-1">Konfirmasi PIN Baru</label>
-                        <input type="password" id="confirm-new-reg-pin" maxlength="6" class="w-full mt-1 p-2 input-bg rounded-lg" inputmode="numeric">
-                    </div>
-                    <p id="reg-error" class="text-red-500 text-sm h-5 text-center"></p>
-                </div>
-                <div class="flex justify-end space-x-2 mt-6">
-                    <button onclick="window.closeRegistrationModal()" class="bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-main font-bold py-2 px-4 rounded-lg">Batal</button>
-                    <button onclick="window.handleNewUserRegistration()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Simpan</button>
-                </div>
-            `;
-            openModal(modalHTML);
-        }
-
-        function closeRegistrationModal() { closeModal(); showPinVerificationModal(); }
-
-        async function handleNewUserRegistration() {
-            const username = el('new-reg-username').value.trim();
-            const newPin = el('new-reg-pin').value;
-            const confirmPin = el('confirm-new-reg-pin').value;
-            const errorEl = el('reg-error');
-            errorEl.textContent = '';
-
-            if (!username || !newPin || !confirmPin) { errorEl.textContent = "Semua kolom wajib diisi."; return; }
-            if (username.length > 10) { errorEl.textContent = "Nama pengguna maksimal 10 karakter."; return; }
-            if (newPin.length !== 6) { errorEl.textContent = "PIN baru harus 6 digit."; return; }
-            if (newPin !== confirmPin) { errorEl.textContent = "Konfirmasi PIN tidak cocok."; return; }
-            if (newPin === String(registrationPin)) { errorEl.textContent = "PIN ini tidak dapat digunakan untuk akun baru."; return; }
-
-            const pinExists = Object.values(allLoginData).some(user => String(user.login) === newPin);
-            if (pinExists) { errorEl.textContent = "PIN ini sudah digunakan. Coba yang lain."; return; }
-
-            showLoader();
-            try {
-                const existingUserKeys = Object.keys(allLoginData || {}).filter(k => k.startsWith('user'));
-                let maxUserNum = 0;
-                if (existingUserKeys.length > 0) {
-                    maxUserNum = Math.max(...existingUserKeys.map(k => parseInt(k.replace('user', ''), 10) || 0));
-                }
-                const newUserId = `user${maxUserNum + 1}`;
-                
-                await set(ref(db, `login/${newUserId}`), { nama: username, login: newPin });
-                
-                if (!allLoginData) allLoginData = {};
-                allLoginData[newUserId] = { nama: username, login: newPin };
-                saveToLocal('allLoginData', allLoginData);
-
-                showToast("Pengguna baru berhasil dibuat!");
-                closeModal();
-                showPinVerificationModal();
-            } catch (error) {
-                showAlertModal("Gagal", `Gagal menyimpan pengguna baru: ${error.message}`, true);
-            } finally {
-                hideLoader();
-            }
-        }
-
-        function updatePinDashes() { const dashes = pinDashes.querySelectorAll('.pin-dash'); const pinLength = pinInputField.value.length; dashes.forEach((dash, index) => { dash.classList.toggle('filled', index < pinLength); }); }
-        async function updateHeaderUI() { if (!currentUserKey) return; currentUserName = allLoginData?.[currentUserKey]?.nama || "Pengguna"; userDisplayName.textContent = `Halo, ${currentUserName.charAt(0).toUpperCase() + currentUserName.slice(1)}`; headerProfilePic.src = currentUserProfile.imageUrl || `https://placehold.co/40x40/E2E8F0/A0AEC0?text=${currentUserName.charAt(0).toUpperCase()}`; }
+        async function updateHeaderUI() { if (!currentUserKey) return; const displayName = currentUserName || "Pengguna"; userDisplayName.textContent = `Halo, ${displayName.charAt(0).toUpperCase() + displayName.slice(1)}`; }
         async function fetchGithubToken() { try { const token = (await get(ref(db, 'token/github'))).val(); if(token) { githubToken = token; saveToLocal('githubToken', token); } else if (!githubToken) { showAlertModal("Konfigurasi Error", "Token GitHub tidak ditemukan.", true); } } catch (error) { if (!githubToken) showAlertModal("Konfigurasi Error", "Gagal mengambil token GitHub.", true); } }
         
         function switchPage(pageId, force = false) { if (!force && hasUnsavedChanges && !el('page-presensi').classList.contains('hidden')) { showUnsavedChangesModal('changePage', pageId); return; } document.querySelectorAll('.page-content').forEach(page => page.classList.add('hidden')); el(`page-${pageId}`).classList.remove('hidden'); document.querySelectorAll('.nav-link').forEach(nav => nav.classList.remove('active')); document.querySelector(`.nav-link[data-page="${pageId}"]`).classList.add('active'); if (pageId === 'hasil-rekap') handleTerapkanRekap(); }
@@ -541,7 +545,7 @@
         function loadAllDataFromLocal() {
             if (!currentUserKey) return;
             const userKeyPrefix = `user_${currentUserKey}_`;
-            currentUserProfile = loadFromLocal(userKeyPrefix + 'profil') || {};
+            
             allStudents = loadFromLocal(userKeyPrefix + 'siswa') || {};
             allMapel = loadFromLocal(userKeyPrefix + 'mapel') || {};
             allJadwalTerstruktur = loadFromLocal(userKeyPrefix + 'jadwal_terstruktur') || {};
@@ -562,7 +566,7 @@
             if (!currentUserKey) return;
             const userPath = `users_data/${currentUserKey}`;
             const userKeyPrefix = `user_${currentUserKey}_`;
-            onValue(ref(db, `${userPath}/profil`), (s) => { currentUserProfile = s.val() || {}; saveToLocal(userKeyPrefix + 'profil', currentUserProfile); updateHeaderUI(); });
+            
             onValue(ref(db, `${userPath}/siswa/`), (s) => { allStudents = s.val() || {}; saveToLocal(userKeyPrefix + 'siswa', allStudents); renderStudentsTable(); updateClassFilters(); displayDashboard(); });
             onValue(ref(db, `${userPath}/mapel/`), (s) => { allMapel = s.val() || {}; saveToLocal(userKeyPrefix + 'mapel', allMapel); renderMapelList(); updateMapelFilter(); updateJadwalMapelFilter(); displayDashboard(); });
             onValue(ref(db, `${userPath}/jadwal_terstruktur`), (s) => { allJadwalTerstruktur = s.val() || {}; saveToLocal(userKeyPrefix + 'jadwal_terstruktur', allJadwalTerstruktur); renderJadwalTerstruktur(); displayDashboard(); });
@@ -579,7 +583,6 @@
         
         function setupPreLoginEventListeners() {
             el('login-form').addEventListener('submit', async (e) => { e.preventDefault(); showLoader(); const email = el('email').value, password = el('password').value; if (!email || !password) { el('login-error').textContent = "Email & Password wajib diisi."; el('login-error').classList.remove('hidden'); hideLoader(); return; } try { await signInWithEmailAndPassword(auth, email, password); el('login-error').classList.add('hidden'); el('password').value = ''; } catch (error) { el('login-error').textContent = "Email atau Password salah."; el('login-error').classList.remove('hidden'); } finally { hideLoader(); } });
-            el('pin-keypad-modal').addEventListener('click', (e) => { const target = e.target.closest('.ios-keypad-button'); if (!target) return; const value = target.dataset.value; let currentPin = pinInputField.value; if (value === 'backspace') { pinInputField.value = currentPin.slice(0, -1); } else if (currentPin.length < 6) { pinInputField.value = currentPin + value; } updatePinDashes(); pinError.classList.add('hidden'); if (pinInputField.value.length === 6) checkPin(); });
         }
 
         function setupEventListeners() {
@@ -594,11 +597,11 @@
                     dropdownMenu.classList.add('hidden');
                 }
             });
-            el('menu-profil').addEventListener('click', (e) => { e.preventDefault(); showProfileModal(); dropdownMenu.classList.add('hidden'); });
-            el('menu-ganti-pin').addEventListener('click', (e) => { e.preventDefault(); showGantiPinModal(); dropdownMenu.classList.add('hidden'); });
-            el('menu-logout').addEventListener('click', (e) => { e.preventDefault(); if (hasUnsavedChanges) { showUnsavedChangesModal('logout'); } else { sessionStorage.removeItem('lastUserKey'); if (dashboardUpdateInterval) clearInterval(dashboardUpdateInterval); signOut(auth); } dropdownMenu.classList.add('hidden'); });
+            
+            // PERUBAHAN: Event listener untuk 'menu-logout' dihapus
+            
             el('bebas-presensi-toggle').addEventListener('change', (e) => { isBebasPresensi = e.target.checked; displayDashboard(); });
-            el('theme-toggle').addEventListener('change', toggleTheme);
+            
             navLinks.forEach(link => { link.addEventListener('click', () => switchPage(link.dataset.page)); });
             addStudentForm.addEventListener('submit', handleAddStudent);
             csvUploadInput.addEventListener('change', handleCsvUpload);
@@ -638,7 +641,7 @@
         function handleAddMapel(e) { e.preventDefault(); const nama = el('mapel-name').value.trim().toUpperCase(), kelas = el('mapel-class').value.toUpperCase(); if (!nama || !kelas) return showToast("Nama mapel dan kelas wajib diisi.", true); showLoader(); set(push(ref(db, `users_data/${currentUserKey}/mapel`)), { nama, kelas }).then(() => { showToast("Mapel berhasil ditambahkan."); addMapelForm.reset(); }).catch(err => showAlertModal("Error", `Gagal: ${err.message}`, true)).finally(hideLoader); }
         function handleToggleMode() { currentMode = currentMode === 'presensi' ? 'nilai' : 'presensi'; const isNilai = currentMode === 'nilai'; toggleModeSwitch.style.transform = isNilai ? 'translateX(1.25rem)' : 'translateX(0)'; toggleModeBtn.classList.toggle('bg-blue-600', isNilai); toggleModeBtn.classList.toggle('bg-gray-200', !isNilai); modeLabel.textContent = `Mode: ${isNilai ? 'Nilai' : 'Presensi'}`; if (!contentArea.classList.contains('hidden')) handleTerapkanFilter(true); }
         
-        // MODIFICATION: Added save status indicator logic
+        
         function handleSaveKegiatan() { 
             const selectedMapelName = filterMapel.value, kelas = filterKelas.value, tanggal = filterTanggal.value; 
             let mapelId = Object.keys(allMapel).find(id => allMapel[id].nama === selectedMapelName && allMapel[id].kelas === kelas); 
@@ -730,13 +733,19 @@
 
             const dateSet = new Set(Object.keys(allHistoricalPresensi));
             Object.keys(allHistoricalNilai).forEach(d => dateSet.add(d));
-            const dateHeaders = Array.from(dateSet)
-                .filter(d => d <= tanggal)
+            
+            // PERUBAHAN: Urutkan tanggal sesuai permintaan
+            // 1. Tanggal yang dipilih (mainDate) selalu diletakkan pertama
+            const dateHeaders = [tanggal]; 
+            
+            // 2. Ambil semua tanggal LAINNYA, urutkan dari terbaru (descending)
+            const otherDates = Array.from(dateSet)
+                .filter(d => d !== tanggal) // Ambil semua KECUALI tanggal yang dipilih
                 .sort()
-                .reverse();
-            if (!dateHeaders.includes(tanggal)) {
-                dateHeaders.unshift(tanggal);
-            }
+                .reverse(); // Urutkan terbaru ke terlama
+            
+            // 3. Gabungkan
+            dateHeaders.push(...otherDates);
 
             renderPresensiTable(studentsInClass, dateHeaders, allHistoricalPresensi, allHistoricalNilai);
 
@@ -744,7 +753,7 @@
             searchPresensiStudentInput.value = '';
             hasUnsavedChanges = false;
             unsavedChanges = {};
-            updateSaveButtonState(); // MODIFICATION: Disable button on new filter
+            updateSaveButtonState();
             hideLoader();
         }
 
@@ -757,7 +766,7 @@
 
         function renderPresensiTable(students, dates, presensiData, nilaiData) {
             const mainDate = filterTanggal.value;
-            let tableHTML = `<table class="w-full text-sm presensi-table whitespace-nowrap"><thead style="background-color: #F0F8FF;" class="text-black sticky top-0 z-10"><tr><th>No</th><th>Nama Lengkap</th><th class="vertical-th">Catatan</th>`;
+            let tableHTML = `<table class="w-full text-sm presensi-table whitespace-nowrap"><thead style="background-color: #F0F8FF;" class="text-black sticky top-0 z-10"><tr><th>No</th><th>Nama Lengkap</th>`;
             dates.forEach(date => {
                 const isMainDate = date === mainDate;
                 const headerClass = isMainDate ? '' : 'vertical-th';
@@ -767,18 +776,14 @@
             tableHTML += `</tr></thead><tbody>`;
 
             if (students.length === 0) {
-                tableHTML += `<tr><td colspan="${dates.length + 3}" class="text-center p-4">Tidak ada siswa di kelas ini.</td></tr>`;
+                tableHTML += `<tr><td colspan="${dates.length + 2}" class="text-center p-4">Tidak ada siswa di kelas ini.</td></tr>`;
             } else {
                 students.forEach((student, index) => {
-                    const studentPresensi = presensiData[mainDate]?.[student.id] || {};
-                    const hasCatatan = studentPresensi.catatan && studentPresensi.catatan.length > 0;
-
+                    
                     tableHTML += `<tr class="student-row" data-student-id="${student.id}" data-full-name="${student.nama}">
                         <td>${index + 1}</td>
                         <td class="nama-col">${abbreviateName(student.nama)}</td>
-                        <td>
-                            <input type="checkbox" onchange="window.toggleNoteInput(this, '${student.id}')" ${hasCatatan ? 'checked' : ''} class="form-checkbox h-4 w-4 text-blue-600 block mx-auto">
-                        </td>`;
+                        `;
 
                     dates.forEach(date => {
                         const pData = presensiData[date]?.[student.id] || {};
@@ -839,20 +844,14 @@
                         tableHTML += `<td>${cellContent}</td>`;
                     });
                     tableHTML += `</tr>`;
-                    tableHTML += `<tr class="note-row hidden" data-note-for="${student.id}" data-visible="false">
-                        <td colspan="${dates.length + 3}" class="p-0">
-                            <div class="p-2">
-                                <textarea class="w-full p-2 input-bg rounded-lg text-sm" oninput="window.updateCatatan(this, '${student.id}', '${mainDate}')" placeholder="Tulis catatan untuk ${mainDate}...">${studentPresensi.catatan || ''}</textarea>
-                            </div>
-                        </td>
-                    </tr>`;
+                    
                 });
             }
             tableHTML += `</tbody></table>`;
             studentTableContainer.innerHTML = tableHTML;
         }
 
-        // MODIFICATION: New function to manage save button state
+        
         function updateSaveButtonState() {
             saveAllBtn.disabled = !hasUnsavedChanges;
         }
@@ -862,7 +861,7 @@
             if (!unsavedChanges[studentId][date]) unsavedChanges[studentId][date] = {};
             Object.assign(unsavedChanges[studentId][date], data);
             hasUnsavedChanges = true;
-            updateSaveButtonState(); // MODIFICATION: Update button on change
+            updateSaveButtonState();
         }
         
         window.togglePresensiDropdown = (event, studentId, date) => {
@@ -893,22 +892,15 @@
         };
 
         window.updateNilai = (input, studentId, date) => {
-            updateChange(studentId, date, { nilai: input.value });
-        };
-
-        window.toggleNoteInput = (checkbox, studentId) => {
-            const noteRow = document.querySelector(`tr[data-note-for="${studentId}"]`);
-            const isChecked = checkbox.checked;
-            noteRow.classList.toggle('hidden', !isChecked);
-            noteRow.dataset.visible = isChecked;
-            if (!isChecked) {
-                const mainDate = filterTanggal.value;
-                updateChange(studentId, mainDate, { catatan: null });
+            // PERBAIKAN: Cek kekosongan di sini.
+            // Jika input kosong, kita kirim 'null' secara eksplisit.
+            // Jika tidak, kirim string nilainya.
+            const nVal = input.value.trim();
+            if (nVal === '') {
+                updateChange(studentId, date, { nilai: null }); // Kirim null
+            } else {
+                updateChange(studentId, date, { nilai: nVal }); // Kirim string nilainya
             }
-        };
-
-        window.updateCatatan = (textarea, studentId, date) => {
-            updateChange(studentId, date, { catatan: textarea.value.trim() });
         };
         
         async function handleSaveAllData() {
@@ -925,21 +917,26 @@
                 for (const date in unsavedChanges[studentId]) {
                     const changes = unsavedChanges[studentId][date];
                     
-                    if (changes.hasOwnProperty('status') || changes.hasOwnProperty('catatan')) {
+                    if (changes.hasOwnProperty('status')) {
                         const presensiPath = `users_data/${currentUserKey}/presensi/${kelas}/${mapelId}/${date}/${studentId}`;
                         const currentData = (await get(ref(db, presensiPath))).val() || { status: 'Hadir' };
                         const finalData = { ...currentData };
                         if (changes.hasOwnProperty('status')) finalData.status = changes.status;
-                        if (changes.hasOwnProperty('catatan')) finalData.catatan = changes.catatan;
+                        
                         updates[presensiPath] = finalData;
                     }
 
                     if (changes.hasOwnProperty('nilai')) {
                         const nilaiPath = `users_data/${currentUserKey}/nilai/${kelas}/${mapelId}/${date}/${studentId}`;
-                        const nVal = String(changes.nilai).trim();
-                        if (nVal === '') {
+                        
+                        // PERBAIKAN: Logika disesuaikan dengan 'updateNilai'
+                        // 'changes.nilai' sekarang bisa 'null' (jika kosong) atau string angka
+                        if (changes.nilai === null) {
+                            // Input dikosongkan, jadi hapus data
                             updates[nilaiPath] = null;
                         } else {
+                            // Input berisi sesuatu, validasi sebagai angka
+                            const nVal = String(changes.nilai).trim(); // (misal: "0" or "50")
                             const n = parseFloat(nVal.replace(',', '.'));
                             if (!isNaN(n) && n >= 0 && n <= 100) {
                                 updates[nilaiPath] = { nilai: n };
@@ -967,7 +964,7 @@
                     showToast("Semua perubahan disimpan.");
                     hasUnsavedChanges = false;
                     unsavedChanges = {};
-                    updateSaveButtonState(); // MODIFICATION: Disable button after save
+                    updateSaveButtonState();
                     handleTerapkanFilter(true);
                 } catch (err) {
                     hideLoader();
@@ -980,7 +977,7 @@
                 showToast("Offline. Perubahan disimpan lokal.");
                 hasUnsavedChanges = false;
                 unsavedChanges = {};
-                updateSaveButtonState(); // MODIFICATION: Disable button after save
+                updateSaveButtonState();
                 hideLoader();
             }
         }
@@ -992,13 +989,164 @@
         window.showEditMapelModal=(m)=>{const d=allMapel[m];let c='';Array.from(availableClasses).sort().forEach(k=>{c+=`<option value="${k}" ${k===d.kelas?'selected':''}>${k}</option>`;});openModal(`<h3 class="text-lg font-bold mb-4">Edit Mapel</h3><div class="mb-4"><label>Nama</label><input type="text" id="edit-mapel-name" value="${d.nama}" class="w-full mt-1 p-2 input-bg rounded-lg"></div><div class="mb-6"><label>Kelas</label><select id="edit-mapel-class" class="w-full mt-1 p-2 input-bg rounded-lg">${c}</select></div><div class="flex justify-end space-x-2"><button onclick="window.closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.handleEditMapel('${m}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Simpan</button></div>`);};window.handleEditMapel=(m)=>{const n=el('edit-mapel-name').value.trim().toUpperCase(),c=el('edit-mapel-class').value.toUpperCase();if(!n||!c)return showToast("Nama & kelas wajib.",true);showLoader();update(ref(db,`users_data/${currentUserKey}/mapel/${m}`),{nama:n,kelas:c}).then(()=>{showToast("Mapel diperbarui.");closeModal();}).catch(e=>showAlertModal("Error",e.message,true)).finally(hideLoader);};window.showDeleteMapelModal=(m,n,c)=>{openModal(`<h3 class="text-lg font-bold mb-2 text-red-600">Hapus Mapel?</h3><p class="mb-6">Yakin hapus <b>${n} (${c})</b> dan semua datanya?</p><div class="flex justify-end space-x-2"><button onclick="window.closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.handleDeleteMapel('${m}','${c}')" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Hapus</button></div>`);};window.handleDeleteMapel=async(m,c)=>{showLoader();try{const u={};u[`users_data/${currentUserKey}/mapel/${m}`]=null;u[`users_data/${currentUserKey}/presensi/${c}/${m}`]=null;u[`users_data/${currentUserKey}/nilai/${c}/${m}`]=null;u[`users_data/${currentUserKey}/kegiatan/${c}/${m}`]=null;const s={};for(const d in allJadwalTerstruktur){for(const i in allJadwalTerstruktur[d]){if(allJadwalTerstruktur[d][i].mapelId===m)s[`users_data/${currentUserKey}/jadwal_terstruktur/${d}/${i}`]=null;}}await update(ref(db),s);await update(ref(db),u);showToast("Mapel dihapus.");closeModal();refreshRekapTableIfNeeded();}catch(e){showAlertModal("Error",e.message,true);}finally{hideLoader();}};
         function renderKegiatanHistory(historyData) { kegiatanHistoryList.innerHTML = ''; if (historyData.length === 0) { kegiatanHistoryList.innerHTML = '<p class="text-center text-gray-400">Tidak ada riwayat.</p>'; kegiatanHistoryToggleMore.classList.add('hidden'); return; } kegiatanHistoryList.dataset.fullhistory = JSON.stringify(historyData); const isPartial = kegiatanHistoryToggleMore.dataset.state === 'partial'; const dataToShow = isPartial ? historyData.slice(0, 2) : historyData; dataToShow.forEach(item => { const [y,m,d] = item.tanggal.split('-'), date = new Date(y,m-1,d); kegiatanHistoryList.innerHTML += `<div class="p-2 border-b border-yellow-200 dark:border-yellow-800"><p class="font-semibold">${formatDateToIndonesian(date)}</p><p class="text-sub">${item.deskripsi}</p></div>`; }); kegiatanHistoryToggleMore.classList.toggle('hidden', historyData.length <= 2); kegiatanHistoryToggleMore.innerHTML = isPartial ? 'Lainnya &darr;' : 'Ringkas &uarr;'; }
         async function fetchAndRenderKegiatanHistory(kelas, mapelId) { kegiatanHistoryList.innerHTML = '<p>Memuat...</p>'; const allKegiatan = (await get(ref(db, `users_data/${currentUserKey}/kegiatan/${kelas}/${mapelId}`))).val() || {}; const historyList = Object.entries(allKegiatan).filter(([,d]) => d.deskripsi).map(([t,d]) => ({ tanggal: t, deskripsi: d.deskripsi })).sort((a,b) => b.tanggal.localeCompare(a.tanggal)); renderKegiatanHistory(historyList); }
-        async function handleTerapkanRekap() { const selectedMapelName = rekapFilterMapel.value, kelas = rekapFilterKelas.value; if (!selectedMapelName || !kelas) { rekapDynamicTableContent.innerHTML = '<p class="text-center text-sub">Pilih Mapel & Kelas.</p>'; rekapSearchContainer.classList.add('hidden'); rekapDownloadDropdownBtn.classList.add('hidden'); return; } let mapelId = Object.keys(allMapel).find(id => allMapel[id].nama === selectedMapelName && allMapel[id].kelas === kelas); if (!mapelId) return showAlertModal("Error", "Kombinasi tidak ditemukan.", true); showLoader(); rekapDynamicTableContent.innerHTML = '<p class="text-center text-sub">Memuat...</p>'; const [presensi, nilai] = await Promise.all([get(ref(db, `users_data/${currentUserKey}/presensi/${kelas}/${mapelId}`)), get(ref(db, `users_data/${currentUserKey}/nilai/${kelas}/${mapelId}`))]); currentRekapData = { presensi: presensi.val() || {}, nilai: nilai.val() || {}, kelas }; rekapSearchContainer.classList.remove('hidden'); rekapDownloadDropdownBtn.classList.remove('hidden'); searchRekapStudentInput.value = ''; filterRekapTable(); hideLoader(); }
+        
+        // PERUBAHAN: handleTerapkanRekap dimodifikasi
+        async function handleTerapkanRekap() {
+            const selectedMapelName = rekapFilterMapel.value, kelas = rekapFilterKelas.value;
+            if (!selectedMapelName || !kelas) {
+                rekapDynamicTableContent.innerHTML = '<p class="text-center text-sub">Pilih Mapel & Kelas.</p>';
+                rekapSearchContainer.classList.add('hidden');
+                rekapDownloadDropdownBtn.classList.add('hidden');
+                return;
+            }
+            let mapelId = Object.keys(allMapel).find(id => allMapel[id].nama === selectedMapelName && allMapel[id].kelas === kelas);
+            if (!mapelId) return showAlertModal("Error", "Kombinasi tidak ditemukan.", true);
+            
+            showLoader();
+            rekapDynamicTableContent.innerHTML = '<p class="text-center text-sub">Memuat...</p>';
+            
+            // PERUBAHAN: Ambil data 'kegiatan' juga
+            const [presensi, nilai, kegiatan] = await Promise.all([
+                get(ref(db, `users_data/${currentUserKey}/presensi/${kelas}/${mapelId}`)),
+                get(ref(db, `users_data/${currentUserKey}/nilai/${kelas}/${mapelId}`)),
+                get(ref(db, `users_data/${currentUserKey}/kegiatan/${kelas}/${mapelId}`)) // <-- Ditambahkan
+            ]);
+            
+            // PERUBAHAN: Simpan 'kegiatan' ke currentRekapData
+            currentRekapData = {
+                presensi: presensi.val() || {},
+                nilai: nilai.val() || {},
+                kegiatan: kegiatan.val() || {}, // <-- Ditambahkan
+                kelas
+            };
+            
+            rekapSearchContainer.classList.remove('hidden');
+            rekapDownloadDropdownBtn.classList.remove('hidden');
+            searchRekapStudentInput.value = '';
+            filterRekapTable(); // Fungsi ini sekarang punya data kegiatan
+            hideLoader();
+        }
+        
         function toggleRekapDownloadDropdown() { rekapDownloadOptions.classList.toggle('hidden'); }
-        function handleDownloadCSV() { rekapDownloadOptions.classList.add('hidden'); const table = rekapDynamicTableContent.querySelector('table'); if (!table) return showToast("Tidak ada data.", true); let csv = [Array.from(table.querySelectorAll('tr')[0].querySelectorAll('th')).map(th => th.textContent.trim()).join(';')]; for (let i = 1; i < table.rows.length; i++) { csv.push(Array.from(table.rows[i].querySelectorAll('td')).map(td => `"${td.textContent.trim().replace(/\s*\n\s*/g, ' - ')}"`).join(';')); } const blob = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; const mapel = allMapel[rekapFilterMapel.value]; a.download = `rekap_${mapel?.nama.replace(/\s/g, '_')}_${mapel?.kelas}.csv` || 'rekap.csv'; a.click(); URL.revokeObjectURL(url); showToast("CSV diunduh."); }
-        function handlePrintRekap() { rekapDownloadOptions.classList.add('hidden'); const content = rekapDynamicTableContent.innerHTML; if (!content || content.includes('Tidak ada data')) return showToast("Tidak ada data.", true); const pW = window.open('', '', 'height=600,width=800'); pW.document.write(`<html><head><title>Cetak Rekap</title><style>body{font-family:Inter,sans-serif;margin:20px}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #e2e8f0;padding:8px}th{background-color:#f1f5f9}.vertical-th{writing-mode:vertical-rl;transform:rotate(180deg)}@media print{body{-webkit-print-color-adjust:exact}th{background-color:#f1f5f9!important}}</style></head><body><h1>Rekapitulasi</h1>`); pW.document.write(content); pW.document.write('</body></html>'); pW.document.close(); pW.print(); }
+        function handleDownloadCSV() {
+            rekapDownloadOptions.classList.add('hidden');
+            const table = rekapDynamicTableContent.querySelector('table');
+            if (!table) return showToast("Tidak ada data.", true);
+            
+            // PERBAIKAN: Ambil header Row 1
+            const headerRow1Els = table.rows[0].querySelectorAll('th');
+            const headerRow1 = Array.from(headerRow1Els)
+                                    .map(th => `"${th.textContent.trim()}"`).join(';');
+
+            // PERBAIKAN: Buat padding untuk Row 2
+            const paddingCount = headerRow1Els.length > 0 ? headerRow1Els.length - 1 : 0; // -1 untuk kolom 'Jumlah'
+            const header2Padding = Array(paddingCount).fill('""').join(';'); // Sel kosong untuk No, Nama, Tgl...
+
+            // PERBAIKAN: Ambil data header Row 2 (S, I, A)
+            const headerRow2Data = Array.from(table.rows[1].querySelectorAll('th'))
+                                    .map(th => `"${th.textContent.trim()}"`).join(';');
+            
+            // PERBAIKAN: Gabungkan padding dan data Row 2
+            const finalHeaderRow2 = header2Padding + (paddingCount > 0 ? ';' : '') + headerRow2Data;
+
+            // PERBAIKAN: Inisialisasi CSV dengan KEDUA baris header
+            let csv = [headerRow1, finalHeaderRow2];
+            
+            // PERBAIKAN: Mulai loop dari i = 2 (melewati 2 baris header)
+            for (let i = 2; i < table.rows.length; i++) {
+                const rowData = Array.from(table.rows[i].querySelectorAll('td')).map(td => {
+                    // 1. Dapatkan teks mentah, ganti newline dengan spasi (untuk "• \n 64" -> "• 64")
+                    let cellText = td.textContent.trim().replace(/\s*\n\s*/g, ' ').trim();
+                    
+                    // 2. PERBAIKAN: Cek apakah ini baris terakhir (baris kegiatan)
+                    const isKegiatanRow = (i === table.rows.length - 1);
+
+                    // 3. JIKA BUKAN baris kegiatan (ini baris siswa), proses nilainya
+                    if (!isKegiatanRow) {
+                        // Cek apakah sel berisi angka di bagian akhir (e.g., "• 64", "S 64", "64")
+                        const gradeMatch = cellText.match(/([\d\.]+)$/);
+                        
+                        if (gradeMatch) {
+                            // Jika ada nilai, ambil nilainya saja (e.g., "64")
+                            cellText = gradeMatch[1];
+                        } else if (cellText === '•') {
+                            // Jika hanya Hadir (•), ganti jadi strip (-)
+                            cellText = '-';
+                        }
+                    }
+                    // 4. JIKA INI BARIS KEGIATAN, biarkan 'cellText' apa adanya
+                    // (e.g., "mengerjakan halaman 24" akan tetap utuh)
+                    
+                    // 5. Bungkus dengan tanda kutip untuk CSV
+                    return `"${cellText}"`;
+                });
+                
+                csv.push(rowData.join(';'));
+            }
+            
+            // Tambahkan BOM (Byte Order Mark) agar Excel membaca UTF-8 dengan benar
+            const blob = new Blob(["\uFEFF" + csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            // PERBAIKAN: Ambil nama file dari nilai filter yang dipilih
+            const mapelName = rekapFilterMapel.value;
+            const kelasName = rekapFilterKelas.value;
+            a.download = `rekap_${mapelName.replace(/\s/g, '_')}_${kelasName}.csv` || 'rekap.csv';
+            
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast("CSV diunduh.");
+        }
+        function handlePrintRekap() { 
+            rekapDownloadOptions.classList.add('hidden'); 
+            const content = rekapDynamicTableContent.innerHTML; 
+            if (!content || content.includes('Tidak ada data')) return showToast("Tidak ada data.", true); 
+            const pW = window.open('', '', 'height=600,width=800'); 
+            
+            // PERBAIKAN: Menambahkan font-size: 9px; pada body & table, dan padding: 4px; pada th,td
+            pW.document.write(`<html><head><title>Cetak Rekap</title><style>body{font-family:Inter,sans-serif;margin:20px;font-size:9px;}h1{font-size:16px;}table{width:100%;border-collapse:collapse;margin-top:15px;font-size:9px;}th,td{border:1px solid #e2e8f0;padding:4px;}th{background-color:#f1f5f9}.vertical-th{writing-mode:vertical-rl;transform:rotate(180deg)}@media print{body{-webkit-print-color-adjust:exact}th{background-color:#f1f5f9!important}}</style></head><body><h1>Rekapitulasi</h1>`); 
+            
+            pW.document.write(content); 
+            pW.document.write('</body></html>'); 
+            pW.document.close(); 
+            pW.print(); 
+        }
         function refreshRekapTableIfNeeded() { const rekapPage = el('page-hasil-rekap'); if (!rekapPage.classList.contains('hidden') && rekapFilterMapel.value) handleTerapkanRekap(); }
         function showDeleteAllStudentsConfirmationModal() { const content = `<h3 class="text-lg font-bold mb-2 text-red-600">Hapus Semua Data?</h3><p class="mb-4">Tindakan ini akan **menghapus semua data siswa, presensi, nilai, mapel, dan jadwal secara permanen!**</p><p class="mb-6">Masukkan password Anda:</p><div class="mb-4"><label for="confirm-password">Password</label><input type="password" id="confirm-password" class="w-full mt-1 p-2 input-bg rounded-lg" required><p id="confirm-password-error" class="text-red-500 mt-2 hidden"></p></div><div class="flex justify-end space-x-2"><button onclick="window.closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button id="confirm-delete-all-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Hapus Semua</button></div>`; openModal(content); el('confirm-delete-all-btn').addEventListener('click', handleDeleteAllStudents); }
-        async function handleDeleteAllStudents() { const pw = el('confirm-password').value, errEl = el('confirm-password-error'); if (!pw) { errEl.textContent = "Password wajib diisi."; errEl.classList.remove('hidden'); return; } errEl.classList.add('hidden'); showLoader(); const user = auth.currentUser; if (!user) { closeModal(); hideLoader(); return showAlertModal("Gagal", "Tidak terautentikasi.", true); } try { await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, pw)); await remove(ref(db, `users_data/${currentUserKey}`)); showToast("Semua data berhasil dihapus."); closeModal(); allStudents = {}; allMapel = {}; allJadwalTerstruktur = {}; availableClasses.clear(); currentPresensiStudentsData = []; currentRekapData = { presensi: {}, nilai: {}, kelas: '' }; renderStudentsTable(); renderMapelList(); updateMapelFilter(); updateClassFilters(); studentTableContainer.innerHTML = ''; rekapDynamicTableContent.innerHTML = ''; contentArea.classList.add('hidden'); kegiatanInput.value = ''; } catch (error) { if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') { errEl.textContent = "Password salah."; errEl.classList.remove('hidden');} else { showAlertModal("Error", `Gagal menghapus: ${error.message}`, true); } } finally { hideLoader(); } }
+        async function handleDeleteAllStudents() {
+            const pw = el('confirm-password').value, errEl = el('confirm-password-error');
+            if (!pw) { errEl.textContent = "Password wajib diisi."; errEl.classList.remove('hidden'); return; }
+            errEl.classList.add('hidden');
+            showLoader();
+            const user = auth.currentUser;
+            if (!user) { closeModal(); hideLoader(); return showAlertModal("Gagal", "Tidak terautentikasi.", true); }
+            try {
+                await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, pw));
+                await remove(ref(db, `users_data/${currentUserKey}`));
+                showToast("Semua data berhasil dihapus.");
+                closeModal();
+                allStudents = {}; allMapel = {}; allJadwalTerstruktur = {};
+                availableClasses.clear();
+                currentPresensiStudentsData = [];
+                // PERUBAHAN: Reset 'kegiatan' juga
+                currentRekapData = { presensi: {}, nilai: {}, kegiatan: {}, kelas: '' };
+                renderStudentsTable(); renderMapelList(); updateMapelFilter(); updateClassFilters();
+                studentTableContainer.innerHTML = '';
+                rekapDynamicTableContent.innerHTML = '';
+                contentArea.classList.add('hidden');
+                kegiatanInput.value = '';
+            } catch (error) {
+                if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    errEl.textContent = "Password salah."; errEl.classList.remove('hidden');
+                } else {
+                    showAlertModal("Error", `Gagal menghapus: ${error.message}`, true);
+                }
+            } finally {
+                hideLoader();
+            }
+        }
         function showDeleteDailyDataConfirmationModal() { const mapel = filterMapel.value, kelas = filterKelas.value, tgl = filterTanggal.value; if (!mapel || !kelas || !tgl) return showToast("Filter harus lengkap.", true); const date = new Date(tgl + 'T00:00:00'); const content = `<h3 class="text-lg font-bold mb-2 text-red-600">Hapus Data Hari Ini?</h3><p class="mb-6">Yakin ingin menghapus data <b>${mapel} (${kelas})</b> pada <b>${formatDateToIndonesian(date)}</b>?</p><div class="flex justify-end space-x-2"><button onclick="window.closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.handleDeleteDailyData()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Hapus</button></div>`; openModal(content); }
         async function handleDeleteDailyData() { const mapel = filterMapel.value, kelas = filterKelas.value, tgl = filterTanggal.value; let mapelId = Object.keys(allMapel).find(id => allMapel[id].nama === mapel && allMapel[id].kelas === kelas); if (!mapelId) return showAlertModal("Error", "Gagal menemukan data.", true); closeModal(); showLoader(); try { const updates = {}; updates[`users_data/${currentUserKey}/presensi/${kelas}/${mapelId}/${tgl}`] = null; updates[`users_data/${currentUserKey}/nilai/${kelas}/${mapelId}/${tgl}`] = null; updates[`users_data/${currentUserKey}/kegiatan/${kelas}/${mapelId}/${tgl}`] = null; await update(ref(db), updates); showToast("Data hari ini dihapus."); handleTerapkanFilter(true); } catch (err) { showAlertModal("Error", `Gagal: ${err.message}`, true); } finally { hideLoader(); } }
         
@@ -1023,7 +1171,7 @@
             let cardsToRender = [];
             const processedPastEntries = new Set();
 
-            // Find incomplete schedules from the past (look back 14 days)
+            
             const today = new Date(todayDateString + 'T00:00:00');
             for (let i = 1; i <= 14; i++) {
                 const pastDate = new Date(today);
@@ -1046,31 +1194,38 @@
                 });
             }
             
-            // Add today's schedule
+            
             const todaySchedule = allJadwalTerstruktur[todayName] ? Object.values(allJadwalTerstruktur[todayName]).map(item => ({ ...item, date: todayDateString })) : [];
             todaySchedule.forEach(item => {
-                 const isPast = currentTime >= item.jam_selesai;
-                 const hasPresensi = !!allPresensiData[item.kelas]?.[item.mapelId]?.[todayDateString];
-                 const hasKegiatan = !!allKegiatanData[item.kelas]?.[item.mapelId]?.[todayDateString]?.deskripsi;
-                 if (!isPast || (isPast && (hasPresensi || hasKegiatan)) || isBebasPresensi) {
-                    cardsToRender.push(item);
-                 }
+                 /* PERUBAHAN: Menghapus filter 'if' di sini.
+                    Sekarang SEMUA jadwal hari ini akan didorong ke 'cardsToRender'
+                    dan akan diurutkan nanti. */
+                 cardsToRender.push(item);
             });
 
 
             const enrichedCards = cardsToRender.map(item => {
                 if (item.isPastIncomplete) {
-                    return { ...item, sortOrder: 0 };
+                    return { ...item, sortOrder: 0 }; // 0: Kemarin (Perlu)
                 }
                 const isPast = currentTime >= item.jam_selesai;
                 const isCurrent = currentTime >= item.jam_mulai && currentTime < item.jam_selesai;
                 const hasPresensi = !!allPresensiData[item.kelas]?.[item.mapelId]?.[item.date];
                 const hasKegiatan = !!allKegiatanData[item.kelas]?.[item.mapelId]?.[item.date]?.deskripsi;
                 const isComplete = hasPresensi && hasKegiatan;
+                
                 let sortOrder;
-                if (isCurrent) { sortOrder = 1; } 
-                else if (!isPast) { sortOrder = 2; } 
-                else { sortOrder = isComplete ? 4 : 3; }
+                // PERUBAHAN: Logika pengurutan baru
+                if (isPast && !isComplete) { 
+                    sortOrder = 1; // 1: Tadi (Perlu Dilengkapi) - NAIK KE ATAS
+                } else if (isCurrent) { 
+                    sortOrder = 2; // 2: Sekarang (Sedang Berlangsung)
+                } else if (!isPast && !isCurrent) { 
+                    sortOrder = 3; // 3: Nanti (Akan Datang)
+                } else { 
+                    // Ini mencakup (isPast && isComplete)
+                    sortOrder = 4; // 4: Tadi (Selesai)
+                }
                 return { ...item, sortOrder };
             });
 
@@ -1083,27 +1238,30 @@
             let dashboardHTML = '';
             if (enrichedCards.length > 0) {
                 enrichedCards.forEach(item => {
-                    const isCurrent = item.sortOrder === 1;
+                    // PERUBAHAN: Pindahkan 'isComplete' ke atas agar bisa dipakai di logika header
                     const hasPresensi = !!allPresensiData[item.kelas]?.[item.mapelId]?.[item.date];
                     const hasKegiatan = !!allKegiatanData[item.kelas]?.[item.mapelId]?.[item.date]?.deskripsi;
                     const isComplete = hasPresensi && hasKegiatan;
                     
                     let cardHeader, cardHeaderColor, cardBorderColor, cardIcon, dateDisplay = '';
 
+                    // PERUBAHAN: Logika header kartu disesuaikan dengan sortOrder baru
                     if (item.isPastIncomplete) {
                         cardHeader = "PERLU DILENGKAPI"; cardHeaderColor = "text-yellow-600"; cardBorderColor = "persistent-card"; cardIcon = `<i class="fa-solid fa-exclamation-triangle text-xl ${cardHeaderColor}"></i>`;
                         const pastDate = new Date(item.date + 'T00:00:00');
                         dateDisplay = `<p class="text-xs font-semibold text-yellow-700 bg-yellow-100 px-2 py-1 rounded-full">${formatDateToIndonesian(pastDate)}</p>`;
-                    } else if (isCurrent) {
+                    
+                    } else if (item.sortOrder === 1) { // 1: Tadi (Perlu)
+                        cardHeader = "PERLU DILENGKAPI"; cardHeaderColor = "text-yellow-600"; cardBorderColor = "persistent-card"; cardIcon = `<i class="fa-solid fa-exclamation-triangle text-xl ${cardHeaderColor}"></i>`;
+                    
+                    } else if (item.sortOrder === 2) { // 2: Sekarang (Berlangsung)
                         cardHeader = "SEDANG BERLANGSUNG"; cardHeaderColor = "text-blue-600"; cardBorderColor = "highlight-card"; cardIcon = `<i class="fa-solid fa-person-chalkboard text-xl ${cardHeaderColor}"></i>`;
-                    } else if (item.sortOrder === 2) { // Upcoming
+                    
+                    } else if (item.sortOrder === 3) { // 3: Nanti (Akan Datang)
                         cardHeader = "SELANJUTNYA"; cardHeaderColor = "text-gray-500"; cardBorderColor = "future-card"; cardIcon = `<i class="fa-solid fa-hourglass-start text-xl ${cardHeaderColor}"></i>`;
-                    } else { // Past Today
-                         if (isComplete) {
-                            cardHeader = "SELESAI"; cardHeaderColor = "text-green-600"; cardBorderColor = "completed-card"; cardIcon = `<i class="fa-solid fa-check-circle text-xl ${cardHeaderColor}"></i>`;
-                         } else {
-                             cardHeader = "PERLU DILENGKAPI"; cardHeaderColor = "text-yellow-600"; cardBorderColor = "persistent-card"; cardIcon = `<i class="fa-solid fa-exclamation-triangle text-xl ${cardHeaderColor}"></i>`;
-                         }
+                    
+                    } else { // 4: Tadi (Selesai)
+                        cardHeader = "SELESAI"; cardHeaderColor = "text-green-600"; cardBorderColor = "completed-card"; cardIcon = `<i class="fa-solid fa-check-circle text-xl ${cardHeaderColor}"></i>`;
                     }
 
                     const mapelColor = getDeterministicColor(item.mapelNama, 'mapel');
@@ -1111,7 +1269,9 @@
                     const presensiData = allPresensiData[item.kelas]?.[item.mapelId]?.[item.date];
                     const kegiatanData = allKegiatanData[item.kelas]?.[item.mapelId]?.[item.date];
                     let presensiHTML = '', presensiDetailHTML = '', buttonHTML = '', kegiatanHTML = '';
-                    const canAccess = isCurrent || item.sortOrder !== 2 || isBebasPresensi || item.isPastIncomplete;
+                    
+                    // PERUBAHAN: Logika 'canAccess' disesuaikan ke sortOrder 3 (Nanti)
+                    const canAccess = item.sortOrder !== 3 || isBebasPresensi;
 
                     if (canAccess) {
                         let buttonText = "Mulai Presensi"; let buttonClass = "bg-blue-600 hover:bg-blue-700"; let buttonIcon = `<i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>`;
@@ -1120,12 +1280,55 @@
                         buttonHTML = `<button onclick="window.handlePresensiShortcut('${item.mapelId}', '${item.kelas}', '${item.date}')" class="${buttonClass} text-white font-bold py-2 px-4 rounded-lg flex items-center transition text-sm">${buttonIcon}<span>${buttonText}</span></button>`;
                     }
 
-                    if (presensiData) { let h = 0, s = 0, i = 0, a = 0; let sakitList = [], izinList = [], alpaList = [], hadirDenganCatatanList = []; Object.entries(presensiData).forEach(([studentId, p]) => { const studentName = allStudents[studentId]?.nama || 'Siswa Dihapus'; switch(p.status) { case 'Hadir': h++; if(p.catatan) hadirDenganCatatanList.push({name: studentName, note: p.catatan}); break; case 'Sakit': s++; sakitList.push({name: studentName, note: p.catatan}); break; case 'Izin': i++; izinList.push({name: studentName, note: p.catatan}); break; case 'Alpa': a++; alpaList.push({name: studentName, note: p.catatan}); break; } }); presensiHTML = `<div class="mt-4 pt-4 border-t border-main"><p class="text-sm font-bold mb-2">Rekap Presensi</p><div class="flex justify-around text-center text-sm"><div><strong>${h}</strong><p>Hadir</p></div><div><strong class="text-orange-600">${s}</strong><p>Sakit</p></div><div><strong class="text-green-600">${i}</strong><p>Izin</p></div><div><strong class="text-red-600">${a}</strong><p>Alpa</p></div></div></div>`; if (sakitList.length > 0 || izinList.length > 0 || alpaList.length > 0 || hadirDenganCatatanList.length > 0) { presensiDetailHTML += '<div class="mt-3 text-xs space-y-1">'; const createList = (title, list) => { if(list.length > 0) presensiDetailHTML += `<div><strong>${title}:</strong> ${list.map(item => `${item.name}<span class="italic text-sub">${item.note ? ` (${item.note})` : ''}</span>`).join(', ')}</div>`; }; createList('Sakit', sakitList); createList('Izin', izinList); createList('Alpa', alpaList); createList('Hadir (dgn catatan)', hadirDenganCatatanList); presensiDetailHTML += '</div>'; } }
-                    if (kegiatanData?.deskripsi) { kegiatanHTML = `<div class="mt-4 pt-4 border-t border-main"><p class="text-sm font-bold mb-1">Kegiatan</p><p class="text-sm p-2 rounded text-black" style="background-color: #F0F8FF;">${kegiatanData.deskripsi}</p></div>`; } 
-                    else if (hasPresensi) { kegiatanHTML = `<div class="mt-4 pt-4 border-t border-main"><p class="text-sm font-bold mb-1">Kegiatan</p><p class="text-sm text-orange-600 font-semibold">Belum diisi.</p></div>`; }
+                    if (presensiData) { let h = 0, s = 0, i = 0, a = 0; let sakitList = [], izinList = [], alpaList = [], hadirDenganCatatanList = []; Object.entries(presensiData).forEach(([studentId, p]) => { const studentName = allStudents[studentId]?.nama || 'Siswa Dihapus'; switch(p.status) { case 'Hadir': h++; if(p.catatan) hadirDenganCatatanList.push({name: studentName, note: p.catatan}); break; case 'Sakit': s++; sakitList.push({name: studentName, note: p.catatan}); break; case 'Izin': i++; izinList.push({name: studentName, note: p.catatan}); break; case 'Alpa': a++; alpaList.push({name: studentName, note: p.catatan}); break; } }); presensiHTML = `<div class="mt-4 pt-4 border-t border-main"><p class="text-sm font-bold mb-2">Rekap Presensi</p><div class="flex justify-around text-center text-sm"><div><strong>${h}</strong><p>Hadir</p></div><div><strong class="text-orange-600">${s}</strong><p>Sakit</p></div><div><strong class="text-green-600">${i}</strong><p>Izin</p></div><div><strong class="text-red-600">${a}</strong><p>Alpa</p></div></div></div>`; if (sakitList.length > 0 || izinList.length > 0 || alpaList.length > 0 || hadirDenganCatatanList.length > 0) { presensiDetailHTML += '<div class="mt-3 text-xs space-y-1">'; const createList = (title, list) => { if(list.length > 0) presensiDetailHTML += `<div><strong>${title}:</strong> ${list.map(item => `${item.name}${item.note ? ` (<span class="italic text-sub">${item.note}</span>)` : ''}`).join(', ')}</div>`; }; createList('Sakit', sakitList); createList('Izin', izinList); createList('Alpa', alpaList); createList('Hadir (dgn catatan)', hadirDenganCatatanList); presensiDetailHTML += '</div>'; } }
                     
-                    const detailContent = (presensiHTML + presensiDetailHTML + kegiatanHTML);
-                    dashboardHTML += ` <div class="card-bg dashboard-card rounded-xl shadow-md ${cardBorderColor} mb-4 p-4"> <div class="flex justify-between items-center mb-2"> <div class="flex items-center space-x-3"> ${cardIcon} <p class="text-sm font-bold ${cardHeaderColor}">${cardHeader}</p> </div> ${dateDisplay || `<p class="font-mono text-sm text-black px-2 py-1 rounded" style="background-color: #F0F8FF;">${item.jam_mulai} - ${item.jam_selesai}</p>`} </div> <div class="flex justify-between items-start"> <div> <h4 class="text-2xl font-bold mb-1"> <span class="px-2 py-1 rounded-md text-xl ${mapelColor.bg} ${mapelColor.text}"> ${item.mapelNama} </span> </h4> <p class="text-lg text-sub"> <span class="font-semibold px-2 py-1 rounded-md text-base ${kelasColor.bg} ${kelasColor.text}"> Kelas ${item.kelas} </span> </p> </div> ${buttonHTML ? `<div class="mt-2 sm:mt-0">${buttonHTML}</div>` : ''} </div> ${(hasPresensi || hasKegiatan) ? `${detailContent}` : ''} </div>`;
+                    // PERUBAHAN BARU: Logika Catatan Kegiatan Cerdas
+                    // 1. Cek apakah kegiatan HARI INI (sesuai tanggal kartu) sudah diisi
+                    if (kegiatanData?.deskripsi) {
+                        const label = item.date === todayDateString ? "Kegiatan Hari Ini" : "Kegiatan Tercatat";
+                        kegiatanHTML = `<div class="mt-4 pt-4 border-t border-main">
+                                            <p class="text-sm font-bold mb-1">${label} (${formatReadableDate(item.date, 'long')})</p>
+                                            <p class="text-sm p-2 rounded text-black" style="background-color: #F0F8FF;">${kegiatanData.deskripsi}</p>
+                                        </div>`;
+                    } 
+                    // 2. JIKA HARI INI KOSONG, cari catatan pertemuan SEBELUMNYA sebagai pengingat
+                    else {
+                        const mapelKegiatan = allKegiatanData[item.kelas]?.[item.mapelId];
+                        let lastKegiatanFound = false;
+                        if (mapelKegiatan) {
+                            // Cari semua tanggal SEBELUM hari ini yg memiliki deskripsi, urutkan terbaru
+                            const previousDates = Object.keys(mapelKegiatan)
+                                                      .filter(d => d < item.date && mapelKegiatan[d]?.deskripsi) 
+                                                      .sort()
+                                                      .reverse();
+                            
+                            if (previousDates.length > 0) {
+                                const lastDate = previousDates[0];
+                                const lastKegiatan = mapelKegiatan[lastDate];
+                                const formattedDate = formatReadableDate(lastDate, 'long'); // (e.g., "Rabu, 20 Nov 2025")
+                                
+                                // Tampilkan sebagai "Pengingat" dengan latar kuning
+                                kegiatanHTML = `<div class="mt-4 pt-4 border-t border-main">
+                                                    <p class="text-sm font-bold mb-1 text-yellow-800">Pengingat: Pertemuan Lalu (${formattedDate})</p>
+                                                    <p class="text-sm p-2 rounded text-black" style="background-color: #FFFACD;">${lastKegiatan.deskripsi}</p>
+                                                </div>`;
+                                lastKegiatanFound = true;
+                            }
+                        }
+                        
+                        // 3. Jika hari ini kosong, dan pertemuan lalu juga kosong, tampilkan status "Belum diisi"
+                        if (!lastKegiatanFound && hasPresensi && (item.isPastIncomplete || item.sortOrder === 3 || item.sortOrder === 1)) {
+                            kegiatanHTML = `<div class="mt-4 pt-4 border-t border-main">
+                                                <p class="text-sm font-bold mb-1">Kegiatan</p>
+                                                <p class="text-sm text-orange-600 font-semibold">Belum diisi.</p>
+                                            </div>`;
+                        }
+                    }
+                    
+                    
+                    // Urutan 'detailContent' tetap (kegiatan di atas presensi)
+                    const detailContent = (kegiatanHTML + presensiHTML + presensiDetailHTML);
+                    dashboardHTML += ` <div class="card-bg dashboard-card rounded-xl shadow-md ${cardBorderColor} mb-4 p-4"> <div class="flex justify-between items-center mb-2"> <div class="flex items-center space-x-3"> ${cardIcon} <p class="text-sm font-bold ${cardHeaderColor}">${cardHeader}</p> </div> ${dateDisplay || `<p class="font-mono text-sm text-black px-2 py-1 rounded" style="background-color: #F0F8FF;">${item.jam_mulai} - ${item.jam_selesai}</p>`} </div> <div class="flex justify-between items-start"> <div> <h4 class="text-2xl font-bold mb-1"> <span class="px-2 py-1 rounded-md text-xl ${mapelColor.bg} ${mapelColor.text}"> ${item.mapelNama} </span> </h4> <p class="text-lg text-sub"> <span class="font-semibold px-2 py-1 rounded-md text-base ${kelasColor.bg} ${kelasColor.text}"> Kelas ${item.kelas} </span> </p> </div> ${buttonHTML ? `<div class="mt-2 sm:mt-0">${buttonHTML}</div>` : ''} </div> ${(hasPresensi || kegiatanHTML) ? `${detailContent}` : ''} </div>`;
                 });
             }
             if (dashboardHTML === '') {
@@ -1148,7 +1351,7 @@
         }
         async function syncOfflineData() { const pending = loadFromLocal('pending-updates'); if (!pending || Object.keys(pending).length === 0) return; showToast("Menyinkronkan data..."); showLoader(); try { await update(ref(db), pending); localStorage.removeItem('pending-updates'); showToast("Sinkronisasi berhasil."); } catch (e) { showToast("Gagal sinkronisasi.", true); } finally { hideLoader(); } }
         function handleOnlineStatus() { offlineIndicator.classList.add('hidden'); syncOfflineData(); }
-        function handleOfflineStatus() { offlineIndicator.classList.remove('hidden'); showToast("Anda offline.", true); }
+        function handleOfflineStatus() { offlineIndicator.classList.add('hidden'); showToast("Anda offline.", true); }
         
         if (installPwaBtn) {
             window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; installPwaBtn.classList.remove('hidden'); });
@@ -1157,165 +1360,8 @@
         }
 
         if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration failed: ', err)); }); }
-        
-        function showProfileModal() {
-            const modalHTML = `
-                <h3 class="text-lg font-bold mb-4">Profil Pengguna</h3>
-                <div class="flex flex-col items-center space-y-4 mb-6">
-                    <div id="profile-pic-container" class="relative">
-                        <img id="modal-profile-pic" src="${currentUserProfile.imageUrl || `https://placehold.co/100x100/E2E8F0/A0AEC0?text=${currentUserName.charAt(0).toUpperCase()}`}" alt="Foto Profil" class="w-24 h-24 rounded-full border-4 border-main">
-                        <label for="profile-pic-upload" class="absolute bottom-0 right-0 bg-blue-500 text-white p-1.5 rounded-full cursor-pointer hover:bg-blue-600"><i class="fa-solid fa-pencil text-xs"></i></label>
-                        <input type="file" id="profile-pic-upload" class="hidden" accept="image/*">
-                    </div>
-                    <div id="cropper-container" class="w-full hidden"><img id="image-to-crop"></div>
-                    <button id="delete-profile-pic-btn" class="text-xs text-red-500 hover:underline ${currentUserProfile.imageUrl ? '' : 'hidden'}">Hapus Foto</button>
-                </div>
-                <div class="mb-4">
-                    <label for="edit-username" class="block text-sm font-medium text-sub mb-1">Nama Pengguna (maks 10 karakter)</label>
-                    <input type="text" id="edit-username" value="${currentUserName}" maxlength="10" class="w-full mt-1 p-2 input-bg rounded-lg">
-                </div>
-                <div class="flex justify-end space-x-2 mt-6">
-                    <button onclick="window.closeModal()" class="bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-main font-bold py-2 px-4 rounded-lg">Batal</button>
-                    <button id="save-profile-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Simpan</button>
-                </div>
-            `;
-            openModal(modalHTML);
-            el('profile-pic-upload').addEventListener('change', handleProfilePicSelect);
-            el('save-profile-btn').addEventListener('click', handleSaveProfile);
-            el('delete-profile-pic-btn').addEventListener('click', handleDeleteProfilePic);
-        }
-
-        function handleProfilePicSelect(e) {
-            const file = e.target.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                el('modal-profile-pic').classList.add('hidden');
-                el('cropper-container').classList.remove('hidden');
-                const imageToCrop = el('image-to-crop');
-                imageToCrop.src = event.target.result;
-                if (cropper) cropper.destroy();
-                cropper = new Cropper(imageToCrop, { aspectRatio: 1, viewMode: 1, background: false, autoCropArea: 0.8 });
-            };
-            reader.readAsDataURL(file);
-        }
-
-        async function handleSaveProfile() {
-            showLoader();
-            const newUsername = el('edit-username').value.trim();
-            if (newUsername.length === 0) { hideLoader(); return showToast("Nama pengguna tidak boleh kosong.", true); }
-            try {
-                if (newUsername !== currentUserName) {
-                    await update(ref(db, `login/${currentUserKey}`), { nama: newUsername });
-                    allLoginData[currentUserKey].nama = newUsername;
-                    saveToLocal('allLoginData', allLoginData);
-                    currentUserName = newUsername;
-                }
-                if (cropper) {
-                    const canvas = cropper.getCroppedCanvas({ width: 256, height: 256 });
-                    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg'));
-                    const base64Content = await fileToBase64(blob);
-                    const sanitizedUserName = sanitizeForPath(currentUserName);
-                    const filePath = `profiles/${currentUserKey}/${sanitizedUserName}/profile.jpg`;
-                    const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${filePath}`;
-                    let sha = null;
-                    try { const res = await fetch(apiUrl, { headers: { 'Authorization': `token ${githubToken}` } }); if (res.ok) sha = (await res.json()).sha; } catch (e) {}
-                    const payload = { message: `Update profil ${new Date().toISOString()}`, content: base64Content, sha };
-                    const res = await fetch(apiUrl, { method: 'PUT', headers: { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify(payload) });
-                    if (!res.ok) throw new Error((await res.json()).message);
-                    const data = await res.json();
-                    await set(ref(db, `users_data/${currentUserKey}/profil`), { imageUrl: data.content.download_url + `?t=${new Date().getTime()}` });
-                }
-                await updateHeaderUI();
-                showToast("Profil berhasil diperbarui.");
-                closeModal();
-            } catch (error) {
-                showAlertModal("Gagal", `Gagal menyimpan profil: ${error.message}`, true);
-            } finally {
-                hideLoader();
-            }
-        }
-        
-        async function handleDeleteProfilePic() {
-            if (!currentUserKey || !currentUserName || !githubToken) return showAlertModal("Error", "Info tidak lengkap.", true);
-            showLoader();
-            const sanitizedUserName = sanitizeForPath(currentUserName);
-            const filePath = `profiles/${currentUserKey}/${sanitizedUserName}/profile.jpg`;
-            const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${filePath}`;
-            try {
-                const res = await fetch(apiUrl, { headers: { 'Authorization': `token ${githubToken}` } });
-                if (res.ok) {
-                    const { sha } = await res.json();
-                    const delRes = await fetch(apiUrl, { method: 'DELETE', headers: { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify({ message: `Hapus foto profil ${new Date().toISOString()}`, sha }) });
-                    if (!delRes.ok) throw new Error((await delRes.json()).message);
-                }
-                await remove(ref(db, `users_data/${currentUserKey}/profil`));
-                currentUserProfile = {};
-                saveToLocal(`user_${currentUserKey}_profil`, {});
-                await updateHeaderUI();
-                showToast("Foto profil dihapus.");
-                closeModal();
-            } catch (error) {
-                showAlertModal("Gagal", `Gagal menghapus foto: ${error.message}`, true);
-            } finally {
-                hideLoader();
-            }
-        }
-
-        function showGantiPinModal() {
-            const modalHTML = `
-                <h3 class="text-lg font-bold mb-4">Ganti PIN</h3>
-                <div class="space-y-4">
-                    <div>
-                        <label for="current-pin" class="block text-sm font-medium text-sub mb-1">PIN Saat Ini</label>
-                        <input type="password" id="current-pin" maxlength="6" class="w-full mt-1 p-2 input-bg rounded-lg" inputmode="numeric">
-                    </div>
-                    <div>
-                        <label for="new-pin" class="block text-sm font-medium text-sub mb-1">PIN Baru (6 digit)</label>
-                        <input type="password" id="new-pin" maxlength="6" class="w-full mt-1 p-2 input-bg rounded-lg" inputmode="numeric">
-                    </div>
-                    <div>
-                        <label for="confirm-new-pin" class="block text-sm font-medium text-sub mb-1">Konfirmasi PIN Baru</label>
-                        <input type="password" id="confirm-new-pin" maxlength="6" class="w-full mt-1 p-2 input-bg rounded-lg" inputmode="numeric">
-                    </div>
-                </div>
-                <div class="flex justify-end space-x-2 mt-6">
-                    <button onclick="window.closeModal()" class="bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-main font-bold py-2 px-4 rounded-lg">Batal</button>
-                    <button id="save-new-pin-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Ganti PIN</button>
-                </div>
-            `;
-            openModal(modalHTML);
-            el('save-new-pin-btn').addEventListener('click', handleSaveNewPin);
-        }
-
-        async function handleSaveNewPin() {
-            const currentPin = el('current-pin').value;
-            const newPin = el('new-pin').value;
-            const confirmNewPin = el('confirm-new-pin').value;
-            if (!currentPin || !newPin || !confirmNewPin) { return showToast("Semua kolom wajib diisi.", true); }
-            if (newPin.length !== 6) { return showToast("PIN baru harus 6 digit.", true); }
-            if (newPin !== confirmNewPin) { return showToast("Konfirmasi PIN baru tidak cocok.", true); }
-            if (String(allLoginData[currentUserKey].login) !== currentPin) { return showToast("PIN saat ini salah.", true); }
-            showLoader();
-            try {
-                await update(ref(db, `login/${currentUserKey}`), { login: newPin });
-                allLoginData[currentUserKey].login = newPin;
-                saveToLocal('allLoginData', allLoginData);
-                showToast("PIN berhasil diganti.");
-                closeModal();
-            } catch (error) {
-                showAlertModal("Gagal", `Gagal mengganti PIN: ${error.message}`, true);
-            } finally {
-                hideLoader();
-            }
-        }
-
         window.handleDeleteDailyData = handleDeleteDailyData; window.handleDeleteJadwal = handleDeleteJadwal; window.handleDeleteMapel = handleDeleteMapel; window.handleDeleteStudent = handleDeleteStudent; window.handleEditMapel = handleEditMapel; window.handleEditStudent = handleEditStudent; window.showDeleteMapelModal = showDeleteMapelModal; window.showDeleteStudentModal = showDeleteStudentModal; window.showEditMapelModal = showEditMapelModal; window.showEditStudentModal = showEditStudentModal; window.goToBuatJadwal = goToBuatJadwal; window.handlePresensiShortcut = handlePresensiShortcut; window.showEditJadwalModal = showEditJadwalModal; window.handleEditJadwal = handleEditJadwal; window.handleDeleteJadwalEntry = handleDeleteJadwalEntry;
-        window.handleNewUserRegistration = handleNewUserRegistration; window.closeRegistrationModal = closeRegistrationModal;
-        
-        applyTheme(loadFromLocal('theme'));
         setupPreLoginEventListeners();
-
     </script>
 </body>
 </html>
-
