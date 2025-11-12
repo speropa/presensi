@@ -992,7 +992,7 @@
         
         async function handleTerapkanRekap() {
             const selectedMapelName = rekapFilterMapel.value, kelas = rekapFilterKelas.value;
-            if (!selectedMapapelselectedMapelName || !kelas) {
+            if (!selectedMapelName || !kelas) {
                 rekapDynamicTableContent.innerHTML = '<p class="text-center text-sub">Pilih Mapel & Kelas.</p>';
                 rekapSearchContainer.classList.add('hidden');
                 rekapDownloadDropdownBtn.classList.add('hidden');
