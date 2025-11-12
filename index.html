@@ -114,7 +114,7 @@
                     <div id="dropdown-menu" class="hidden absolute right-0 top-full mt-2 w-56 card-bg rounded-lg shadow-xl z-20">
                         <div class="p-2">
                             <div class="flex items-center justify-between px-3 py-2 text-sub">
-                                <div class="flex items-center"><i class="fa-solid fa-unlock-alt w-6"></i><span>Bebas Presensi</span></div>
+                                <div class="flex items-center"><i class="fa-solid fa-unlock-alt w-6"></i><span class="ml-2">Bebas Presensi & Nonaktifkan Notifikasi</span></div>
                                 <label for="bebas-presensi-toggle" class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="bebas-presensi-toggle" class="sr-only peer"><div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div></label>
                             </div>
                             
@@ -557,7 +557,14 @@
             
             onValue(ref(db, `${userPath}/siswa/`), (s) => { allStudents = s.val() || {}; saveToLocal(userKeyPrefix + 'siswa', allStudents); renderStudentsTable(); updateClassFilters(); displayDashboard(); });
             onValue(ref(db, `${userPath}/mapel/`), (s) => { allMapel = s.val() || {}; saveToLocal(userKeyPrefix + 'mapel', allMapel); renderMapelList(); updateMapelFilter(); updateJadwalMapelFilter(); displayDashboard(); });
-            onValue(ref(db, `${userPath}/jadwal_terstruktur`), (s) => { allJadwalTerstruktur = s.val() || {}; saveToLocal(userKeyPrefix + 'jadwal_terstruktur', allJadwalTerstruktur); renderJadwalTerstruktur(); displayDashboard(); });
+            onValue(ref(db, `${userPath}/jadwal_terstruktur`), (s) => { 
+                allJadwalTerstruktur = s.val() || {}; 
+                saveToLocal(userKeyPrefix + 'jadwal_terstruktur', allJadwalTerstruktur); 
+                renderJadwalTerstruktur(); 
+                displayDashboard(); 
+                // TAMBAHAN: Jadwalkan ulang notifikasi saat jadwal berubah
+                scheduleAllNotifications();
+            });
             onValue(ref(db, `${userPath}/jadwal`), (s) => { const d = s.val(); saveToLocal(userKeyPrefix + 'jadwal_gambar', d); const hasImage = d && d.imageUrl; jadwalImage.src = hasImage ? d.imageUrl : ''; jadwalImage.classList.toggle('hidden', !hasImage); jadwalImage.classList.toggle('cursor-pointer', hasImage); jadwalPlaceholder.classList.toggle('hidden', hasImage); jadwalUploadLabel.classList.toggle('hidden', hasImage); deleteJadwalBtn.classList.toggle('hidden', !hasImage); });
             onValue(ref(db, `${userPath}/presensi`), (s) => { allPresensiData = s.val() || {}; saveToLocal(userKeyPrefix + 'presensi', allPresensiData); displayDashboard(); });
             onValue(ref(db, `${userPath}/kegiatan`), (s) => { allKegiatanData = s.val() || {}; saveToLocal(userKeyPrefix + 'kegiatan', allKegiatanData); displayDashboard(); });
@@ -587,7 +594,12 @@
                 }
             });
             
-            el('bebas-presensi-toggle').addEventListener('change', (e) => { isBebasPresensi = e.target.checked; displayDashboard(); });
+            el('bebas-presensi-toggle').addEventListener('change', (e) => { 
+                isBebasPresensi = e.target.checked; 
+                displayDashboard(); 
+                // TAMBAHAN: Perbarui notifikasi berdasarkan toggle
+                scheduleAllNotifications();
+            });
             
             navLinks.forEach(link => { link.addEventListener('click', () => switchPage(link.dataset.page)); });
             addStudentForm.addEventListener('submit', handleAddStudent);
@@ -1311,6 +1323,125 @@
         function handleOfflineStatus() { 
             offlineIndicator.classList.remove('hidden'); 
             showToast("Anda offline.", true); 
+        }
+        
+        // --- 
+        // --- KODE BARU UNTUK NOTIFIKASI NATIVE (APK) ---
+        // ---
+        
+        /**
+         * Membatalkan semua notifikasi lokal yang tertunda.
+         * Ini dipanggil saat "Bebas Presensi" diaktifkan atau saat jadwal diperbarui.
+         */
+        async function cancelAllNotifications() {
+            try {
+                // Cek apakah kita ada di dalam Capacitor (APK)
+                if (typeof Capacitor === 'undefined' || !Capacitor.Plugins || !Capacitor.Plugins.LocalNotifications) return;
+                
+                const { LocalNotifications } = Capacitor.Plugins;
+                const pending = await LocalNotifications.getPending();
+                
+                if (pending.notifications.length > 0) {
+                    console.log("Membatalkan notifikasi...", pending);
+                    await LocalNotifications.cancel(pending);
+                }
+            } catch (err) {
+                console.error("Gagal membatalkan notifikasi:", err);
+            }
+        }
+
+        /**
+         * Menjadwalkan semua notifikasi (2 menit sebelum & 40 menit sesudah)
+         * berdasarkan allJadwalTerstruktur.
+         * Kode ini HANYA akan berjalan di dalam APK (Capacitor).
+         */
+        async function scheduleAllNotifications() {
+            try {
+                // 1. Cek apakah di dalam APK
+                if (typeof Capacitor === 'undefined' || !Capacitor.Plugins || !Capacitor.Plugins.LocalNotifications) {
+                    console.log("Mode browser, skip notifikasi native.");
+                    return;
+                }
+                const { LocalNotifications } = Capacitor.Plugins;
+
+                // 2. PERMINTAAN ANDA: Cek "Bebas Presensi"
+                if (isBebasPresensi) {
+                    console.log("Bebas Presensi aktif, membatalkan notifikasi.");
+                    await cancelAllNotifications();
+                    showToast("Notifikasi dinonaktifkan (Bebas Presensi).");
+                    return;
+                }
+
+                // 3. Minta Izin (jika perlu)
+                let permission = await LocalNotifications.checkPermissions();
+                if (permission.display === 'prompt') {
+                    permission = await LocalNotifications.requestPermissions();
+                }
+                if (permission.display !== 'granted') {
+                    return showAlertModal("Izin Ditolak", "Izin notifikasi ditolak. Fitur pengingat tidak akan berfungsi.", true);
+                }
+
+                // 4. Bersihkan notifikasi lama
+                await cancelAllNotifications();
+                console.log("Menjadwalkan notifikasi baru...");
+
+                const daysOfWeek = { senin: 2, selasa: 3, rabu: 4, kamis: 5, jumat: 6, sabtu: 7 };
+                const notificationsToSchedule = [];
+                let notificationId = 1; // ID unik
+
+                for (const dayName in allJadwalTerstruktur) {
+                    const dayNumber = daysOfWeek[dayName];
+                    if (!dayNumber) continue;
+
+                    const daySchedule = allJadwalTerstruktur[dayName];
+                    for (const scheduleKey in daySchedule) {
+                        const item = daySchedule[scheduleKey];
+                        const [startHour, startMinute] = item.jam_mulai.split(':').map(Number);
+
+                        // Notifikasi A (2 Menit SEBELUM)
+                        const notifTimeA = new Date();
+                        notifTimeA.setHours(startHour, startMinute, 0, 0);
+                        notifTimeA.setMinutes(notifTimeA.getMinutes() - 2);
+                        
+                        notificationsToSchedule.push({
+                            id: notificationId++,
+                            title: "Pengingat Mengajar",
+                            body: `Kelas ${item.mapelNama} (${item.kelas}) akan dimulai 2 menit lagi.`,
+                            schedule: { 
+                                on: { weekday: dayNumber, hour: notifTimeA.getHours(), minute: notifTimeA.getMinutes() },
+                                repeats: true // Ulangi setiap minggu
+                            }
+                        });
+
+                        // Notifikasi B (40 Menit SESUDAH)
+                        const notifTimeB = new Date();
+                        notifTimeB.setHours(startHour, startMinute, 0, 0);
+                        notifTimeB.setMinutes(notifTimeB.getMinutes() + 40);
+
+                        notificationsToSchedule.push({
+                            id: notificationId++,
+                            title: "Pengingat Presensi",
+                            body: `Jangan lupa lengkapi presensi & kegiatan untuk ${item.mapelNama} (${item.kelas}).`,
+                            schedule: { 
+                                on: { weekday: dayNumber, hour: notifTimeB.getHours(), minute: notifTimeB.getMinutes() },
+                                repeats: true // Ulangi setiap minggu
+                            }
+                        });
+                    }
+                }
+
+                // 5. Jadwalkan semua
+                if (notificationsToSchedule.length > 0) {
+                    await LocalNotifications.schedule({ notifications: notificationsToSchedule });
+                    showToast(`Notifikasi berhasil diatur.`);
+                } else {
+                    showToast("Tidak ada jadwal untuk diatur notifikasinya.");
+                }
+
+            } catch (err) {
+                console.error("Gagal menjadwalkan notifikasi:", err);
+                showAlertModal("Error Notifikasi", `Gagal: ${err.message}`, true);
+            }
         }
         
         if (installPwaBtn) {
