@@ -316,12 +316,6 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getDatabase(app);
-        
-        /* Baris ini dihapus karena enablePersistence bukan bagian dari Realtime Database
-        enablePersistence(db).catch((err) => {
-            console.error('Gagal mengaktifkan persistensi:', err);
-        });
-        */
 
         let currentMode = 'presensi', allStudents = {}, allMapel = {}, allJadwalTerstruktur = {}, hasUnsavedChanges = false, pendingAction = null, pendingPage = null, currentUserKey = null, currentUserName = null, githubToken = null, deferredPrompt, allLoginData = null, currentJadwalMode = 'dinamis', dashboardUpdateInterval = null, isBebasPresensi = false;
         let cropper = null; 
@@ -474,21 +468,34 @@
                     }
                     
                     currentUserName = namaData.name; 
+                    saveToLocal('lastUserName', currentUserName);
                     
-                    handleSuccessfulLogin('user1'); 
                 } catch (error) {
-                    showAlertModal("Error", `Gagal memuat data nama: ${error.message}`, true);
-                    hideLoader();
-                    return;
+                    console.warn("Gagal fetch nama, mungkin offline. Memuat nama dari cache localStorage...");
+                    currentUserName = loadFromLocal('lastUserName'); 
+                    if (!currentUserName) {
+                        currentUserName = "Guru";
+                    }
                 }
+                
+                handleSuccessfulLogin('user1'); 
+                
             } else {
                 try {
-                    showLoader();
                     await signInWithEmailAndPassword(auth, 'mdsr@gmail.com', '12345678');
+                    
                 } catch (error) {
-                    loginPage.classList.remove('hidden');
-                    mainApp.classList.add('hidden');
-                    hideLoader();
+                    console.warn("Gagal sign-in, mungkin offline.");
+                    const lastUserKey = loadFromLocal('lastUserKey');
+                    if (lastUserKey) {
+                        console.log("Memuat aplikasi dalam mode offline berdasarkan sesi terakhir.");
+                        currentUserName = loadFromLocal('lastUserName') || "Guru";
+                        handleSuccessfulLogin(lastUserKey);
+                    } else {
+                        loginPage.classList.remove('hidden');
+                        mainApp.classList.add('hidden');
+                        hideLoader();
+                    }
                 }
             }
         });
@@ -496,7 +503,7 @@
         async function handleSuccessfulLogin(userKey) {
             showLoader();
             try {
-                sessionStorage.setItem('lastUserKey', userKey);
+                saveToLocal('lastUserKey', userKey);
                 currentUserKey = userKey;
                 mainApp.classList.remove('hidden');
                 showToast("Login berhasil!");
