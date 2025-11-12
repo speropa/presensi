@@ -326,8 +326,17 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getDatabase(app);
-
         
+        try {
+        await enablePersistence(db);
+        console.log("Offline persistence enabled");
+        } catch (err) {
+          if (err.code == 'failed-precondition') {
+          console.warn("Persistence failed, possibly multiple tabs open.");
+        } else if (err.code == 'unimplemented') {
+          console.warn("Persistence is not available in this browser.");
+  }
+}
         let currentMode = 'presensi', allStudents = {}, allMapel = {}, allJadwalTerstruktur = {}, hasUnsavedChanges = false, pendingAction = null, pendingPage = null, currentUserKey = null, currentUserName = null, githubToken = null, deferredPrompt, allLoginData = null, currentJadwalMode = 'dinamis', dashboardUpdateInterval = null, isBebasPresensi = false;
         let cropper = null; 
         let availableClasses = new Set(), unsavedChanges = {}, currentPresensiStudentsData = [], currentRekapData = { presensi: {}, nilai: {}, kegiatan: {}, kelas: '' };
