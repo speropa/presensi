@@ -622,9 +622,10 @@
             // Tampilkan container tombol offline
             offlineLoginContainer.classList.remove('hidden');
             // Spinner tetap berputar, tapi tombol kini tersedia
-        }, 0); // 10 detik
+        }, 10000); // 10 detik
         // AKHIR MODIFIKASI
         
+        // --- FUNGSI DIPERBARUI ---
         async function handleSuccessfulLogin(userKey) {
             offlineLoginContainer.classList.add('hidden');
             showLoader();
@@ -633,38 +634,53 @@
                 currentUserKey = userKey;
                 mainApp.classList.remove('hidden');
                 loginPage.classList.add('hidden'); 
-                showToast("Login berhasil!");
                 
+                // 1. Muat data lokal (termasuk pending updates)
                 loadAllDataFromLocal(); 
-                initializeDataListeners(); 
                 
+                // 2. Setup listeners
+                initializeDataListeners(); 
                 setupEventListeners();
+                
                 el('filter-tanggal').value = getLocalISODate();
                 handleToggleJadwalMode();
                 switchPage('dashboard');
                 if (dashboardUpdateInterval) clearInterval(dashboardUpdateInterval);
                 dashboardUpdateInterval = setInterval(displayDashboard, 10000);
                 
+                // 3. TAMBAHAN PENTING: Cek dan sinkronkan data segera jika online
                 if(navigator.onLine) {
+                    console.log("Online, mengambil token & memicu sinkronisasi...");
                     fetchGithubToken();
+                    // Beri jeda sedikit agar listener Firebase (jika ada) siap, lalu sinkronkan
+                    setTimeout(() => {
+                        syncOfflineData();
+                    }, 1500); // Beri jeda 1.5 detik
+                } else {
+                    console.log("Offline, melewatkan sinkronisasi awal.");
+                    showToast("Masuk mode Offline.");
                 }
 
             } catch (error) {
                 console.error("Error detail saat login:", error);
                 showAlertModal("Error", `Terjadi kesalahan setelah login: ${error.message}`, true);
             } finally {
+                // Sembunyikan loader HANYA setelah semua setup selesai
                 hideLoader();
             }
         }
+        // --- AKHIR FUNGSI DIPERBARUI ---
 
         async function updateHeaderUI() { if (!currentUserKey) return; const displayName = currentUserName || "Pengguna"; userDisplayName.textContent = `Halo, ${displayName.charAt(0).toUpperCase() + displayName.slice(1)}`; }
         async function fetchGithubToken() { try { const token = (await get(ref(db, 'token/github'))).val(); if(token) { githubToken = token; storageService.saveToken(token); } else if (!githubToken) { showAlertModal("Konfigurasi Error", "Token GitHub tidak ditemukan.", true); } } catch (error) { if (!githubToken) showAlertModal("Konfigurasi Error", "Gagal mengambil token GitHub.", true); } }
         
         function switchPage(pageId, force = false) { if (!force && hasUnsavedChanges && !el('page-presensi').classList.contains('hidden')) { showUnsavedChangesModal('changePage', pageId); return; } document.querySelectorAll('.page-content').forEach(page => page.classList.add('hidden')); el(`page-${pageId}`).classList.remove('hidden'); document.querySelectorAll('.nav-link').forEach(nav => nav.classList.remove('active')); document.querySelector(`.nav-link[data-page="${pageId}"]`).classList.add('active'); if (pageId === 'hasil-rekap') handleTerapkanRekap(); }
         
+        // --- FUNGSI DIPERBARUI ---
         function loadAllDataFromLocal() {
             if (!currentUserKey) return;
             
+            // 1. Muat data dasar dari local storage
             allStudents = storageService.loadUserData('siswa') || {};
             allMapel = storageService.loadUserData('mapel') || {};
             allJadwalTerstruktur = storageService.loadUserData('jadwal_terstruktur') || {};
@@ -672,6 +688,53 @@
             allKegiatanData = storageService.loadUserData('kegiatan') || {};
             allNilaiData = storageService.loadUserData('nilai') || {}; 
             githubToken = storageService.loadToken();
+
+            // 2. MERGE: Terapkan data pending (hutang) ke atas data yang dimuat
+            // Ini kuncinya: Memastikan tampilan UI menyertakan data offline yang belum terkirim
+            const pending = storageService.loadPendingUpdates();
+            if (pending && Object.keys(pending).length > 0) {
+                console.log(`Menerapkan ${Object.keys(pending).length} pending updates ke tampilan lokal...`);
+                for (const path in pending) {
+                    const parts = path.split('/');
+                    // Format path: users_data/USER_KEY/TYPE/KELAS/MAPELID/TANGGAL/SISWA_ID
+                    if (parts.length < 6) continue; // Path tidak valid
+
+                    const type = parts[2]; // presensi, nilai, atau kegiatan
+                    const kls = parts[3];
+                    const mpl = parts[4];
+                    const tgl = parts[5];
+                    const val = pending[path]; // Data yang akan disimpan
+
+                    if (type === 'presensi' && parts.length >= 8) {
+                        const stuId = parts[6];
+                        if (!allPresensiData[kls]) allPresensiData[kls] = {};
+                        if (!allPresensiData[kls][mpl]) allPresensiData[kls][mpl] = {};
+                        if (!allPresensiData[kls][mpl][tgl]) allPresensiData[kls][mpl][tgl] = {};
+                        allPresensiData[kls][mpl][tgl][stuId] = val;
+                        // console.log(`Merge local presensi: ${kls}/${mpl}/${tgl}/${stuId}`);
+                    } else if (type === 'nilai' && parts.length >= 8) {
+                        const stuId = parts[6];
+                        if (!allNilaiData[kls]) allNilaiData[kls] = {};
+                        if (!allNilaiData[kls][mpl]) allNilaiData[kls][mpl] = {};
+                        if (!allNilaiData[kls][mpl][tgl]) allNilaiData[kls][mpl][tgl] = {};
+                        allNilaiData[kls][mpl][tgl][stuId] = val;
+                        // console.log(`Merge local nilai: ${kls}/${mpl}/${tgl}/${stuId}`);
+                    } else if (type === 'kegiatan' && parts.length === 7) { 
+                        // Path kegiatan: users_data/USER_KEY/kegiatan/KELAS/MAPELID/TANGGAL
+                        if (!allKegiatanData[kls]) allKegiatanData[kls] = {};
+                        if (!allKegiatanData[kls][mpl]) allKegiatanData[kls][mpl] = {};
+                        allKegiatanData[kls][mpl][tgl] = val;
+                        // console.log(`Merge local kegiatan: ${kls}/${mpl}/${tgl}`);
+                    }
+                }
+                 // Simpan kembali data yang sudah di-merge ke local storage
+                 // agar konsisten jika user refresh saat masih offline
+                storageService.saveUserData('presensi', allPresensiData);
+                storageService.saveUserData('nilai', allNilaiData);
+                storageService.saveUserData('kegiatan', allKegiatanData);
+            }
+
+            // 3. Lanjutkan render UI dengan data yang sudah di-merge
             updateHeaderUI();
             renderStudentsTable();
             updateClassFilters();
@@ -681,29 +744,124 @@
             renderJadwalTerstruktur();
             displayDashboard();
         }
+        // --- AKHIR FUNGSI DIPERBARUI ---
+
 
         function initializeDataListeners() {
             if (!currentUserKey) return;
 
+            // Hanya pasang listener jika online. 
+            // Jika offline, kita sudah memuat data dari cache di loadAllDataFromLocal().
             if (navigator.onLine) {
                 console.log("Mode Online: Memasang listener Firebase...");
                 const userPath = `users_data/${currentUserKey}`;
                 
-                onValue(ref(db, `${userPath}/siswa/`), (s) => { allStudents = s.val() || {}; storageService.saveUserData('siswa', allStudents); renderStudentsTable(); updateClassFilters(); displayDashboard(); });
-                onValue(ref(db, `${userPath}/mapel/`), (s) => { allMapel = s.val() || {}; storageService.saveUserData('mapel', allMapel); renderMapelList(); updateMapelFilter(); updateJadwalMapelFilter(); displayDashboard(); });
+                // PENTING: Saat data baru masuk dari Firebase, kita HARUS menggabungkannya
+                // dengan data pending, BUKAN menimpanya.
+                // Tapi untuk sekarang, kita andalkan syncOfflineData() yang berjalan dulu.
+                
+                onValue(ref(db, `${userPath}/siswa/`), (s) => { 
+                    allStudents = s.val() || {}; 
+                    storageService.saveUserData('siswa', allStudents); 
+                    renderStudentsTable(); 
+                    updateClassFilters(); 
+                    displayDashboard(); 
+                });
+                onValue(ref(db, `${userPath}/mapel/`), (s) => { 
+                    allMapel = s.val() || {}; 
+                    storageService.saveUserData('mapel', allMapel); 
+                    renderMapelList(); 
+                    updateMapelFilter(); 
+                    updateJadwalMapelFilter(); 
+                    displayDashboard(); 
+                });
                 onValue(ref(db, `${userPath}/jadwal_terstruktur`), (s) => { 
                     allJadwalTerstruktur = s.val() || {}; 
                     storageService.saveUserData('jadwal_terstruktur', allJadwalTerstruktur); 
                     renderJadwalTerstruktur(); 
                     displayDashboard(); 
                 });
-                onValue(ref(db, `${userPath}/jadwal`), (s) => { const d = s.val(); storageService.saveUserData('jadwal_gambar', d); const hasImage = d && d.imageUrl; jadwalImage.src = hasImage ? d.imageUrl : ''; jadwalImage.classList.toggle('hidden', !hasImage); jadwalImage.classList.toggle('cursor-pointer', hasImage); jadwalPlaceholder.classList.toggle('hidden', hasImage); jadwalUploadLabel.classList.toggle('hidden', hasImage); deleteJadwalBtn.classList.toggle('hidden', !hasImage); });
-                onValue(ref(db, `${userPath}/presensi`), (s) => { allPresensiData = s.val() || {}; storageService.saveUserData('presensi', allPresensiData); displayDashboard(); });
-                onValue(ref(db, `${userPath}/kegiatan`), (s) => { allKegiatanData = s.val() || {}; storageService.saveUserData('kegiatan', allKegiatanData); displayDashboard(); });
-                onValue(ref(db, `${userPath}/nilai`), (s) => { allNilaiData = s.val() || {}; storageService.saveUserData('nilai', allNilaiData); });
+                onValue(ref(db, `${userPath}/jadwal`), (s) => { 
+                    const d = s.val(); 
+                    storageService.saveUserData('jadwal_gambar', d); 
+                    const hasImage = d && d.imageUrl; 
+                    jadwalImage.src = hasImage ? d.imageUrl : ''; 
+                    jadwalImage.classList.toggle('hidden', !hasImage); 
+                    jadwalImage.classList.toggle('cursor-pointer', hasImage); 
+                    jadwalPlaceholder.classList.toggle('hidden', hasImage); 
+                    jadwalUploadLabel.classList.toggle('hidden', hasImage); 
+                    deleteJadwalBtn.classList.toggle('hidden', !hasImage); 
+                });
+                
+                // Untuk data dinamis (presensi, nilai, kegiatan), kita perlu lebih hati-hati
+                // agar tidak menimpa data pending.
+                
+                const pending = storageService.loadPendingUpdates() || {};
+                
+                onValue(ref(db, `${userPath}/presensi`), (s) => { 
+                    const serverData = s.val() || {};
+                    // Gabungkan server data dengan pending data (pending data menimpa server data)
+                    // Ini cara sederhana, idealnya perbandingan timestamp
+                    allPresensiData = serverData;
+                    // Terapkan lagi pending data di atas data server yg baru masuk
+                    if (pending && Object.keys(pending).length > 0) {
+                         for (const path in pending) {
+                            const parts = path.split('/');
+                            if (parts[2] === 'presensi' && parts.length >= 8) {
+                                const [,,, kls, mpl, tgl, stuId] = parts;
+                                const val = pending[path];
+                                if (!allPresensiData[kls]) allPresensiData[kls] = {};
+                                if (!allPresensiData[kls][mpl]) allPresensiData[kls][mpl] = {};
+                                if (!allPresensiData[kls][mpl][tgl]) allPresensiData[kls][mpl][tgl] = {};
+                                allPresensiData[kls][mpl][tgl][stuId] = val;
+                            }
+                        }
+                    }
+                    storageService.saveUserData('presensi', allPresensiData); 
+                    displayDashboard(); 
+                });
+                
+                onValue(ref(db, `${userPath}/kegiatan`), (s) => { 
+                    const serverData = s.val() || {};
+                    allKegiatanData = serverData;
+                     if (pending && Object.keys(pending).length > 0) {
+                         for (const path in pending) {
+                            const parts = path.split('/');
+                            if (parts[2] === 'kegiatan' && parts.length === 7) {
+                                const [,,, kls, mpl, tgl] = parts;
+                                const val = pending[path];
+                                if (!allKegiatanData[kls]) allKegiatanData[kls] = {};
+                                if (!allKegiatanData[kls][mpl]) allKegiatanData[kls][mpl] = {};
+                                allKegiatanData[kls][mpl][tgl] = val;
+                            }
+                        }
+                    }
+                    storageService.saveUserData('kegiatan', allKegiatanData); 
+                    displayDashboard(); 
+                });
+                
+                onValue(ref(db, `${userPath}/nilai`), (s) => { 
+                    const serverData = s.val() || {};
+                    allNilaiData = serverData;
+                     if (pending && Object.keys(pending).length > 0) {
+                         for (const path in pending) {
+                            const parts = path.split('/');
+                            if (parts[2] === 'nilai' && parts.length >= 8) {
+                                const [,,, kls, mpl, tgl, stuId] = parts;
+                                const val = pending[path];
+                                if (!allNilaiData[kls]) allNilaiData[kls] = {};
+                                if (!allNilaiData[kls][mpl]) allNilaiData[kls][mpl] = {};
+                                if (!allNilaiData[kls][mpl][tgl]) allNilaiData[kls][mpl][tgl] = {};
+                                allNilaiData[kls][mpl][tgl][stuId] = val;
+                            }
+                        }
+                    }
+                    storageService.saveUserData('nilai', allNilaiData); 
+                });
             
             } else {
                 console.log("Mode Offline: Melewatkan pemasangan listener Firebase. Data dimuat dari cache.");
+                // Data sudah dimuat di loadAllDataFromLocal
             }
         }
 
@@ -801,6 +959,13 @@
                 const pending = storageService.loadPendingUpdates() || {};
                 pending[dataPath] = dataToSave;
                 storageService.savePendingUpdates(pending);
+                
+                // Simpan juga ke variabel global agar UI update
+                if (!allKegiatanData[kelas]) allKegiatanData[kelas] = {};
+                if (!allKegiatanData[kelas][mapelId]) allKegiatanData[kelas][mapelId] = {};
+                allKegiatanData[kelas][mapelId][tanggal] = dataToSave;
+                storageService.saveUserData('kegiatan', allKegiatanData); // Simpan ke cache lokal
+                
                 statusEl.textContent = 'Tersimpan (offline)';
                 setTimeout(() => statusEl.classList.add('hidden'), 2500); 
                 handleOfflineStatus();
@@ -850,6 +1015,7 @@
             contentArea.classList.remove('hidden');
             studentTableContainer.innerHTML = '<p class="col-span-full text-center text-sub">Memuat data presensi...</p>';
             
+            // Gunakan data global yg sudah di-merge
             fetchAndRenderKegiatanHistory(kelas, mapelId);
             
             const kegiatan = allKegiatanData[kelas]?.[mapelId]?.[tanggal];
@@ -869,6 +1035,7 @@
                 return;
             }
 
+            // Gunakan data global yg sudah di-merge
             const allHistoricalPresensi = allPresensiData[kelas]?.[mapelId] || {};
             const allHistoricalNilai = allNilaiData[kelas]?.[mapelId] || {};
 
@@ -1046,6 +1213,7 @@
             const updates = {};
             let hasInvalidGrade = false;
 
+            // Gunakan data global yang sudah di-merge sebagai basis
             const allCurrentPresensi = allPresensiData[kelas]?.[mapelId] || {};
             const allCurrentNilai = allNilaiData[kelas]?.[mapelId] || {};
 
@@ -1055,6 +1223,7 @@
                     
                     if (changes.hasOwnProperty('status')) {
                         const presensiPath = `users_data/${currentUserKey}/presensi/${kelas}/${mapelId}/${date}/${studentId}`;
+                        // Ambil data dari state global BUKAN dari data mentah server
                         const currentData = allCurrentPresensi[date]?.[studentId] || { status: 'Hadir' };
                         const finalData = { ...currentData };
                         if (changes.hasOwnProperty('status')) finalData.status = changes.status;
@@ -1090,49 +1259,56 @@
                 return showToast("Tidak ada perubahan untuk disimpan.", true);
             }
 
+            // Gabungkan dengan data pending yang sudah ada
+            const pending = storageService.loadPendingUpdates() || {};
+            Object.assign(pending, updates);
+            storageService.savePendingUpdates(pending);
+
+            // Perbarui state global (allPresensiData, allNilaiData) secara lokal
+            for (const path in updates) {
+                const parts = path.split('/');
+                const [,,, type, kls, mpl, tgl, stuId] = parts;
+                const data = updates[path];
+
+                if (type === 'presensi') {
+                    if (!allPresensiData[kls]) allPresensiData[kls] = {};
+                    if (!allPresensiData[kls][mpl]) allPresensiData[kls][mpl] = {};
+                    if (!allPresensiData[kls][mpl][tgl]) allPresensiData[kls][mpl][tgl] = {};
+                    allPresensiData[kls][mpl][tgl][stuId] = data;
+                } else if (type === 'nilai') {
+                    if (!allNilaiData[kls]) allNilaiData[kls] = {};
+                    if (!allNilaiData[kls][mpl]) allNilaiData[kls][mpl] = {};
+                    if (!allNilaiData[kls][mpl][tgl]) allNilaiData[kls][mpl][tgl] = {};
+                    allNilaiData[kls][mpl][tgl][stuId] = data;
+                }
+            }
+            // Simpan state global yang sudah diperbarui ke local storage
+            storageService.saveUserData('presensi', allPresensiData);
+            storageService.saveUserData('nilai', allNilaiData);
+
             if (navigator.onLine) {
                 try {
-                    await update(ref(db), updates);
-                    showToast("Semua perubahan disimpan.");
-                    hasUnsavedChanges = false;
-                    unsavedChanges = {};
-                    updateSaveButtonState();
-                    handleTerapkanFilter(true);
+                    // Kirim HANYA data pending
+                    await update(ref(db), pending);
+                    storageService.clearPendingUpdates(); // Hapus pending jika sukses
+                    showToast("Semua perubahan disimpan dan disinkronkan.");
                 } catch (err) {
                     hideLoader();
-                    showAlertModal("Error", `Gagal menyimpan: ${err.message}`, true);
+                    // JANGAN clear pending jika gagal
+                    showAlertModal("Error", `Gagal sinkronisasi: ${err.message}. Data tetap tersimpan offline.`, true);
                 }
             } else {
-                const pending = storageService.loadPendingUpdates() || {};
-                Object.assign(pending, updates);
-                storageService.savePendingUpdates(pending);
                 showToast("Offline. Perubahan disimpan lokal.");
-                hasUnsavedChanges = false;
-                unsavedChanges = {};
-                updateSaveButtonState();
-                
-                for (const path in updates) {
-                    const parts = path.split('/');
-                    const [,,, type, kls, mpl, tgl, stuId] = parts;
-                    const data = updates[path];
-
-                    if (type === 'presensi') {
-                        if (!allPresensiData[kls]) allPresensiData[kls] = {};
-                        if (!allPresensiData[kls][mpl]) allPresensiData[kls][mpl] = {};
-                        if (!allPresensiData[kls][mpl][tgl]) allPresensiData[kls][mpl][tgl] = {};
-                        allPresensiData[kls][mpl][tgl][stuId] = data;
-                    } else if (type === 'nilai') {
-                        if (!allNilaiData[kls]) allNilaiData[kls] = {};
-                        if (!allNilaiData[kls][mpl]) allNilaiData[kls][mpl] = {};
-                        if (!allNilaiData[kls][mpl][tgl]) allNilaiData[kls][mpl][tgl] = {};
-                        allNilaiData[kls][mpl][tgl][stuId] = data;
-                    }
-                }
-                storageService.saveUserData('presensi', allPresensiData);
-                storageService.saveUserData('nilai', allNilaiData);
-                
-                handleTerapkanFilter(true); 
+                handleOfflineStatus();
             }
+
+            // Apapun hasilnya, reset state "unsaved"
+            hasUnsavedChanges = false;
+            unsavedChanges = {};
+            updateSaveButtonState();
+            
+            // Render ulang tabel dengan data terbaru dari state global
+            handleTerapkanFilter(true); 
         }
         
         async function handleJadwalUpload(e) { const file = e.target.files[0]; if (!file || !currentUserKey || !currentUserName) return showAlertModal("Error", "Info pengguna tidak lengkap.", true); if (!githubToken) return showAlertModal("Error", "Token GitHub tidak ditemukan.", true); if (!file.type.startsWith('image/')) return showAlertModal("Error", "Pilih file gambar.", true); showLoader(); const sanitizedUserName = sanitizeForPath(currentUserName); const filePath = `schedules/${currentUserKey}/${sanitizedUserName}/schedule.jpg`; const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${filePath}`; try { const content = await fileToBase64(file); let sha = null; try { const res = await fetch(apiUrl, { headers: { 'Authorization': `token ${githubToken}` } }); if (res.ok) sha = (await res.json()).sha; } catch (e) {} const payload = { message: `Update jadwal ${new Date().toISOString()}`, content, sha }; const res = await fetch(apiUrl, { method: 'PUT', headers: { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); if (!res.ok) throw new Error((await res.json()).message); const data = await res.json(); await set(ref(db, `users_data/${currentUserKey}/jadwal`), { imageUrl: data.content.download_url }); showToast("Jadwal berhasil diunggah."); } catch (error) { showAlertModal("Gagal", `Gagal mengunggah: ${error.message}`, true); } finally { jadwalUploadInput.value = ''; hideLoader(); } }
@@ -1143,6 +1319,7 @@
         
         function fetchAndRenderKegiatanHistory(kelas, mapelId) { 
             kegiatanHistoryList.innerHTML = '<p>Memuat...</p>'; 
+            // Gunakan data global
             const allKegiatan = allKegiatanData[kelas]?.[mapelId] || {}; 
             const historyList = Object.entries(allKegiatan).filter(([,d]) => d.deskripsi).map(([t,d]) => ({ tanggal: t, deskripsi: d.deskripsi })).sort((a,b) => b.tanggal.localeCompare(a.tanggal)); 
             renderKegiatanHistory(historyList); 
@@ -1164,22 +1341,10 @@
             showLoader();
             rekapDynamicTableContent.innerHTML = '<p class="text-center text-sub">Memuat...</p>';
             
-            let presensiData, nilaiData, kegiatanData;
-            if (navigator.onLine) {
-                const [presensi, nilai, kegiatan] = await Promise.all([
-                    get(ref(db, `users_data/${currentUserKey}/presensi/${kelas}/${mapelId}`)),
-                    get(ref(db, `users_data/${currentUserKey}/nilai/${kelas}/${mapelId}`)),
-                    get(ref(db, `users_data/${currentUserKey}/kegiatan/${kelas}/${mapelId}`)) 
-                ]);
-                presensiData = presensi.val() || {};
-                nilaiData = nilai.val() || {};
-                kegiatanData = kegiatan.val() || {};
-            } else {
-                console.log("Memuat rekap dari cache offline");
-                presensiData = allPresensiData[kelas]?.[mapelId] || {};
-                nilaiData = allNilaiData[kelas]?.[mapelId] || {};
-                kegiatanData = allKegiatanData[kelas]?.[mapelId] || {};
-            }
+            // Langsung gunakan data global yang sudah di-merge
+            const presensiData = allPresensiData[kelas]?.[mapelId] || {};
+            const nilaiData = allNilaiData[kelas]?.[mapelId] || {};
+            const kegiatanData = allKegiatanData[kelas]?.[mapelId] || {};
             
             currentRekapData = {
                 presensi: presensiData,
@@ -1273,18 +1438,35 @@
             try {
                 await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, pw));
                 await remove(ref(db, `users_data/${currentUserKey}`));
+                
+                // Hapus juga data lokal
+                storageService.clearPendingUpdates();
+                // Hapus data user spesifik dari local storage
+                const prefix = storageService.prefix + storageService._getUserKey();
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith(prefix)) {
+                        localStorage.removeItem(key);
+                    }
+                });
+
                 showToast("Semua data berhasil dihapus.");
                 closeModal();
+                
+                // Reset state aplikasi
                 allStudents = {}; allMapel = {}; allJadwalTerstruktur = {};
+                allPresensiData = {}; allKegiatanData = {}; allNilaiData = {};
                 availableClasses.clear();
                 currentPresensiStudentsData = [];
-                
                 currentRekapData = { presensi: {}, nilai: {}, kegiatan: {}, kelas: '' };
+                
+                // Render ulang UI
                 renderStudentsTable(); renderMapelList(); updateMapelFilter(); updateClassFilters();
                 studentTableContainer.innerHTML = '';
                 rekapDynamicTableContent.innerHTML = '';
                 contentArea.classList.add('hidden');
                 kegiatanInput.value = '';
+                displayDashboard();
+
             } catch (error) {
                 if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
                     errEl.textContent = "Password salah."; errEl.classList.remove('hidden');
@@ -1296,7 +1478,52 @@
             }
         }
         function showDeleteDailyDataConfirmationModal() { const mapel = filterMapel.value, kelas = filterKelas.value, tgl = filterTanggal.value; if (!mapel || !kelas || !tgl) return showToast("Filter harus lengkap.", true); const date = new Date(tgl + 'T00:00:00'); const content = `<h3 class="text-lg font-bold mb-2 text-red-600">Hapus Data Hari Ini?</h3><p class="mb-6">Yakin ingin menghapus data <b>${mapel} (${kelas})</b> pada <b>${formatDateToIndonesian(date)}</b>?</p><div class="flex justify-end space-x-2"><button onclick="window.closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.handleDeleteDailyData()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Hapus</button></div>`; openModal(content); }
-        async function handleDeleteDailyData() { const mapel = filterMapel.value, kelas = filterKelas.value, tgl = filterTanggal.value; let mapelId = Object.keys(allMapel).find(id => allMapel[id].nama === mapel && allMapel[id].kelas === kelas); if (!mapelId) return showAlertModal("Error", "Gagal menemukan data.", true); closeModal(); showLoader(); try { const updates = {}; updates[`users_data/${currentUserKey}/presensi/${kelas}/${mapelId}/${tgl}`] = null; updates[`users_data/${currentUserKey}/nilai/${kelas}/${mapelId}/${tgl}`] = null; updates[`users_data/${currentUserKey}/kegiatan/${kelas}/${mapelId}/${tgl}`] = null; await update(ref(db), updates); showToast("Data hari ini dihapus."); handleTerapkanFilter(true); } catch (err) { showAlertModal("Error", `Gagal: ${err.message}`, true); } finally { hideLoader(); } }
+        async function handleDeleteDailyData() { 
+            const mapel = filterMapel.value, kelas = filterKelas.value, tgl = filterTanggal.value; 
+            let mapelId = Object.keys(allMapel).find(id => allMapel[id].nama === mapel && allMapel[id].kelas === kelas); 
+            if (!mapelId) return showAlertModal("Error", "Gagal menemukan data.", true); 
+            closeModal(); 
+            showLoader(); 
+            
+            const updates = {};
+            const pPath = `users_data/${currentUserKey}/presensi/${kelas}/${mapelId}/${tgl}`;
+            const nPath = `users_data/${currentUserKey}/nilai/${kelas}/${mapelId}/${tgl}`;
+            const kPath = `users_data/${currentUserKey}/kegiatan/${kelas}/${mapelId}/${tgl}`;
+            updates[pPath] = null;
+            updates[nPath] = null;
+            updates[kPath] = null;
+
+            // Hapus juga dari state global
+            if (allPresensiData[kelas]?.[mapelId]) delete allPresensiData[kelas][mapelId][tgl];
+            if (allNilaiData[kelas]?.[mapelId]) delete allNilaiData[kelas][mapelId][tgl];
+            if (allKegiatanData[kelas]?.[mapelId]) delete allKegiatanData[kelas][mapelId][tgl];
+            storageService.saveUserData('presensi', allPresensiData);
+            storageService.saveUserData('nilai', allNilaiData);
+            storageService.saveUserData('kegiatan', allKegiatanData);
+
+            // Hapus dari pending updates jika ada
+            const pending = storageService.loadPendingUpdates() || {};
+            let pendingUpdated = false;
+            Object.keys(pending).forEach(key => {
+                if (key.startsWith(pPath) || key.startsWith(nPath) || key.startsWith(kPath)) {
+                    delete pending[key];
+                    pendingUpdated = true;
+                }
+            });
+            if(pendingUpdated) storageService.savePendingUpdates(pending);
+
+            try { 
+                if (navigator.onLine) {
+                    await update(ref(db), updates); 
+                }
+                showToast("Data hari ini dihapus."); 
+                handleTerapkanFilter(true); 
+            } catch (err) { 
+                showAlertModal("Error", `Gagal: ${err.message}`, true); 
+            } finally { 
+                hideLoader(); 
+            } 
+        }
         
         async function handleAddJadwal(e) { e.preventDefault(); const hari = el('jadwal-hari').value, jam_mulai = el('jadwal-jam-mulai').value, jam_selesai = el('jadwal-jam-selesai').value, mapelId = el('jadwal-mapel').value; if (!hari || !jam_mulai || !jam_selesai || !mapelId) return showToast("Semua kolom wajib diisi.", true); if (jam_mulai >= jam_selesai) return showToast("Jam mulai harus sebelum jam selesai.", true); showLoader(); const mapelData = allMapel[mapelId]; const newScheduleData = { jam_mulai, jam_selesai, mapelId, mapelNama: mapelData.nama, kelas: mapelData.kelas }; const newScheduleRef = push(ref(db, `users_data/${currentUserKey}/jadwal_terstruktur/${hari}`)); try { await set(newScheduleRef, newScheduleData); showToast("Jadwal berhasil ditambahkan."); addJadwalForm.reset(); } catch (err) { showAlertModal("Error", `Gagal menambahkan jadwal: ${err.message}`, true); } finally { hideLoader(); } }
         function renderJadwalTerstruktur() { jadwalTerstrukturContainer.innerHTML = ''; const daysOrder = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu']; daysOrder.forEach(day => { const daySchedule = allJadwalTerstruktur[day]; if (daySchedule) { const dayName = day.charAt(0).toUpperCase() + day.slice(1); let dayHtml = `<div class="mb-4"><h4 class="text-md font-bold border-b border-main pb-2 mb-2">${dayName}</h4><div class="space-y-2">`; Object.entries(daySchedule).sort(([,a],[,b])=>a.jam_mulai.localeCompare(b.jam_mulai)).forEach(([id, item]) => { dayHtml += `<div class="bg-white dark:bg-white dark:text-gray-800 p-3 rounded-lg flex justify-between items-center"><div><p class="font-medium">${item.jam_mulai} - ${item.jam_selesai}</p><p class="text-sm text-sub dark:text-gray-600">${item.mapelNama} - ${item.kelas}</p></div><div class="flex items-center"><button onclick="window.showEditJadwalModal('${day}','${id}')" class="p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400"><i class="fa-solid fa-pencil"></i></button><button onclick="window.handleDeleteJadwalEntry('${day}','${id}')" class="p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400"><i class="fa-solid fa-trash"></i></button></div></div>`; }); dayHtml += `</div></div>`; jadwalTerstrukturContainer.innerHTML += dayHtml; } }); if (jadwalTerstrukturContainer.innerHTML === '') jadwalTerstrukturContainer.innerHTML = '<p class="text-center text-sub py-4">Belum ada jadwal.</p>'; }
@@ -1488,26 +1715,31 @@
                 console.log("Tidak ada data pending untuk disinkronkan.");
                 return;
             }
+            console.log(`Menyinkronkan ${Object.keys(pending).length} data offline...`);
             showToast("Menyinkronkan data offline..."); 
             showLoader(); 
             try { 
                 await update(ref(db), pending); 
                 storageService.clearPendingUpdates(); 
                 showToast("Sinkronisasi berhasil."); 
-                initializeDataListeners();
+                // Tidak perlu panggil initializeDataListeners() lagi karena onValue akan terpicu
             } catch (e) { 
-                showToast("Gagal sinkronisasi.", true); 
+                showToast("Gagal sinkronisasi. Data tetap tersimpan.", true); 
+                console.error("Sinkronisasi gagal:", e);
             } finally { 
                 hideLoader(); 
             } 
         }
         
         function handleOnlineStatus() { 
+            console.log("Status: Online");
             offlineIndicator.classList.add('hidden'); 
-            syncOfflineData(); 
+            syncOfflineData(); // Panggil sinkronisasi saat kembali online
+            // Pastikan listener terpasang jika belum
             initializeDataListeners(); 
         }
         function handleOfflineStatus() { 
+            console.log("Status: Offline");
             offlineIndicator.classList.remove('hidden'); 
             showToast("Anda offline.", true); 
         }
@@ -1519,7 +1751,7 @@
         }
 
         if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration failed: ', err)); }); }
-        window.handleDeleteDailyData = handleDeleteDailyData; window.handleDeleteJadwal = handleDeleteJadwal; window.handleDeleteMapel = handleDeleteMapel; window.handleDeleteStudent = handleDeleteStudent; window.handleEditMapel = handleEditMapel; window.handleEditStudent = handleEditStudent; window.showDeleteMapelModal = showDeleteMapelModal; window.showDeleteStudentModal = showDeleteStudentModal; window.showEditMapelModal = showEditMapelModal; window.showEditStudentModal = showEditStudentModal; window.goToBuatJadwal = goToBuatJadwal; window.handlePresensiShortcut = handlePresensiShortcut; window.showEditJadwalModal = showEditJadwalModal; window.handleEditJadwal = handleEditJadwal; window.handleDeleteJadwalEntry = handleDeleteJadwalEntry;
+        window.handleDeleteDailyData = handleDeleteDailyData; window.handleDeleteJadwal = handleDeleteJadwal; window.handleDeleteMapel = handleDeleteMapel; window.handleDeleteStudent = handleDeleteStudent; window.handleEditMapel = handleEditMapel; window.handleEditStudent = handleEditStudent; window.showDeleteMapelModal = showDeleteMapelModal; window.showDeleteStudentModal = showDeleteStudentModal; window.showEditMapelModal = showEditMapelModal; window.showEditStudentModal = showEditStudentModal; window.goToBuatJadwal = goToBuatJadwal; window.handlePresensiShortcut = handlePresensiShortcut; window.showEditJadwalModal = showEditJadwalModal; window.handleEditJadwal = handleEditJadwal; window.handleDeleteJadwalEntry = handleDeleteJadwalEntry; window.confirmDeleteJadwalEntry = window.confirmDeleteJadwalEntry;
         setupPreLoginEventListeners();
     </script>
 </body>
