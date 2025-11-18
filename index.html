@@ -84,9 +84,9 @@
     <div id="loading-spinner" class="fixed inset-0 bg-white bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 flex flex-col items-center justify-center z-50">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
         <div id="offline-login-container" class="mt-8 text-center hidden">
-            <p class="text-sub mb-4">Ingin membuka secara offline?</p>
+            <p class="text-sub mb-4">Buka aplikasi secara offline</p>
             <button id="offline-login-btn" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition duration-300">
-                Mode Offline
+                Moda Offline
             </button>
         </div>
     </div>
@@ -334,6 +334,7 @@
         
         const el = id => document.getElementById(id);
 
+        // --- Data Storage Abstraction Layer ---
         const storageService = {
             prefix: 'presensi_app_',
             
@@ -408,6 +409,7 @@
                 } catch (e) { console.error("Gagal menghapus pending updates:", e); }
             }
         };
+        // --- End of Data Storage Abstraction Layer ---
 
         const loadingSpinner = el('loading-spinner'), loginPage = el('login-page'), mainApp = el('app'), userDisplayName = el('user-display-name'), offlineIndicator = el('offline-indicator'), installPwaBtn = el('install-pwa-btn'), filterMapel = el('filter-mapel'), filterKelas = el('filter-kelas'), filterTanggal = el('filter-tanggal'), terapkanBtn = el('terapkan-filter-btn'), rekapFilterMapel = el('rekap-filter-mapel'), rekapFilterKelas = el('rekap-filter-kelas'), terapkanRekapBtn = el('terapkan-rekap-btn'), deleteDailyDataBtn = el('delete-daily-data-btn'), toggleModeBtn = el('toggle-mode-btn'), toggleModeSwitch = el('toggle-mode-switch'), modeLabel = el('mode-label'), contentArea = el('content-area'), kegiatanInput = el('kegiatan-pembelajaran'), studentTableContainer = el('student-table-container'), saveAllBtn = el('save-all-btn'), kegiatanHistoryList = el('kegiatan-history-list'), kegiatanHistoryToggleMore = el('kegiatan-history-toggle-more'), presensiSearchContainer = el('presensi-search-container'), searchPresensiStudentInput = el('search-presensi-student'), addStudentForm = el('add-student-form'), allStudentsTable = el('all-students-table'), csvUploadInput = el('csv-upload'), downloadTemplateBtn = el('download-template-btn'), deleteAllStudentsBtn = el('delete-all-students-btn'), searchAllStudentsInput = el('search-all-students'), addMapelForm = el('add-mapel-form'), mapelListContainer = el('mapel-list-container'), jadwalUploadInput = el('jadwal-upload'), jadwalUploadLabel = el('jadwal-upload-label'), jadwalImageContainer = el('jadwal-image-container'), jadwalImage = el('jadwal-image'), jadwalPlaceholder = el('jadwal-placeholder'), deleteJadwalBtn = el('delete-jadwal-btn'), imageViewerModal = el('image-viewer-modal'), closeImageViewerBtn = el('close-image-viewer-btn'), fullscreenImage = el('fullscreen-image'), rekapTableContainer = el('rekap-table-container'), rekapDownloadDropdownBtn = el('rekap-download-dropdown-btn'), rekapDownloadOptions = el('rekap-download-options'), downloadCsvBtn = el('download-csv-btn'), printRekapBtn = el('print-rekap-btn'), rekapSearchContainer = el('rekap-search-container'), searchRekapStudentInput = el('search-rekap-student'), rekapDynamicTableContent = el('rekap-dynamic-table-content'), addJadwalForm = el('add-jadwal-form'), jadwalTerstrukturContainer = el('jadwal-terstruktur-container'), toggleJadwalModeBtn = el('toggle-jadwal-mode-btn'), toggleJadwalModeSwitch = el('toggle-jadwal-mode-switch'), jadwalModeLabel = el('jadwal-mode-label'), jadwalViewGambar = el('jadwal-view-gambar'), jadwalViewDinamis = el('jadwal-view-dinamis'), dashboardGreeting = el('dashboard-greeting'), dashboardDate = el('dashboard-date'), dashboardJadwalCerdas = el('dashboard-jadwal-cerdas'), modal = el('modal'), modalContent = el('modal-content'), burgerMenuBtn = el('burger-menu-btn'), dropdownMenu = el('dropdown-menu');
         const offlineLoginContainer = el('offline-login-container'); 
@@ -545,8 +547,8 @@
         
         function handleOfflineLogin() {
             console.log("Mencoba login offline...");
-            clearTimeout(authTimeout);
-            offlineLoginContainer.classList.add('hidden');
+            clearTimeout(authTimeout); 
+            offlineLoginContainer.classList.add('hidden'); 
             
             const lastUser = storageService.loadLastUser();
             if (lastUser.key) {
@@ -556,17 +558,25 @@
             } else {
                 console.log("Tidak ada sesi terakhir, menampilkan halaman login manual.");
                 hideLoader(); 
-                loginPage.classList.remove('hidden');
+                loginPage.classList.remove('hidden'); 
                 mainApp.classList.add('hidden');
             }
         }
 
+        // Tampilkan loader di awal
         showLoader(); 
+
+        // Listener untuk tombol offline baru
         offlineLoginBtn.addEventListener('click', handleOfflineLogin);
+
+        // MODIFIKASI: Logika onAuthStateChanged DIPERBAIKI
         onAuthStateChanged(auth, async (user) => {
             if (user) {
+                // --- INI ADALAH PERBAIKANNYA ---
+                // Kita HANYA membatalkan timer jika kita berhasil login.
                 if(authTimeout) clearTimeout(authTimeout);
-
+                // --- AKHIR PERBAIKAN ---
+                
                 try {
                     const namaSnapshot = await get(ref(db, 'users_data/user1/nama'));
                     const namaData = namaSnapshot.val();
@@ -585,22 +595,35 @@
                         currentUserName = "Guru";
                     }
                 }
+                
                 handleSuccessfulLogin('user1'); 
                 
             } else {
-                console.log("onAuthStateChanged: user is null, attempting auto-signin.");
-                
+                // User adalah null. 
+                // JANGAN batalkan authTimeout. Biarkan timer tetap berjalan
+                // sebagai jaring pengaman saat kita mencoba sign-in.
                 try {
                     await signInWithEmailAndPassword(auth, 'mdsr@gmail.com', '12345678');
+                    // Jika ini berhasil, onAuthStateChanged akan dipanggil LAGI,
+                    // tapi kali ini dengan 'user', dan blok 'if (user)' di atas
+                    // akan berjalan, membatalkan timer dengan benar.
                 } catch (error) {
+                    // Jika sign-in GAGAL, kita tidak melakukan apa-apa.
+                    // Biarkan saja. Timer authTimeout akan (akhirnya) berjalan
+                    // dan menampilkan tombol "Buka Offline".
                     console.warn("Gagal auto-signin: " + error.message);
                 }
             }
         });
+
+        // Mulai timer 10 detik SETELAH listener auth disiapkan
         authTimeout = setTimeout(() => {
             console.log("Auth timeout (10s). Menawarkan mode offline.");
+            // Tampilkan container tombol offline
             offlineLoginContainer.classList.remove('hidden');
-        }, 0);
+            // Spinner tetap berputar, tapi tombol kini tersedia
+        }, 0); // 10 detik
+        // AKHIR MODIFIKASI
         
         async function handleSuccessfulLogin(userKey) {
             offlineLoginContainer.classList.add('hidden');
@@ -613,7 +636,6 @@
                 showToast("Login berhasil!");
                 
                 loadAllDataFromLocal(); 
-                
                 initializeDataListeners(); 
                 
                 setupEventListeners();
