@@ -81,7 +81,16 @@
     </style>
 </head>
 <body class="app-bg">
-    <div id="loading-spinner" class="fixed inset-0 bg-white bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 flex items-center justify-center z-50"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div></div>
+    <div id="loading-spinner" class="fixed inset-0 bg-white bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 flex flex-col items-center justify-center z-50">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+        <div id="offline-login-container" class="mt-8 text-center hidden">
+            <p class="text-sub mb-4">Ingin membuka secara offline?</p>
+            <button id="offline-login-btn" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition duration-300">
+                Mode Offline
+            </button>
+        </div>
+    </div>
+
     <div id="toast" class="fixed top-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg hidden fade-in z-[100]"><p id="toast-message"></p></div>
     
     <div id="login-page" class="min-h-screen flex items-center justify-center p-4 hidden">
@@ -321,13 +330,90 @@
         let cropper = null; 
         let availableClasses = new Set(), unsavedChanges = {}, currentPresensiStudentsData = [], currentRekapData = { presensi: {}, nilai: {}, kegiatan: {}, kelas: '' };
         let allPresensiData = {}, allKegiatanData = {}, allNilaiData = {};
-
-        const el = id => document.getElementById(id);
-        const loadingSpinner = el('loading-spinner'), loginPage = el('login-page'), mainApp = el('app'), userDisplayName = el('user-display-name'), offlineIndicator = el('offline-indicator'), installPwaBtn = el('install-pwa-btn'), filterMapel = el('filter-mapel'), filterKelas = el('filter-kelas'), filterTanggal = el('filter-tanggal'), terapkanBtn = el('terapkan-filter-btn'), rekapFilterMapel = el('rekap-filter-mapel'), rekapFilterKelas = el('rekap-filter-kelas'), terapkanRekapBtn = el('terapkan-rekap-btn'), deleteDailyDataBtn = el('delete-daily-data-btn'), toggleModeBtn = el('toggle-mode-btn'), toggleModeSwitch = el('toggle-mode-switch'), modeLabel = el('mode-label'), contentArea = el('content-area'), kegiatanInput = el('kegiatan-pembelajaran'), studentTableContainer = el('student-table-container'), saveAllBtn = el('save-all-btn'), kegiatanHistoryList = el('kegiatan-history-list'), kegiatanHistoryToggleMore = el('kegiatan-history-toggle-more'), presensiSearchContainer = el('presensi-search-container'), searchPresensiStudentInput = el('search-presensi-student'), addStudentForm = el('add-student-form'), allStudentsTable = el('all-students-table'), csvUploadInput = el('csv-upload'), downloadTemplateBtn = el('download-template-btn'), deleteAllStudentsBtn = el('delete-all-students-btn'), searchAllStudentsInput = el('search-all-students'), addMapelForm = el('add-mapel-form'), mapelListContainer = el('mapel-list-container'), jadwalUploadInput = el('jadwal-upload'), jadwalUploadLabel = el('jadwal-upload-label'), jadwalImageContainer = el('jadwal-image-container'), jadwalImage = el('jadwal-image'), jadwalPlaceholder = el('jadwal-placeholder'), deleteJadwalBtn = el('delete-jadwal-btn'), imageViewerModal = el('image-viewer-modal'), closeImageViewerBtn = el('close-image-viewer-btn'), fullscreenImage = el('fullscreen-image'), rekapTableContainer = el('rekap-table-container'), rekapDownloadDropdownBtn = el('rekap-download-dropdown-btn'), rekapDownloadOptions = el('rekap-download-options'), downloadCsvBtn = el('download-csv-btn'), printRekapBtn = el('print-rekap-btn'), rekapSearchContainer = el('rekap-search-container'), searchRekapStudentInput = el('search-rekap-student'), rekapDynamicTableContent = el('rekap-dynamic-table-content'), addJadwalForm = el('add-jadwal-form'), jadwalTerstrukturContainer = el('jadwal-terstruktur-container'), toggleJadwalModeBtn = el('toggle-jadwal-mode-btn'), toggleJadwalModeSwitch = el('toggle-jadwal-mode-switch'), jadwalModeLabel = el('jadwal-mode-label'), jadwalViewGambar = el('jadwal-view-gambar'), jadwalViewDinamis = el('jadwal-view-dinamis'), dashboardGreeting = el('dashboard-greeting'), dashboardDate = el('dashboard-date'), dashboardJadwalCerdas = el('dashboard-jadwal-cerdas'), modal = el('modal'), modalContent = el('modal-content'), burgerMenuBtn = el('burger-menu-btn'), dropdownMenu = el('dropdown-menu');
-        const navLinks = document.querySelectorAll('.nav-link'), pages = document.querySelectorAll('.page-content');
+        let authTimeout = null; 
         
-        const saveToLocal = (key, data) => { try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) { console.error("Gagal menyimpan ke localStorage:", e); } };
-        const loadFromLocal = (key) => { try { const data = localStorage.getItem(key); return data ? JSON.parse(data) : null; } catch (e) { console.error("Gagal memuat dari localStorage:", e); return null; } };
+        const el = id => document.getElementById(id);
+
+        const storageService = {
+            prefix: 'presensi_app_',
+            
+            _getUserKey: () => {
+                if (currentUserKey) return `user_${currentUserKey}_`;
+                const lastKey = localStorage.getItem(storageService.prefix + 'lastUserKey'); 
+                return lastKey ? `user_${JSON.parse(lastKey)}_` : '';
+            },
+            
+            saveUserData: (key, data) => {
+                try {
+                    const userKey = storageService._getUserKey();
+                    localStorage.setItem(storageService.prefix + userKey + key, JSON.stringify(data));
+                } catch (e) { console.error(`Gagal menyimpan ${key} ke localStorage:`, e); }
+            },
+            
+            loadUserData: (key) => {
+                try {
+                    const userKey = storageService._getUserKey();
+                    const data = localStorage.getItem(storageService.prefix + userKey + key);
+                    return data ? JSON.parse(data) : null;
+                } catch (e) { console.error(`Gagal memuat ${key} dari localStorage:`, e); return null; }
+            },
+            
+            saveLastUser: (key, name) => {
+                try {
+                    if (key) localStorage.setItem(storageService.prefix + 'lastUserKey', JSON.stringify(key));
+                    if (name) localStorage.setItem(storageService.prefix + 'lastUserName', JSON.stringify(name));
+                } catch (e) { console.error("Gagal menyimpan user terakhir:", e); }
+            },
+            
+            loadLastUser: () => {
+                try {
+                    const key = localStorage.getItem(storageService.prefix + 'lastUserKey');
+                    const name = localStorage.getItem(storageService.prefix + 'lastUserName');
+                    return {
+                        key: key ? JSON.parse(key) : null,
+                        name: name ? JSON.parse(name) : null
+                    };
+                } catch (e) { console.error("Gagal memuat user terakhir:", e); return { key: null, name: null }; }
+            },
+            
+            saveToken: (token) => {
+                try {
+                    localStorage.setItem(storageService.prefix + 'githubToken', JSON.stringify(token));
+                } catch (e) { console.error("Gagal menyimpan token:", e); }
+            },
+            
+            loadToken: () => {
+                try {
+                    const token = localStorage.getItem(storageService.prefix + 'githubToken');
+                    return token ? JSON.parse(token) : null;
+                } catch (e) { console.error("Gagal memuat token:", e); return null; }
+            },
+            
+            savePendingUpdates: (updates) => {
+                try {
+                    localStorage.setItem(storageService.prefix + 'pending-updates', JSON.stringify(updates));
+                } catch (e) { console.error("Gagal menyimpan pending updates:", e); }
+            },
+
+            loadPendingUpdates: () => {
+                try {
+                    const data = localStorage.getItem(storageService.prefix + 'pending-updates');
+                    return data ? JSON.parse(data) : null;
+                } catch (e) { console.error("Gagal memuat pending updates:", e); return null; }
+            },
+            
+            clearPendingUpdates: () => {
+                try {
+                    localStorage.removeItem(storageService.prefix + 'pending-updates');
+                } catch (e) { console.error("Gagal menghapus pending updates:", e); }
+            }
+        };
+
+        const loadingSpinner = el('loading-spinner'), loginPage = el('login-page'), mainApp = el('app'), userDisplayName = el('user-display-name'), offlineIndicator = el('offline-indicator'), installPwaBtn = el('install-pwa-btn'), filterMapel = el('filter-mapel'), filterKelas = el('filter-kelas'), filterTanggal = el('filter-tanggal'), terapkanBtn = el('terapkan-filter-btn'), rekapFilterMapel = el('rekap-filter-mapel'), rekapFilterKelas = el('rekap-filter-kelas'), terapkanRekapBtn = el('terapkan-rekap-btn'), deleteDailyDataBtn = el('delete-daily-data-btn'), toggleModeBtn = el('toggle-mode-btn'), toggleModeSwitch = el('toggle-mode-switch'), modeLabel = el('mode-label'), contentArea = el('content-area'), kegiatanInput = el('kegiatan-pembelajaran'), studentTableContainer = el('student-table-container'), saveAllBtn = el('save-all-btn'), kegiatanHistoryList = el('kegiatan-history-list'), kegiatanHistoryToggleMore = el('kegiatan-history-toggle-more'), presensiSearchContainer = el('presensi-search-container'), searchPresensiStudentInput = el('search-presensi-student'), addStudentForm = el('add-student-form'), allStudentsTable = el('all-students-table'), csvUploadInput = el('csv-upload'), downloadTemplateBtn = el('download-template-btn'), deleteAllStudentsBtn = el('delete-all-students-btn'), searchAllStudentsInput = el('search-all-students'), addMapelForm = el('add-mapel-form'), mapelListContainer = el('mapel-list-container'), jadwalUploadInput = el('jadwal-upload'), jadwalUploadLabel = el('jadwal-upload-label'), jadwalImageContainer = el('jadwal-image-container'), jadwalImage = el('jadwal-image'), jadwalPlaceholder = el('jadwal-placeholder'), deleteJadwalBtn = el('delete-jadwal-btn'), imageViewerModal = el('image-viewer-modal'), closeImageViewerBtn = el('close-image-viewer-btn'), fullscreenImage = el('fullscreen-image'), rekapTableContainer = el('rekap-table-container'), rekapDownloadDropdownBtn = el('rekap-download-dropdown-btn'), rekapDownloadOptions = el('rekap-download-options'), downloadCsvBtn = el('download-csv-btn'), printRekapBtn = el('print-rekap-btn'), rekapSearchContainer = el('rekap-search-container'), searchRekapStudentInput = el('search-rekap-student'), rekapDynamicTableContent = el('rekap-dynamic-table-content'), addJadwalForm = el('add-jadwal-form'), jadwalTerstrukturContainer = el('jadwal-terstruktur-container'), toggleJadwalModeBtn = el('toggle-jadwal-mode-btn'), toggleJadwalModeSwitch = el('toggle-jadwal-mode-switch'), jadwalModeLabel = el('jadwal-mode-label'), jadwalViewGambar = el('jadwal-view-gambar'), jadwalViewDinamis = el('jadwal-view-dinamis'), dashboardGreeting = el('dashboard-greeting'), dashboardDate = el('dashboard-date'), dashboardJadwalCerdas = el('dashboard-jadwal-cerdas'), modal = el('modal'), modalContent = el('modal-content'), burgerMenuBtn = el('burger-menu-btn'), dropdownMenu = el('dropdown-menu');
+        const offlineLoginContainer = el('offline-login-container'); 
+        const offlineLoginBtn = el('offline-login-btn'); 
+        
+        const navLinks = document.querySelectorAll('.nav-link'), pages = document.querySelectorAll('.page-content');
         
         const mapelColorPalette = [{ bg: 'bg-sky-100', text: 'text-sky-800' }, { bg: 'bg-amber-100', text: 'text-amber-800' }, { bg: 'bg-violet-100', text: 'text-violet-800' }, { bg: 'bg-lime-100', text: 'text-lime-800' }, { bg: 'bg-rose-100', text: 'text-rose-800' }, { bg: 'bg-teal-100', text: 'text-teal-800' }, { bg: 'bg-fuchsia-100', text: 'text-fuchsia-800' }, { bg: 'bg-indigo-100', text: 'text-indigo-800' }, { bg: 'bg-emerald-100', text: 'text-emerald-800' }, { bg: 'bg-cyan-100', text: 'text-cyan-800' }, { bg: 'bg-pink-100', text: 'text-pink-800' }, { bg: 'bg-green-100', text: 'text-green-800' }, { bg: 'bg-purple-100', text: 'text-purple-800' }];
         const kelasColorPalette = { 'A': { bg: 'bg-red-100', text: 'text-red-800' }, 'B': { bg: 'bg-orange-100', text: 'text-orange-800' }, 'C': { bg: 'bg-yellow-100', text: 'text-yellow-800' }, 'D': { bg: 'bg-green-100', text: 'text-green-800' }, 'E': { bg: 'bg-blue-100', text: 'text-blue-800' }, 'F': { bg: 'bg-purple-100', text: 'text-purple-800' }, 'DEFAULT': { bg: 'bg-gray-100', text: 'text-gray-800' } };
@@ -457,8 +543,30 @@
             }
         }
         
+        function handleOfflineLogin() {
+            console.log("Mencoba login offline...");
+            clearTimeout(authTimeout);
+            offlineLoginContainer.classList.add('hidden');
+            
+            const lastUser = storageService.loadLastUser();
+            if (lastUser.key) {
+                console.log("Memuat aplikasi dalam mode offline berdasarkan sesi terakhir.");
+                currentUserName = lastUser.name || "Guru";
+                handleSuccessfulLogin(lastUser.key);
+            } else {
+                console.log("Tidak ada sesi terakhir, menampilkan halaman login manual.");
+                hideLoader(); 
+                loginPage.classList.remove('hidden');
+                mainApp.classList.add('hidden');
+            }
+        }
+
+        showLoader(); 
+        offlineLoginBtn.addEventListener('click', handleOfflineLogin);
         onAuthStateChanged(auth, async (user) => {
             if (user) {
+                if(authTimeout) clearTimeout(authTimeout);
+
                 try {
                     const namaSnapshot = await get(ref(db, 'users_data/user1/nama'));
                     const namaData = namaSnapshot.val();
@@ -468,54 +576,57 @@
                     }
                     
                     currentUserName = namaData.name; 
-                    saveToLocal('lastUserName', currentUserName);
+                    storageService.saveLastUser(null, currentUserName);
                     
                 } catch (error) {
                     console.warn("Gagal fetch nama, mungkin offline. Memuat nama dari cache localStorage...");
-                    currentUserName = loadFromLocal('lastUserName'); 
+                    currentUserName = storageService.loadLastUser().name;
                     if (!currentUserName) {
                         currentUserName = "Guru";
                     }
                 }
-                
                 handleSuccessfulLogin('user1'); 
                 
             } else {
+                console.log("onAuthStateChanged: user is null, attempting auto-signin.");
+                
                 try {
                     await signInWithEmailAndPassword(auth, 'mdsr@gmail.com', '12345678');
-                    
                 } catch (error) {
-                    console.warn("Gagal sign-in, mungkin offline.");
-                    const lastUserKey = loadFromLocal('lastUserKey');
-                    if (lastUserKey) {
-                        console.log("Memuat aplikasi dalam mode offline berdasarkan sesi terakhir.");
-                        currentUserName = loadFromLocal('lastUserName') || "Guru";
-                        handleSuccessfulLogin(lastUserKey);
-                    } else {
-                        loginPage.classList.remove('hidden');
-                        mainApp.classList.add('hidden');
-                        hideLoader();
-                    }
+                    console.warn("Gagal auto-signin: " + error.message);
                 }
             }
         });
+        authTimeout = setTimeout(() => {
+            console.log("Auth timeout (10s). Menawarkan mode offline.");
+            offlineLoginContainer.classList.remove('hidden');
+        }, 0);
         
         async function handleSuccessfulLogin(userKey) {
+            offlineLoginContainer.classList.add('hidden');
             showLoader();
             try {
-                saveToLocal('lastUserKey', userKey);
+                storageService.saveLastUser(userKey, null);
                 currentUserKey = userKey;
                 mainApp.classList.remove('hidden');
+                loginPage.classList.add('hidden'); 
                 showToast("Login berhasil!");
-                loadAllDataFromLocal();
+                
+                loadAllDataFromLocal(); 
+                
                 initializeDataListeners(); 
+                
                 setupEventListeners();
                 el('filter-tanggal').value = getLocalISODate();
                 handleToggleJadwalMode();
                 switchPage('dashboard');
                 if (dashboardUpdateInterval) clearInterval(dashboardUpdateInterval);
                 dashboardUpdateInterval = setInterval(displayDashboard, 10000);
-                fetchGithubToken();
+                
+                if(navigator.onLine) {
+                    fetchGithubToken();
+                }
+
             } catch (error) {
                 console.error("Error detail saat login:", error);
                 showAlertModal("Error", `Terjadi kesalahan setelah login: ${error.message}`, true);
@@ -525,21 +636,20 @@
         }
 
         async function updateHeaderUI() { if (!currentUserKey) return; const displayName = currentUserName || "Pengguna"; userDisplayName.textContent = `Halo, ${displayName.charAt(0).toUpperCase() + displayName.slice(1)}`; }
-        async function fetchGithubToken() { try { const token = (await get(ref(db, 'token/github'))).val(); if(token) { githubToken = token; saveToLocal('githubToken', token); } else if (!githubToken) { showAlertModal("Konfigurasi Error", "Token GitHub tidak ditemukan.", true); } } catch (error) { if (!githubToken) showAlertModal("Konfigurasi Error", "Gagal mengambil token GitHub.", true); } }
+        async function fetchGithubToken() { try { const token = (await get(ref(db, 'token/github'))).val(); if(token) { githubToken = token; storageService.saveToken(token); } else if (!githubToken) { showAlertModal("Konfigurasi Error", "Token GitHub tidak ditemukan.", true); } } catch (error) { if (!githubToken) showAlertModal("Konfigurasi Error", "Gagal mengambil token GitHub.", true); } }
         
         function switchPage(pageId, force = false) { if (!force && hasUnsavedChanges && !el('page-presensi').classList.contains('hidden')) { showUnsavedChangesModal('changePage', pageId); return; } document.querySelectorAll('.page-content').forEach(page => page.classList.add('hidden')); el(`page-${pageId}`).classList.remove('hidden'); document.querySelectorAll('.nav-link').forEach(nav => nav.classList.remove('active')); document.querySelector(`.nav-link[data-page="${pageId}"]`).classList.add('active'); if (pageId === 'hasil-rekap') handleTerapkanRekap(); }
         
         function loadAllDataFromLocal() {
             if (!currentUserKey) return;
-            const userKeyPrefix = `user_${currentUserKey}_`;
             
-            allStudents = loadFromLocal(userKeyPrefix + 'siswa') || {};
-            allMapel = loadFromLocal(userKeyPrefix + 'mapel') || {};
-            allJadwalTerstruktur = loadFromLocal(userKeyPrefix + 'jadwal_terstruktur') || {};
-            allPresensiData = loadFromLocal(userKeyPrefix + 'presensi') || {};
-            allKegiatanData = loadFromLocal(userKeyPrefix + 'kegiatan') || {};
-            allNilaiData = loadFromLocal(userKeyPrefix + 'nilai') || {}; 
-            githubToken = loadFromLocal('githubToken');
+            allStudents = storageService.loadUserData('siswa') || {};
+            allMapel = storageService.loadUserData('mapel') || {};
+            allJadwalTerstruktur = storageService.loadUserData('jadwal_terstruktur') || {};
+            allPresensiData = storageService.loadUserData('presensi') || {};
+            allKegiatanData = storageService.loadUserData('kegiatan') || {};
+            allNilaiData = storageService.loadUserData('nilai') || {}; 
+            githubToken = storageService.loadToken();
             updateHeaderUI();
             renderStudentsTable();
             updateClassFilters();
@@ -552,22 +662,29 @@
 
         function initializeDataListeners() {
             if (!currentUserKey) return;
-            const userPath = `users_data/${currentUserKey}`;
-            const userKeyPrefix = `user_${currentUserKey}_`;
+
+            if (navigator.onLine) {
+                console.log("Mode Online: Memasang listener Firebase...");
+                const userPath = `users_data/${currentUserKey}`;
+                
+                onValue(ref(db, `${userPath}/siswa/`), (s) => { allStudents = s.val() || {}; storageService.saveUserData('siswa', allStudents); renderStudentsTable(); updateClassFilters(); displayDashboard(); });
+                onValue(ref(db, `${userPath}/mapel/`), (s) => { allMapel = s.val() || {}; storageService.saveUserData('mapel', allMapel); renderMapelList(); updateMapelFilter(); updateJadwalMapelFilter(); displayDashboard(); });
+                onValue(ref(db, `${userPath}/jadwal_terstruktur`), (s) => { 
+                    allJadwalTerstruktur = s.val() || {}; 
+                    storageService.saveUserData('jadwal_terstruktur', allJadwalTerstruktur); 
+                    renderJadwalTerstruktur(); 
+                    displayDashboard(); 
+                });
+                onValue(ref(db, `${userPath}/jadwal`), (s) => { const d = s.val(); storageService.saveUserData('jadwal_gambar', d); const hasImage = d && d.imageUrl; jadwalImage.src = hasImage ? d.imageUrl : ''; jadwalImage.classList.toggle('hidden', !hasImage); jadwalImage.classList.toggle('cursor-pointer', hasImage); jadwalPlaceholder.classList.toggle('hidden', hasImage); jadwalUploadLabel.classList.toggle('hidden', hasImage); deleteJadwalBtn.classList.toggle('hidden', !hasImage); });
+                onValue(ref(db, `${userPath}/presensi`), (s) => { allPresensiData = s.val() || {}; storageService.saveUserData('presensi', allPresensiData); displayDashboard(); });
+                onValue(ref(db, `${userPath}/kegiatan`), (s) => { allKegiatanData = s.val() || {}; storageService.saveUserData('kegiatan', allKegiatanData); displayDashboard(); });
+                onValue(ref(db, `${userPath}/nilai`), (s) => { allNilaiData = s.val() || {}; storageService.saveUserData('nilai', allNilaiData); });
             
-            onValue(ref(db, `${userPath}/siswa/`), (s) => { allStudents = s.val() || {}; saveToLocal(userKeyPrefix + 'siswa', allStudents); renderStudentsTable(); updateClassFilters(); displayDashboard(); });
-            onValue(ref(db, `${userPath}/mapel/`), (s) => { allMapel = s.val() || {}; saveToLocal(userKeyPrefix + 'mapel', allMapel); renderMapelList(); updateMapelFilter(); updateJadwalMapelFilter(); displayDashboard(); });
-            onValue(ref(db, `${userPath}/jadwal_terstruktur`), (s) => { 
-                allJadwalTerstruktur = s.val() || {}; 
-                saveToLocal(userKeyPrefix + 'jadwal_terstruktur', allJadwalTerstruktur); 
-                renderJadwalTerstruktur(); 
-                displayDashboard(); 
-            });
-            onValue(ref(db, `${userPath}/jadwal`), (s) => { const d = s.val(); saveToLocal(userKeyPrefix + 'jadwal_gambar', d); const hasImage = d && d.imageUrl; jadwalImage.src = hasImage ? d.imageUrl : ''; jadwalImage.classList.toggle('hidden', !hasImage); jadwalImage.classList.toggle('cursor-pointer', hasImage); jadwalPlaceholder.classList.toggle('hidden', hasImage); jadwalUploadLabel.classList.toggle('hidden', hasImage); deleteJadwalBtn.classList.toggle('hidden', !hasImage); });
-            onValue(ref(db, `${userPath}/presensi`), (s) => { allPresensiData = s.val() || {}; saveToLocal(userKeyPrefix + 'presensi', allPresensiData); displayDashboard(); });
-            onValue(ref(db, `${userPath}/kegiatan`), (s) => { allKegiatanData = s.val() || {}; saveToLocal(userKeyPrefix + 'kegiatan', allKegiatanData); displayDashboard(); });
-            onValue(ref(db, `${userPath}/nilai`), (s) => { allNilaiData = s.val() || {}; saveToLocal(userKeyPrefix + 'nilai', allNilaiData); });
+            } else {
+                console.log("Mode Offline: Melewatkan pemasangan listener Firebase. Data dimuat dari cache.");
+            }
         }
+
         function renderStudentsTable() { allStudentsTable.innerHTML = ''; if (Object.keys(allStudents).length === 0) { allStudentsTable.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-sub">Belum ada siswa.</td></tr>`; return; } const sortedStudents = Object.entries(allStudents).map(([id, data]) => ({ id, ...data })).sort((a, b) => a.kelas.localeCompare(b.kelas) || a.nama.localeCompare(b.nama)); allStudentsTable.dataset.fullStudents = JSON.stringify(sortedStudents); filterAllStudentsTable(); }
         function renderMapelList() { mapelListContainer.innerHTML = ''; if (Object.keys(allMapel).length === 0) { mapelListContainer.innerHTML = `<p class="text-center p-4 text-sub">Belum ada mapel.</p>`; return; } Object.entries(allMapel).forEach(([id, mapel]) => { mapelListContainer.innerHTML += `<div class="bg-white dark:bg-white dark:text-gray-800 p-3 rounded-lg flex justify-between items-center"><div><p class="font-semibold">${mapel.nama}</p><p class="text-sm text-sub dark:text-gray-600">Kelas: ${mapel.kelas}</p></div><div class="flex items-center space-x-2"><button onclick="window.showEditMapelModal('${id}')" class="p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400"><i class="fa-solid fa-pencil"></i></button><button onclick="window.showDeleteMapelModal('${id}', '${mapel.nama}', '${mapel.kelas}')" class="p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400"><i class="fa-solid fa-trash"></i></button></div></div>`; }); }
         function updateClassFilters() { availableClasses.clear(); Object.values(allStudents).forEach(s => availableClasses.add(s.kelas)); const classOptionsHtml = '<option value="">Pilih Kelas</option>' + Array.from(availableClasses).sort().map(k => `<option value="${k}">${k}</option>`).join(''); el('mapel-class').innerHTML = classOptionsHtml; }
@@ -659,9 +776,9 @@
                     setTimeout(() => statusEl.classList.add('hidden'), 2500); 
                 }
             } else {
-                const pending = loadFromLocal('pending-updates') || {};
+                const pending = storageService.loadPendingUpdates() || {};
                 pending[dataPath] = dataToSave;
-                saveToLocal('pending-updates', pending);
+                storageService.savePendingUpdates(pending);
                 statusEl.textContent = 'Tersimpan (offline)';
                 setTimeout(() => statusEl.classList.add('hidden'), 2500); 
                 handleOfflineStatus();
@@ -711,9 +828,8 @@
             contentArea.classList.remove('hidden');
             studentTableContainer.innerHTML = '<p class="col-span-full text-center text-sub">Memuat data presensi...</p>';
             
-            await fetchAndRenderKegiatanHistory(kelas, mapelId);
+            fetchAndRenderKegiatanHistory(kelas, mapelId);
             
-            // DIGANTI: Ambil kegiatan dari data global, bukan 'get()'
             const kegiatan = allKegiatanData[kelas]?.[mapelId]?.[tanggal];
             kegiatanInput.value = kegiatan?.deskripsi || '';
 
@@ -731,7 +847,6 @@
                 return;
             }
 
-            // DIGANTI: Ambil presensi dan nilai dari data global, bukan 'get()'
             const allHistoricalPresensi = allPresensiData[kelas]?.[mapelId] || {};
             const allHistoricalNilai = allNilaiData[kelas]?.[mapelId] || {};
 
@@ -909,7 +1024,6 @@
             const updates = {};
             let hasInvalidGrade = false;
 
-            // Membangun 'updates' dari data yang sudah ada di database (untuk offline)
             const allCurrentPresensi = allPresensiData[kelas]?.[mapelId] || {};
             const allCurrentNilai = allNilaiData[kelas]?.[mapelId] || {};
 
@@ -919,7 +1033,6 @@
                     
                     if (changes.hasOwnProperty('status')) {
                         const presensiPath = `users_data/${currentUserKey}/presensi/${kelas}/${mapelId}/${date}/${studentId}`;
-                        // Ambil data dari cache global, bukan 'get()'
                         const currentData = allCurrentPresensi[date]?.[studentId] || { status: 'Hadir' };
                         const finalData = { ...currentData };
                         if (changes.hasOwnProperty('status')) finalData.status = changes.status;
@@ -968,14 +1081,35 @@
                     showAlertModal("Error", `Gagal menyimpan: ${err.message}`, true);
                 }
             } else {
-                const pending = loadFromLocal('pending-updates') || {};
+                const pending = storageService.loadPendingUpdates() || {};
                 Object.assign(pending, updates);
-                saveToLocal('pending-updates', pending);
+                storageService.savePendingUpdates(pending);
                 showToast("Offline. Perubahan disimpan lokal.");
                 hasUnsavedChanges = false;
                 unsavedChanges = {};
                 updateSaveButtonState();
-                handleTerapkanFilter(true); // Memuat ulang tabel dari data (sekarang offline)
+                
+                for (const path in updates) {
+                    const parts = path.split('/');
+                    const [,,, type, kls, mpl, tgl, stuId] = parts;
+                    const data = updates[path];
+
+                    if (type === 'presensi') {
+                        if (!allPresensiData[kls]) allPresensiData[kls] = {};
+                        if (!allPresensiData[kls][mpl]) allPresensiData[kls][mpl] = {};
+                        if (!allPresensiData[kls][mpl][tgl]) allPresensiData[kls][mpl][tgl] = {};
+                        allPresensiData[kls][mpl][tgl][stuId] = data;
+                    } else if (type === 'nilai') {
+                        if (!allNilaiData[kls]) allNilaiData[kls] = {};
+                        if (!allNilaiData[kls][mpl]) allNilaiData[kls][mpl] = {};
+                        if (!allNilaiData[kls][mpl][tgl]) allNilaiData[kls][mpl][tgl] = {};
+                        allNilaiData[kls][mpl][tgl][stuId] = data;
+                    }
+                }
+                storageService.saveUserData('presensi', allPresensiData);
+                storageService.saveUserData('nilai', allNilaiData);
+                
+                handleTerapkanFilter(true); 
             }
         }
         
@@ -984,15 +1118,15 @@
         async function handleDeleteJadwal() { if (!currentUserKey || !currentUserName || !githubToken) return showAlertModal("Error", "Info tidak lengkap.", true); closeModal(); showLoader(); const sanitizedUserName = sanitizeForPath(currentUserName); const filePath = `schedules/${currentUserKey}/${sanitizedUserName}/schedule.jpg`; const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${filePath}`; try { const res = await fetch(apiUrl, { headers: { 'Authorization': `token ${githubToken}` } }); if (res.ok) { const { sha } = await res.json(); const delRes = await fetch(apiUrl, { method: 'DELETE', headers: { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify({ message: `Hapus jadwal ${new Date().toISOString()}`, sha }) }); if (!delRes.ok) throw new Error((await delRes.json()).message); } await remove(ref(db, `users_data/${currentUserKey}/jadwal`)); showToast("Jadwal berhasil dihapus."); } catch (error) { showAlertModal("Gagal", `Gagal menghapus: ${error.message}`, true); } finally { hideLoader(); } };
         window.showEditStudentModal=(s)=>{const d=allStudents[s];let c='';Array.from(availableClasses).sort().forEach(k=>{c+=`<option value="${k}" ${k===d.kelas?'selected':''}>${k}</option>`;});openModal(`<h3 class="text-lg font-bold mb-4">Edit Siswa</h3><div class="mb-4"><label>Nama</label><input type="text" id="edit-student-name" value="${d.nama}" class="w-full mt-1 p-2 input-bg rounded-lg"></div><div class="mb-6"><label>Kelas</label><select id="edit-student-class" class="w-full mt-1 p-2 input-bg rounded-lg">${c}</select></div><div class="flex justify-end space-x-2"><button onclick="window.closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.handleEditStudent('${s}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Simpan</button></div>`);};window.handleEditStudent=(s)=>{const n=el('edit-student-name').value.trim().toUpperCase(),c=el('edit-student-class').value.toUpperCase();if(!n||!c)return showToast("Nama & kelas wajib.",true);showLoader();update(ref(db,`users_data/${currentUserKey}/siswa/${s}`),{nama:n,kelas:c}).then(()=>{showToast("Data siswa diperbarui.");closeModal();refreshRekapTableIfNeeded();}).catch(e=>showAlertModal("Error",e.message,true)).finally(hideLoader);};window.showDeleteStudentModal=(s,n)=>{openModal(`<h3 class="text-lg font-bold mb-2 text-red-600">Hapus Siswa?</h3><p class="mb-6">Yakin hapus <b>${n}</b> dan semua datanya?</p><div class="flex justify-end space-x-2"><button onclick="window.closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.handleDeleteStudent('${s}')" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Hapus</button></div>`);};window.handleDeleteStudent=async(s)=>{showLoader();try{const u={};u[`users_data/${currentUserKey}/siswa/${s}`]=null;const[p,n]=await Promise.all([get(ref(db,`users_data/${currentUserKey}/presensi`)),get(ref(db,`users_data/${currentUserKey}/nilai`))]);const ap=p.val()||{},an=n.val()||{};for(const k in ap){for(const m in ap[k]){if(ap[k][m][s])u[`users_data/${currentUserKey}/presensi/${k}/${m}/${s}`]=null;}}for(const k in an){for(const m in an[k]){if(an[k][m][s])u[`users_data/${currentUserKey}/nilai/${k}/${m}/${s}`]=null;}}await update(ref(db),u);showToast("Siswa dihapus.");closeModal();refreshRekapTableIfNeeded();}catch(e){showAlertModal("Error",e.message,true);}finally{hideLoader();}};
         window.showEditMapelModal=(m)=>{const d=allMapel[m];let c='';Array.from(availableClasses).sort().forEach(k=>{c+=`<option value="${k}" ${k===d.kelas?'selected':''}>${k}</option>`;});openModal(`<h3 class="text-lg font-bold mb-4">Edit Mapel</h3><div class="mb-4"><label>Nama</label><input type="text" id="edit-mapel-name" value="${d.nama}" class="w-full mt-1 p-2 input-bg rounded-lg"></div><div class="mb-6"><label>Kelas</label><select id="edit-mapel-class" class="w-full mt-1 p-2 input-bg rounded-lg">${c}</select></div><div class="flex justify-end space-x-2"><button onclick="window.closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.handleEditMapel('${m}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Simpan</button></div>`);};window.handleEditMapel=(m)=>{const n=el('edit-mapel-name').value.trim().toUpperCase(),c=el('edit-mapel-class').value.toUpperCase();if(!n||!c)return showToast("Nama & kelas wajib.",true);showLoader();update(ref(db,`users_data/${currentUserKey}/mapel/${m}`),{nama:n,kelas:c}).then(()=>{showToast("Mapel diperbarui.");closeModal();}).catch(e=>showAlertModal("Error",e.message,true)).finally(hideLoader);};window.showDeleteMapelModal=(m,n,c)=>{openModal(`<h3 class="text-lg font-bold mb-2 text-red-600">Hapus Mapel?</h3><p class="mb-6">Yakin hapus <b>${n} (${c})</b> dan semua datanya?</p><div class="flex justify-end space-x-2"><button onclick="window.closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.handleDeleteMapel('${m}','${c}')" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Hapus</button></div>`);};window.handleDeleteMapel=async(m,c)=>{showLoader();try{const u={};u[`users_data/${currentUserKey}/mapel/${m}`]=null;u[`users_data/${currentUserKey}/presensi/${c}/${m}`]=null;u[`users_data/${currentUserKey}/nilai/${c}/${m}`]=null;u[`users_data/${currentUserKey}/kegiatan/${c}/${m}`]=null;const s={};for(const d in allJadwalTerstruktur){for(const i in allJadwalTerstruktur[d]){if(allJadwalTerstruktur[d][i].mapelId===m)s[`users_data/${currentUserKey}/jadwal_terstruktur/${d}/${i}`]=null;}}await update(ref(db),s);await update(ref(db),u);showToast("Mapel dihapus.");closeModal();refreshRekapTableIfNeeded();}catch(e){showAlertModal("Error",e.message,true);}finally{hideLoader();}};
-        function renderKegiatanHistory(historyData) { kegiatanHistoryList.innerHTML = ''; if (historyData.length === 0) { kegiatanHistoryList.innerHTML = '<p class="text-center text-gray-400">Tidak ada riwayat.</p>'; kegiatanHistoryToggleMore.classList.add('hidden'); return; } kegiatanHistoryList.dataset.fullhistory = JSON.stringify(historyData); const isPartial = kegiatanHistoryToggleMore.dataset.state === 'partial'; const dataToShow = isPartial ? historyData.slice(0, 2) : historyData; dataToShow.forEach(item => { const [y,m,d] = item.tanggal.split('-'), date = new Date(y,m-1,d); kegiatanHistoryList.innerHTML += `<div class="p-2 border-b border-yellow-200 dark:border-yellow-800"><p class="font-semibold">${formatDateToIndonesian(date)}</p><p class="text-sub">${item.deskripsi}</p></div>`; }); kegiatanHistoryToggleMore.classList.toggle('hidden', historyData.length <= 2); kegiatanHistoryToggleMore.innerHTML = isPartial ? 'Lainnya &darr;' : 'Ringkas &uarr;'; }
         
-        async function fetchAndRenderKegiatanHistory(kelas, mapelId) { 
+        function fetchAndRenderKegiatanHistory(kelas, mapelId) { 
             kegiatanHistoryList.innerHTML = '<p>Memuat...</p>'; 
-            // DIGANTI: Ambil kegiatan dari data global, bukan 'get()'
             const allKegiatan = allKegiatanData[kelas]?.[mapelId] || {}; 
             const historyList = Object.entries(allKegiatan).filter(([,d]) => d.deskripsi).map(([t,d]) => ({ tanggal: t, deskripsi: d.deskripsi })).sort((a,b) => b.tanggal.localeCompare(a.tanggal)); 
             renderKegiatanHistory(historyList); 
         }
+
+        function renderKegiatanHistory(historyData) { kegiatanHistoryList.innerHTML = ''; if (historyData.length === 0) { kegiatanHistoryList.innerHTML = '<p class="text-center text-gray-400">Tidak ada riwayat.</p>'; kegiatanHistoryToggleMore.classList.add('hidden'); return; } kegiatanHistoryList.dataset.fullhistory = JSON.stringify(historyData); const isPartial = kegiatanHistoryToggleMore.dataset.state === 'partial'; const dataToShow = isPartial ? historyData.slice(0, 2) : historyData; dataToShow.forEach(item => { const [y,m,d] = item.tanggal.split('-'), date = new Date(y,m-1,d); kegiatanHistoryList.innerHTML += `<div class="p-2 border-b border-yellow-200 dark:border-yellow-800"><p class="font-semibold">${formatDateToIndonesian(date)}</p><p class="text-sub">${item.deskripsi}</p></div>`; }); kegiatanHistoryToggleMore.classList.toggle('hidden', historyData.length <= 2); kegiatanHistoryToggleMore.innerHTML = isPartial ? 'Lainnya &darr;' : 'Ringkas &uarr;'; }
         
         async function handleTerapkanRekap() {
             const selectedMapelName = rekapFilterMapel.value, kelas = rekapFilterKelas.value;
@@ -1008,16 +1142,27 @@
             showLoader();
             rekapDynamicTableContent.innerHTML = '<p class="text-center text-sub">Memuat...</p>';
             
-            const [presensi, nilai, kegiatan] = await Promise.all([
-                get(ref(db, `users_data/${currentUserKey}/presensi/${kelas}/${mapelId}`)),
-                get(ref(db, `users_data/${currentUserKey}/nilai/${kelas}/${mapelId}`)),
-                get(ref(db, `users_data/${currentUserKey}/kegiatan/${kelas}/${mapelId}`)) 
-            ]);
+            let presensiData, nilaiData, kegiatanData;
+            if (navigator.onLine) {
+                const [presensi, nilai, kegiatan] = await Promise.all([
+                    get(ref(db, `users_data/${currentUserKey}/presensi/${kelas}/${mapelId}`)),
+                    get(ref(db, `users_data/${currentUserKey}/nilai/${kelas}/${mapelId}`)),
+                    get(ref(db, `users_data/${currentUserKey}/kegiatan/${kelas}/${mapelId}`)) 
+                ]);
+                presensiData = presensi.val() || {};
+                nilaiData = nilai.val() || {};
+                kegiatanData = kegiatan.val() || {};
+            } else {
+                console.log("Memuat rekap dari cache offline");
+                presensiData = allPresensiData[kelas]?.[mapelId] || {};
+                nilaiData = allNilaiData[kelas]?.[mapelId] || {};
+                kegiatanData = allKegiatanData[kelas]?.[mapelId] || {};
+            }
             
             currentRekapData = {
-                presensi: presensi.val() || {},
-                nilai: nilai.val() || {},
-                kegiatan: kegiatan.val() || {}, 
+                presensi: presensiData,
+                nilai: nilaiData,
+                kegiatan: kegiatanData, 
                 kelas
             };
             
@@ -1314,8 +1459,32 @@
             await handleTerapkanFilter(true);
             el('filter-container').scrollIntoView({ behavior: 'smooth' });
         }
-        async function syncOfflineData() { const pending = loadFromLocal('pending-updates'); if (!pending || Object.keys(pending).length === 0) return; showToast("Menyinkronkan data..."); showLoader(); try { await update(ref(db), pending); localStorage.removeItem('pending-updates'); showToast("Sinkronisasi berhasil."); } catch (e) { showToast("Gagal sinkronisasi.", true); } finally { hideLoader(); } }
-        function handleOnlineStatus() { offlineIndicator.classList.add('hidden'); syncOfflineData(); }
+        
+        async function syncOfflineData() { 
+            const pending = storageService.loadPendingUpdates(); 
+            if (!pending || Object.keys(pending).length === 0) {
+                console.log("Tidak ada data pending untuk disinkronkan.");
+                return;
+            }
+            showToast("Menyinkronkan data offline..."); 
+            showLoader(); 
+            try { 
+                await update(ref(db), pending); 
+                storageService.clearPendingUpdates(); 
+                showToast("Sinkronisasi berhasil."); 
+                initializeDataListeners();
+            } catch (e) { 
+                showToast("Gagal sinkronisasi.", true); 
+            } finally { 
+                hideLoader(); 
+            } 
+        }
+        
+        function handleOnlineStatus() { 
+            offlineIndicator.classList.add('hidden'); 
+            syncOfflineData(); 
+            initializeDataListeners(); 
+        }
         function handleOfflineStatus() { 
             offlineIndicator.classList.remove('hidden'); 
             showToast("Anda offline.", true); 
