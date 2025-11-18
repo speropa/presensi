@@ -84,7 +84,7 @@
     <div id="loading-spinner" class="fixed inset-0 bg-white bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 flex flex-col items-center justify-center z-50">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
         <div id="offline-login-container" class="mt-8 text-center hidden">
-            <p class="text-sub mb-4">Buka aplikasi secara offline</p>
+            <p class="text-sub mb-4">Buka aplikasi secara offline?</p>
             <button id="offline-login-btn" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition duration-300">
                 Moda Offline
             </button>
@@ -622,10 +622,7 @@
             // Tampilkan container tombol offline
             offlineLoginContainer.classList.remove('hidden');
             // Spinner tetap berputar, tapi tombol kini tersedia
-        }, 10000); // 10 detik
-        // AKHIR MODIFIKASI
-        
-        // --- FUNGSI DIPERBARUI ---
+        }, 0); //
         async function handleSuccessfulLogin(userKey) {
             offlineLoginContainer.classList.add('hidden');
             showLoader();
