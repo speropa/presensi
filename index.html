@@ -84,7 +84,7 @@
     <div id="loading-spinner" class="fixed inset-0 bg-white bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 flex flex-col items-center justify-center z-50">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
         <div id="offline-login-container" class="mt-8 text-center hidden">
-            <p class="text-sub mb-4">Buka aplikasi secara offline?</p>
+            <p class="text-sub mb-4">Buka aplikasi secara offline</p>
             <button id="offline-login-btn" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition duration-300">
                 Moda Offline
             </button>
@@ -616,13 +616,16 @@
             }
         });
 
-        // Mulai timer 10 detik SETELAH listener auth disiapkan
+        // Mulai timer (0 detik) SETELAH listener auth disiapkan
         authTimeout = setTimeout(() => {
-            console.log("Auth timeout (10s). Menawarkan mode offline.");
+            console.log("Auth timeout (0s). Menawarkan mode offline.");
             // Tampilkan container tombol offline
             offlineLoginContainer.classList.remove('hidden');
             // Spinner tetap berputar, tapi tombol kini tersedia
-        }, 0); //
+        }, 0); // UBAH KE 0 SESUAI PERMINTAAN
+        // AKHIR MODIFIKASI
+        
+        // --- FUNGSI DIPERBARUI ---
         async function handleSuccessfulLogin(userKey) {
             offlineLoginContainer.classList.add('hidden');
             showLoader();
@@ -694,6 +697,7 @@
                 for (const path in pending) {
                     const parts = path.split('/');
                     // Format path: users_data/USER_KEY/TYPE/KELAS/MAPELID/TANGGAL/SISWA_ID
+                    // Kita ambil bagian pentingnya saja
                     if (parts.length < 6) continue; // Path tidak valid
 
                     const type = parts[2]; // presensi, nilai, atau kegiatan
@@ -924,10 +928,89 @@
             if (!navigator.onLine) handleOfflineStatus();
         }
 
-        function handleAddStudent(e) { e.preventDefault(); const nama = el('student-name').value.trim().toUpperCase(), kelas = el('student-class').value.trim().toUpperCase(); if (!nama || !kelas) return showToast("Nama dan kelas wajib diisi.", true); showLoader(); set(push(ref(db, `users_data/${currentUserKey}/siswa`)), { nama, kelas }).then(() => { showToast("Siswa berhasil ditambahkan."); addStudentForm.reset(); refreshRekapTableIfNeeded(); }).catch(err => showAlertModal("Error", `Gagal: ${err.message}`, true)).finally(hideLoader); }
+        // --- FUNGSI ADD STUDENT DIPERBAIKI ---
+        async function handleAddStudent(e) {
+            e.preventDefault();
+            const nama = el('student-name').value.trim().toUpperCase();
+            const kelas = el('student-class').value.trim().toUpperCase();
+            if (!nama || !kelas) return showToast("Nama dan kelas wajib diisi.", true);
+            
+            showLoader();
+
+            const newRef = push(ref(db, `users_data/${currentUserKey}/siswa`));
+            const newKey = newRef.key;
+            const newData = { nama, kelas };
+            const path = `users_data/${currentUserKey}/siswa/${newKey}`;
+
+            if (navigator.onLine) {
+                set(newRef, newData).then(() => {
+                    showToast("Siswa berhasil ditambahkan.");
+                    addStudentForm.reset();
+                    refreshRekapTableIfNeeded();
+                }).catch(err => showAlertModal("Error", `Gagal: ${err.message}`, true))
+                .finally(hideLoader);
+            } else {
+                // OFFLINE LOGIC: Simpan lokal & update UI tanpa menunggu server
+                allStudents[newKey] = newData;
+                storageService.saveUserData('siswa', allStudents);
+                
+                const pending = storageService.loadPendingUpdates() || {};
+                pending[path] = newData;
+                storageService.savePendingUpdates(pending);
+
+                renderStudentsTable();
+                updateClassFilters();
+                
+                showToast("Siswa disimpan di HP (Offline).");
+                addStudentForm.reset();
+                hideLoader();
+            }
+        }
+        // --- AKHIR FUNGSI ADD STUDENT DIPERBAIKI ---
+
         function handleCsvUpload(e) { const file = e.target.files[0]; if (!file) return; showLoader(); Papa.parse(file, { header: false, skipEmptyLines: true, delimiter: ";", complete: (results) => { const data = {}; results.data.slice(1).forEach(row => { if (Array.isArray(row) && row.length > 2) { const nama = row[1]?.trim().toUpperCase(), kelas = row[2]?.trim().toUpperCase(); if (nama && kelas) data[push(ref(db, `users_data/${currentUserKey}/siswa`)).key] = { nama, kelas }; } }); if (Object.keys(data).length > 0) { update(ref(db, `users_data/${currentUserKey}/siswa`), data).then(() => { showToast(`${Object.keys(data).length} siswa diunggah.`); refreshRekapTableIfNeeded(); }).catch(err => showAlertModal("Error", `Gagal: ${err.message}`, true)).finally(hideLoader); } else { showAlertModal("Gagal", "Tidak ada data valid.", true); hideLoader(); } csvUploadInput.value = ''; }, error: (err) => { showAlertModal("Error", `Gagal: ${err.message}`, true); hideLoader(); } }); }
         function handleDownloadTemplate() { window.open('https://drive.google.com/uc?export=download&id=1itiQBK37vt58iorp2ZIUtKSeu19Z7Dhq', '_blank'); }
-        function handleAddMapel(e) { e.preventDefault(); const nama = el('mapel-name').value.trim().toUpperCase(), kelas = el('mapel-class').value.toUpperCase(); if (!nama || !kelas) return showToast("Nama mapel dan kelas wajib diisi.", true); showLoader(); set(push(ref(db, `users_data/${currentUserKey}/mapel`)), { nama, kelas }).then(() => { showToast("Mapel berhasil ditambahkan."); addMapelForm.reset(); }).catch(err => showAlertModal("Error", `Gagal: ${err.message}`, true)).finally(hideLoader); }
+        
+        // --- FUNGSI ADD MAPEL DIPERBAIKI ---
+        async function handleAddMapel(e) {
+            e.preventDefault();
+            const nama = el('mapel-name').value.trim().toUpperCase();
+            const kelas = el('mapel-class').value.toUpperCase();
+            if (!nama || !kelas) return showToast("Nama mapel dan kelas wajib diisi.", true);
+            
+            showLoader();
+
+            const newRef = push(ref(db, `users_data/${currentUserKey}/mapel`));
+            const newKey = newRef.key;
+            const newData = { nama, kelas };
+            const path = `users_data/${currentUserKey}/mapel/${newKey}`;
+
+            if (navigator.onLine) {
+                set(newRef, newData).then(() => {
+                    showToast("Mapel berhasil ditambahkan.");
+                    addMapelForm.reset();
+                }).catch(err => showAlertModal("Error", `Gagal: ${err.message}`, true))
+                .finally(hideLoader);
+            } else {
+                // OFFLINE LOGIC
+                allMapel[newKey] = newData;
+                storageService.saveUserData('mapel', allMapel);
+
+                const pending = storageService.loadPendingUpdates() || {};
+                pending[path] = newData;
+                storageService.savePendingUpdates(pending);
+
+                renderMapelList();
+                updateMapelFilter();
+                updateJadwalMapelFilter();
+                
+                showToast("Mapel disimpan di HP (Offline).");
+                addMapelForm.reset();
+                hideLoader();
+            }
+        }
+        // --- AKHIR FUNGSI ADD MAPEL DIPERBAIKI ---
+
         function handleToggleMode() { currentMode = currentMode === 'presensi' ? 'nilai' : 'presensi'; const isNilai = currentMode === 'nilai'; toggleModeSwitch.style.transform = isNilai ? 'translateX(1.25rem)' : 'translateX(0)'; toggleModeBtn.classList.toggle('bg-blue-600', isNilai); toggleModeBtn.classList.toggle('bg-gray-200', !isNilai); modeLabel.textContent = `Mode: ${isNilai ? 'Nilai' : 'Presensi'}`; if (!contentArea.classList.contains('hidden')) handleTerapkanFilter(true); }
         
         async function handleSaveKegiatan() { 
@@ -965,7 +1048,7 @@
                 
                 statusEl.textContent = 'Tersimpan (offline)';
                 setTimeout(() => statusEl.classList.add('hidden'), 2500); 
-                handleOfflineStatus();
+                // handleOfflineStatus(); // DIHAPUS AGAR TOAST TIDAK TIMPA
             }
         }
         
@@ -1295,8 +1378,8 @@
                     showAlertModal("Error", `Gagal sinkronisasi: ${err.message}. Data tetap tersimpan offline.`, true);
                 }
             } else {
-                showToast("Offline. Perubahan disimpan lokal.");
-                handleOfflineStatus();
+                showToast("Tersimpan di HP. Akan dikirim saat ada sinyal.", false); // false = hijau
+                // handleOfflineStatus(); // DIHAPUS
             }
 
             // Apapun hasilnya, reset state "unsaved"
@@ -1522,7 +1605,51 @@
             } 
         }
         
-        async function handleAddJadwal(e) { e.preventDefault(); const hari = el('jadwal-hari').value, jam_mulai = el('jadwal-jam-mulai').value, jam_selesai = el('jadwal-jam-selesai').value, mapelId = el('jadwal-mapel').value; if (!hari || !jam_mulai || !jam_selesai || !mapelId) return showToast("Semua kolom wajib diisi.", true); if (jam_mulai >= jam_selesai) return showToast("Jam mulai harus sebelum jam selesai.", true); showLoader(); const mapelData = allMapel[mapelId]; const newScheduleData = { jam_mulai, jam_selesai, mapelId, mapelNama: mapelData.nama, kelas: mapelData.kelas }; const newScheduleRef = push(ref(db, `users_data/${currentUserKey}/jadwal_terstruktur/${hari}`)); try { await set(newScheduleRef, newScheduleData); showToast("Jadwal berhasil ditambahkan."); addJadwalForm.reset(); } catch (err) { showAlertModal("Error", `Gagal menambahkan jadwal: ${err.message}`, true); } finally { hideLoader(); } }
+        // --- FUNGSI ADD JADWAL DIPERBAIKI ---
+        async function handleAddJadwal(e) { 
+            e.preventDefault(); 
+            const hari = el('jadwal-hari').value, jam_mulai = el('jadwal-jam-mulai').value, jam_selesai = el('jadwal-jam-selesai').value, mapelId = el('jadwal-mapel').value; 
+            if (!hari || !jam_mulai || !jam_selesai || !mapelId) return showToast("Semua kolom wajib diisi.", true); 
+            if (jam_mulai >= jam_selesai) return showToast("Jam mulai harus sebelum jam selesai.", true); 
+            
+            showLoader(); 
+            
+            const mapelData = allMapel[mapelId]; 
+            const newScheduleData = { jam_mulai, jam_selesai, mapelId, mapelNama: mapelData.nama, kelas: mapelData.kelas }; 
+            const newRef = push(ref(db, `users_data/${currentUserKey}/jadwal_terstruktur/${hari}`)); 
+            const newKey = newRef.key;
+            const path = `users_data/${currentUserKey}/jadwal_terstruktur/${hari}/${newKey}`;
+
+            if (navigator.onLine) {
+                try { 
+                    await set(newRef, newScheduleData); 
+                    showToast("Jadwal berhasil ditambahkan."); 
+                    addJadwalForm.reset(); 
+                } catch (err) { 
+                    showAlertModal("Error", `Gagal menambahkan jadwal: ${err.message}`, true); 
+                } finally { 
+                    hideLoader(); 
+                } 
+            } else {
+                // OFFLINE LOGIC
+                if (!allJadwalTerstruktur[hari]) allJadwalTerstruktur[hari] = {};
+                allJadwalTerstruktur[hari][newKey] = newScheduleData;
+                storageService.saveUserData('jadwal_terstruktur', allJadwalTerstruktur);
+
+                const pending = storageService.loadPendingUpdates() || {};
+                pending[path] = newScheduleData;
+                storageService.savePendingUpdates(pending);
+
+                renderJadwalTerstruktur();
+                displayDashboard(); // Update dashboard juga agar kartu baru muncul
+
+                showToast("Jadwal disimpan di HP (Offline).");
+                addJadwalForm.reset();
+                hideLoader();
+            }
+        }
+        // --- AKHIR FUNGSI ADD JADWAL DIPERBAIKI ---
+
         function renderJadwalTerstruktur() { jadwalTerstrukturContainer.innerHTML = ''; const daysOrder = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu']; daysOrder.forEach(day => { const daySchedule = allJadwalTerstruktur[day]; if (daySchedule) { const dayName = day.charAt(0).toUpperCase() + day.slice(1); let dayHtml = `<div class="mb-4"><h4 class="text-md font-bold border-b border-main pb-2 mb-2">${dayName}</h4><div class="space-y-2">`; Object.entries(daySchedule).sort(([,a],[,b])=>a.jam_mulai.localeCompare(b.jam_mulai)).forEach(([id, item]) => { dayHtml += `<div class="bg-white dark:bg-white dark:text-gray-800 p-3 rounded-lg flex justify-between items-center"><div><p class="font-medium">${item.jam_mulai} - ${item.jam_selesai}</p><p class="text-sm text-sub dark:text-gray-600">${item.mapelNama} - ${item.kelas}</p></div><div class="flex items-center"><button onclick="window.showEditJadwalModal('${day}','${id}')" class="p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400"><i class="fa-solid fa-pencil"></i></button><button onclick="window.handleDeleteJadwalEntry('${day}','${id}')" class="p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400"><i class="fa-solid fa-trash"></i></button></div></div>`; }); dayHtml += `</div></div>`; jadwalTerstrukturContainer.innerHTML += dayHtml; } }); if (jadwalTerstrukturContainer.innerHTML === '') jadwalTerstrukturContainer.innerHTML = '<p class="text-center text-sub py-4">Belum ada jadwal.</p>'; }
         window.showEditJadwalModal = (day, scheduleId) => { const jadwal = allJadwalTerstruktur[day]?.[scheduleId]; if(!jadwal) return; let dayOpts = '', mapelOpts = ''; ['senin','selasa','rabu','kamis','jumat','sabtu'].forEach(d=>{dayOpts+=`<option value="${d}" ${d===day?'selected':''}>${d.charAt(0).toUpperCase()+d.slice(1)}</option>`;}); Object.entries(allMapel).sort(([,a],[,b])=>a.nama.localeCompare(b.nama)||a.kelas.localeCompare(b.kelas)).forEach(([id,m])=>{mapelOpts+=`<option value="${id}" ${id===jadwal.mapelId?'selected':''}>${m.nama} - ${m.kelas}</option>`;}); openModal(`<h3 class="text-lg font-bold mb-4">Edit Jadwal</h3><div class="space-y-4"><div><label for="edit-jadwal-hari" class="block text-sm font-medium text-sub mb-1">Hari</label><select id="edit-jadwal-hari" class="w-full p-2 input-bg rounded-lg">${dayOpts}</select></div><div class="grid grid-cols-2 gap-4"><div><label for="edit-jadwal-jam-mulai" class="block text-sm font-medium text-sub mb-1">Mulai</label><input type="time" id="edit-jadwal-jam-mulai" value="${jadwal.jam_mulai}" class="w-full p-2 input-bg rounded-lg"></div><div><label for="edit-jadwal-jam-selesai" class="block text-sm font-medium text-sub mb-1">Selesai</label><input type="time" id="edit-jadwal-jam-selesai" value="${jadwal.jam_selesai}" class="w-full p-2 input-bg rounded-lg"></div></div><div><label for="edit-jadwal-mapel" class="block text-sm font-medium text-sub mb-1">Mapel</label><select id="edit-jadwal-mapel" class="w-full p-2 input-bg rounded-lg">${mapelOpts}</select></div></div><div class="flex justify-end space-x-2 mt-6"><button onclick="window.closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.handleEditJadwal('${day}','${scheduleId}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Simpan</button></div>`); }
         async function handleEditJadwal(originalDay, scheduleId) { const newDay = el('edit-jadwal-hari').value, newStart = el('edit-jadwal-jam-mulai').value, newEnd = el('edit-jadwal-jam-selesai').value, newMapelId = el('edit-jadwal-mapel').value; if (!newDay || !newStart || !newEnd || !newMapelId) return showToast("Semua kolom wajib.", true); if (newStart >= newEnd) return showToast("Jam tidak valid.", true); showLoader(); try { const mapelData = allMapel[newMapelId]; const updatedData = { jam_mulai: newStart, jam_selesai: newEnd, mapelId: newMapelId, mapelNama: mapelData.nama, kelas: mapelData.kelas }; const updates = {}; updates[`users_data/${currentUserKey}/jadwal_terstruktur/${originalDay}/${scheduleId}`] = null; updates[`users_data/${currentUserKey}/jadwal_terstruktur/${newDay}/${scheduleId}`] = updatedData; await update(ref(db), updates); showToast("Jadwal berhasil diperbarui."); closeModal(); } catch (err) { showAlertModal("Error", `Gagal memperbarui: ${err.message}`, true); } finally { hideLoader(); } }
