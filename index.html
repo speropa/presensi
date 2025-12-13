@@ -126,7 +126,11 @@
                                 <div class="flex items-center"><i class="fa-solid fa-unlock-alt w-6"></i><span class="ml-2">Bebas Presensi</span></div>
                                 <label for="bebas-presensi-toggle" class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="bebas-presensi-toggle" class="sr-only peer"><div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div></label>
                             </div>
-                            
+                            <div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+                            <button id="reset-menu-btn" class="w-full text-left px-3 py-2 text-sub hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center transition-colors">
+                                <i class="fa-solid fa-rotate-left w-6"></i>
+                                <span class="ml-2">Reset Data</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -578,11 +582,11 @@
                 // --- AKHIR PERBAIKAN ---
                 
                 try {
-                    const namaSnapshot = await get(ref(db, 'users_data/user1/nama'));
+                    const namaSnapshot = await get(ref(db, 'nama'));
                     const namaData = namaSnapshot.val();
                     
                     if (!namaData || !namaData.name) {
-                        throw new Error("Data 'nama' untuk 'user1' tidak ditemukan.");
+                        throw new Error("Data 'nama' tidak ditemukan.");
                     }
                     
                     currentUserName = namaData.name; 
@@ -616,13 +620,14 @@
             }
         });
 
-        // Mulai timer (0 detik) SETELAH listener auth disiapkan
+        // Mulai timer (3 detik = 3000ms) SETELAH listener auth disiapkan
+        // MODIFIKASI: Mengubah 0 menjadi 3000 sesuai permintaan
         authTimeout = setTimeout(() => {
-            console.log("Auth timeout (0s). Menawarkan mode offline.");
+            console.log("Auth timeout (3s). Menawarkan mode offline.");
             // Tampilkan container tombol offline
             offlineLoginContainer.classList.remove('hidden');
             // Spinner tetap berputar, tapi tombol kini tersedia
-        }, 0); // UBAH KE 0 SESUAI PERMINTAAN
+        }, 3000); 
         // AKHIR MODIFIKASI
         
         // --- FUNGSI DIPERBARUI ---
@@ -696,32 +701,32 @@
                 console.log(`Menerapkan ${Object.keys(pending).length} pending updates ke tampilan lokal...`);
                 for (const path in pending) {
                     const parts = path.split('/');
-                    // Format path: users_data/USER_KEY/TYPE/KELAS/MAPELID/TANGGAL/SISWA_ID
+                    // Format path: TYPE/KELAS/MAPELID/TANGGAL/SISWA_ID
                     // Kita ambil bagian pentingnya saja
-                    if (parts.length < 6) continue; // Path tidak valid
+                    if (parts.length < 4) continue; // Path tidak valid
 
-                    const type = parts[2]; // presensi, nilai, atau kegiatan
-                    const kls = parts[3];
-                    const mpl = parts[4];
-                    const tgl = parts[5];
+                    const type = parts[0]; // presensi, nilai, atau kegiatan
+                    const kls = parts[1];
+                    const mpl = parts[2];
+                    const tgl = parts[3];
                     const val = pending[path]; // Data yang akan disimpan
 
-                    if (type === 'presensi' && parts.length >= 8) {
-                        const stuId = parts[6];
+                    if (type === 'presensi' && parts.length >= 6) {
+                        const stuId = parts[4];
                         if (!allPresensiData[kls]) allPresensiData[kls] = {};
                         if (!allPresensiData[kls][mpl]) allPresensiData[kls][mpl] = {};
                         if (!allPresensiData[kls][mpl][tgl]) allPresensiData[kls][mpl][tgl] = {};
                         allPresensiData[kls][mpl][tgl][stuId] = val;
                         // console.log(`Merge local presensi: ${kls}/${mpl}/${tgl}/${stuId}`);
-                    } else if (type === 'nilai' && parts.length >= 8) {
-                        const stuId = parts[6];
+                    } else if (type === 'nilai' && parts.length >= 6) {
+                        const stuId = parts[4];
                         if (!allNilaiData[kls]) allNilaiData[kls] = {};
                         if (!allNilaiData[kls][mpl]) allNilaiData[kls][mpl] = {};
                         if (!allNilaiData[kls][mpl][tgl]) allNilaiData[kls][mpl][tgl] = {};
                         allNilaiData[kls][mpl][tgl][stuId] = val;
                         // console.log(`Merge local nilai: ${kls}/${mpl}/${tgl}/${stuId}`);
-                    } else if (type === 'kegiatan' && parts.length === 7) { 
-                        // Path kegiatan: users_data/USER_KEY/kegiatan/KELAS/MAPELID/TANGGAL
+                    } else if (type === 'kegiatan' && parts.length === 5) { 
+                        // Path kegiatan: kegiatan/KELAS/MAPELID/TANGGAL
                         if (!allKegiatanData[kls]) allKegiatanData[kls] = {};
                         if (!allKegiatanData[kls][mpl]) allKegiatanData[kls][mpl] = {};
                         allKegiatanData[kls][mpl][tgl] = val;
@@ -755,20 +760,19 @@
             // Jika offline, kita sudah memuat data dari cache di loadAllDataFromLocal().
             if (navigator.onLine) {
                 console.log("Mode Online: Memasang listener Firebase...");
-                const userPath = `users_data/${currentUserKey}`;
                 
                 // PENTING: Saat data baru masuk dari Firebase, kita HARUS menggabungkannya
                 // dengan data pending, BUKAN menimpanya.
                 // Tapi untuk sekarang, kita andalkan syncOfflineData() yang berjalan dulu.
                 
-                onValue(ref(db, `${userPath}/siswa/`), (s) => { 
+                onValue(ref(db, `siswa/`), (s) => { 
                     allStudents = s.val() || {}; 
                     storageService.saveUserData('siswa', allStudents); 
                     renderStudentsTable(); 
                     updateClassFilters(); 
                     displayDashboard(); 
                 });
-                onValue(ref(db, `${userPath}/mapel/`), (s) => { 
+                onValue(ref(db, `mapel/`), (s) => { 
                     allMapel = s.val() || {}; 
                     storageService.saveUserData('mapel', allMapel); 
                     renderMapelList(); 
@@ -776,13 +780,13 @@
                     updateJadwalMapelFilter(); 
                     displayDashboard(); 
                 });
-                onValue(ref(db, `${userPath}/jadwal_terstruktur`), (s) => { 
+                onValue(ref(db, `jadwal_terstruktur`), (s) => { 
                     allJadwalTerstruktur = s.val() || {}; 
                     storageService.saveUserData('jadwal_terstruktur', allJadwalTerstruktur); 
                     renderJadwalTerstruktur(); 
                     displayDashboard(); 
                 });
-                onValue(ref(db, `${userPath}/jadwal`), (s) => { 
+                onValue(ref(db, `jadwal`), (s) => { 
                     const d = s.val(); 
                     storageService.saveUserData('jadwal_gambar', d); 
                     const hasImage = d && d.imageUrl; 
@@ -799,7 +803,7 @@
                 
                 const pending = storageService.loadPendingUpdates() || {};
                 
-                onValue(ref(db, `${userPath}/presensi`), (s) => { 
+                onValue(ref(db, `presensi`), (s) => { 
                     const serverData = s.val() || {};
                     // Gabungkan server data dengan pending data (pending data menimpa server data)
                     // Ini cara sederhana, idealnya perbandingan timestamp
@@ -808,8 +812,8 @@
                     if (pending && Object.keys(pending).length > 0) {
                          for (const path in pending) {
                             const parts = path.split('/');
-                            if (parts[2] === 'presensi' && parts.length >= 8) {
-                                const [,,, kls, mpl, tgl, stuId] = parts;
+                            if (parts[0] === 'presensi' && parts.length >= 6) {
+                                const [type, kls, mpl, tgl, stuId] = parts;
                                 const val = pending[path];
                                 if (!allPresensiData[kls]) allPresensiData[kls] = {};
                                 if (!allPresensiData[kls][mpl]) allPresensiData[kls][mpl] = {};
@@ -822,14 +826,14 @@
                     displayDashboard(); 
                 });
                 
-                onValue(ref(db, `${userPath}/kegiatan`), (s) => { 
+                onValue(ref(db, `kegiatan`), (s) => { 
                     const serverData = s.val() || {};
                     allKegiatanData = serverData;
                      if (pending && Object.keys(pending).length > 0) {
                          for (const path in pending) {
                             const parts = path.split('/');
-                            if (parts[2] === 'kegiatan' && parts.length === 7) {
-                                const [,,, kls, mpl, tgl] = parts;
+                            if (parts[0] === 'kegiatan' && parts.length === 5) {
+                                const [type, kls, mpl, tgl] = parts;
                                 const val = pending[path];
                                 if (!allKegiatanData[kls]) allKegiatanData[kls] = {};
                                 if (!allKegiatanData[kls][mpl]) allKegiatanData[kls][mpl] = {};
@@ -841,14 +845,14 @@
                     displayDashboard(); 
                 });
                 
-                onValue(ref(db, `${userPath}/nilai`), (s) => { 
+                onValue(ref(db, `nilai`), (s) => { 
                     const serverData = s.val() || {};
                     allNilaiData = serverData;
                      if (pending && Object.keys(pending).length > 0) {
                          for (const path in pending) {
                             const parts = path.split('/');
-                            if (parts[2] === 'nilai' && parts.length >= 8) {
-                                const [,,, kls, mpl, tgl, stuId] = parts;
+                            if (parts[0] === 'nilai' && parts.length >= 6) {
+                                const [type, kls, mpl, tgl, stuId] = parts;
                                 const val = pending[path];
                                 if (!allNilaiData[kls]) allNilaiData[kls] = {};
                                 if (!allNilaiData[kls][mpl]) allNilaiData[kls][mpl] = {};
@@ -895,6 +899,8 @@
                 displayDashboard(); 
             });
             
+            el('reset-menu-btn').addEventListener('click', showResetDataModal); // Penambahan listener
+
             navLinks.forEach(link => { link.addEventListener('click', () => switchPage(link.dataset.page)); });
             addStudentForm.addEventListener('submit', handleAddStudent);
             csvUploadInput.addEventListener('change', handleCsvUpload);
@@ -928,6 +934,141 @@
             if (!navigator.onLine) handleOfflineStatus();
         }
 
+        function showResetDataModal() {
+            const content = `
+                <h3 class="text-lg font-bold mb-4 text-red-600">Reset Data</h3>
+                <p class="text-sm text-sub mb-4">Pilih data yang ingin dihapus secara permanen:</p>
+                <div class="space-y-3 mb-6">
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="checkbox" class="reset-checkbox w-5 h-5 text-red-600 rounded focus:ring-red-500 border-gray-300" value="siswa">
+                        <span>Data Siswa</span>
+                    </label>
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="checkbox" class="reset-checkbox w-5 h-5 text-red-600 rounded focus:ring-red-500 border-gray-300" value="mapel">
+                        <span>Mata Pelajaran</span>
+                    </label>
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="checkbox" class="reset-checkbox w-5 h-5 text-red-600 rounded focus:ring-red-500 border-gray-300" value="jadwal">
+                        <span>Jadwal (Gambar & Dinamis)</span>
+                    </label>
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="checkbox" class="reset-checkbox w-5 h-5 text-red-600 rounded focus:ring-red-500 border-gray-300" value="presensi">
+                        <span>Riwayat Presensi</span>
+                    </label>
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="checkbox" class="reset-checkbox w-5 h-5 text-red-600 rounded focus:ring-red-500 border-gray-300" value="nilai">
+                        <span>Data Nilai</span>
+                    </label>
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="checkbox" class="reset-checkbox w-5 h-5 text-red-600 rounded focus:ring-red-500 border-gray-300" value="kegiatan">
+                        <span>Jurnal Kegiatan</span>
+                    </label>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-sub mb-1">Konfirmasi Password</label>
+                    <input type="password" id="reset-confirm-password" class="w-full p-2 input-bg rounded-lg" placeholder="Masukkan password Anda">
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button onclick="window.closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button>
+                    <button onclick="window.handleResetDataExecute()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Hapus Terpilih</button>
+                </div>
+            `;
+            openModal(content);
+        }
+
+        window.handleResetDataExecute = async () => {
+            const checkboxes = document.querySelectorAll('.reset-checkbox:checked');
+            const password = el('reset-confirm-password').value;
+            
+            if (checkboxes.length === 0) return showToast("Pilih minimal satu data.", true);
+            if (!password) return showToast("Password wajib diisi.", true);
+
+            showLoader();
+            
+            const user = auth.currentUser;
+            if (!user) { closeModal(); hideLoader(); return showAlertModal("Gagal", "Tidak terautentikasi.", true); }
+
+            try {
+                await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, password));
+                
+                const updates = {};
+                
+                checkboxes.forEach(cb => {
+                    const type = cb.value;
+                    
+                    // Penghapusan langsung di root
+                    if (type === 'siswa') {
+                        updates[`siswa`] = null;
+                        allStudents = {};
+                        storageService.saveUserData('siswa', {});
+                    } else if (type === 'mapel') {
+                        updates[`mapel`] = null;
+                        allMapel = {};
+                        storageService.saveUserData('mapel', {});
+                    } else if (type === 'jadwal') {
+                        updates[`jadwal`] = null;
+                        updates[`jadwal_terstruktur`] = null;
+                        allJadwalTerstruktur = {};
+                        storageService.saveUserData('jadwal_terstruktur', {});
+                        storageService.saveUserData('jadwal_gambar', null);
+                    } else if (type === 'presensi') {
+                        updates[`presensi`] = null;
+                        allPresensiData = {};
+                        storageService.saveUserData('presensi', {});
+                    } else if (type === 'nilai') {
+                        updates[`nilai`] = null;
+                        allNilaiData = {};
+                        storageService.saveUserData('nilai', {});
+                    } else if (type === 'kegiatan') {
+                        updates[`kegiatan`] = null;
+                        allKegiatanData = {};
+                        storageService.saveUserData('kegiatan', {});
+                    }
+                });
+
+                // Offline logic
+                const pending = storageService.loadPendingUpdates() || {};
+                Object.assign(pending, updates);
+                storageService.savePendingUpdates(pending);
+
+                // Execute if online
+                if (navigator.onLine) {
+                    await update(ref(db), updates);
+                    storageService.clearPendingUpdates();
+                }
+
+                showToast("Data terpilih berhasil direset.");
+                closeModal();
+                
+                // Refresh UI
+                renderStudentsTable();
+                renderMapelList();
+                updateClassFilters();
+                updateMapelFilter();
+                updateJadwalMapelFilter();
+                renderJadwalTerstruktur();
+                
+                studentTableContainer.innerHTML = '';
+                rekapDynamicTableContent.innerHTML = '';
+                jadwalImage.src = '';
+                jadwalImage.classList.add('hidden');
+                jadwalPlaceholder.classList.remove('hidden');
+                deleteJadwalBtn.classList.add('hidden');
+                jadwalUploadLabel.classList.remove('hidden');
+                
+                displayDashboard();
+
+            } catch (error) {
+                if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    showToast("Password salah.", true);
+                } else {
+                    showAlertModal("Error", `Gagal: ${error.message}`, true);
+                }
+            } finally {
+                hideLoader();
+            }
+        }
+
         // --- FUNGSI ADD STUDENT DIPERBAIKI ---
         async function handleAddStudent(e) {
             e.preventDefault();
@@ -937,10 +1078,11 @@
             
             showLoader();
 
-            const newRef = push(ref(db, `users_data/${currentUserKey}/siswa`));
+            // Referensi path diperbarui ke root 'siswa'
+            const newRef = push(ref(db, `siswa`));
             const newKey = newRef.key;
             const newData = { nama, kelas };
-            const path = `users_data/${currentUserKey}/siswa/${newKey}`;
+            const path = `siswa/${newKey}`;
 
             if (navigator.onLine) {
                 set(newRef, newData).then(() => {
@@ -968,7 +1110,7 @@
         }
         // --- AKHIR FUNGSI ADD STUDENT DIPERBAIKI ---
 
-        function handleCsvUpload(e) { const file = e.target.files[0]; if (!file) return; showLoader(); Papa.parse(file, { header: false, skipEmptyLines: true, delimiter: ";", complete: (results) => { const data = {}; results.data.slice(1).forEach(row => { if (Array.isArray(row) && row.length > 2) { const nama = row[1]?.trim().toUpperCase(), kelas = row[2]?.trim().toUpperCase(); if (nama && kelas) data[push(ref(db, `users_data/${currentUserKey}/siswa`)).key] = { nama, kelas }; } }); if (Object.keys(data).length > 0) { update(ref(db, `users_data/${currentUserKey}/siswa`), data).then(() => { showToast(`${Object.keys(data).length} siswa diunggah.`); refreshRekapTableIfNeeded(); }).catch(err => showAlertModal("Error", `Gagal: ${err.message}`, true)).finally(hideLoader); } else { showAlertModal("Gagal", "Tidak ada data valid.", true); hideLoader(); } csvUploadInput.value = ''; }, error: (err) => { showAlertModal("Error", `Gagal: ${err.message}`, true); hideLoader(); } }); }
+        function handleCsvUpload(e) { const file = e.target.files[0]; if (!file) return; showLoader(); Papa.parse(file, { header: false, skipEmptyLines: true, delimiter: ";", complete: (results) => { const data = {}; results.data.slice(1).forEach(row => { if (Array.isArray(row) && row.length > 2) { const nama = row[1]?.trim().toUpperCase(), kelas = row[2]?.trim().toUpperCase(); if (nama && kelas) data[push(ref(db, `siswa`)).key] = { nama, kelas }; } }); if (Object.keys(data).length > 0) { update(ref(db, `siswa`), data).then(() => { showToast(`${Object.keys(data).length} siswa diunggah.`); refreshRekapTableIfNeeded(); }).catch(err => showAlertModal("Error", `Gagal: ${err.message}`, true)).finally(hideLoader); } else { showAlertModal("Gagal", "Tidak ada data valid.", true); hideLoader(); } csvUploadInput.value = ''; }, error: (err) => { showAlertModal("Error", `Gagal: ${err.message}`, true); hideLoader(); } }); }
         function handleDownloadTemplate() { window.open('https://drive.google.com/uc?export=download&id=1itiQBK37vt58iorp2ZIUtKSeu19Z7Dhq', '_blank'); }
         
         // --- FUNGSI ADD MAPEL DIPERBAIKI ---
@@ -980,10 +1122,11 @@
             
             showLoader();
 
-            const newRef = push(ref(db, `users_data/${currentUserKey}/mapel`));
+            // Referensi path diperbarui ke root 'mapel'
+            const newRef = push(ref(db, `mapel`));
             const newKey = newRef.key;
             const newData = { nama, kelas };
-            const path = `users_data/${currentUserKey}/mapel/${newKey}`;
+            const path = `mapel/${newKey}`;
 
             if (navigator.onLine) {
                 set(newRef, newData).then(() => {
@@ -1022,7 +1165,8 @@
             statusEl.textContent = 'Menyimpan...';
             statusEl.classList.remove('hidden');
 
-            const dataPath = `users_data/${currentUserKey}/kegiatan/${kelas}/${mapelId}/${tanggal}`;
+            // Path diperbarui tanpa users_data
+            const dataPath = `kegiatan/${kelas}/${mapelId}/${tanggal}`;
             const dataToSave = { deskripsi: kegiatanInput.value.trim() };
 
             if (navigator.onLine) {
@@ -1302,7 +1446,8 @@
                     const changes = unsavedChanges[studentId][date];
                     
                     if (changes.hasOwnProperty('status')) {
-                        const presensiPath = `users_data/${currentUserKey}/presensi/${kelas}/${mapelId}/${date}/${studentId}`;
+                        // Path diperbarui tanpa users_data
+                        const presensiPath = `presensi/${kelas}/${mapelId}/${date}/${studentId}`;
                         // Ambil data dari state global BUKAN dari data mentah server
                         const currentData = allCurrentPresensi[date]?.[studentId] || { status: 'Hadir' };
                         const finalData = { ...currentData };
@@ -1312,7 +1457,8 @@
                     }
 
                     if (changes.hasOwnProperty('nilai')) {
-                        const nilaiPath = `users_data/${currentUserKey}/nilai/${kelas}/${mapelId}/${date}/${studentId}`;
+                        // Path diperbarui tanpa users_data
+                        const nilaiPath = `nilai/${kelas}/${mapelId}/${date}/${studentId}`;
                         
                         if (changes.nilai === null) {
                             updates[nilaiPath] = null;
@@ -1347,7 +1493,8 @@
             // Perbarui state global (allPresensiData, allNilaiData) secara lokal
             for (const path in updates) {
                 const parts = path.split('/');
-                const [,,, type, kls, mpl, tgl, stuId] = parts;
+                // Format path baru: TYPE/KELAS/MAPELID/TANGGAL/SISWA_ID
+                const [type, kls, mpl, tgl, stuId] = parts;
                 const data = updates[path];
 
                 if (type === 'presensi') {
@@ -1391,11 +1538,11 @@
             handleTerapkanFilter(true); 
         }
         
-        async function handleJadwalUpload(e) { const file = e.target.files[0]; if (!file || !currentUserKey || !currentUserName) return showAlertModal("Error", "Info pengguna tidak lengkap.", true); if (!githubToken) return showAlertModal("Error", "Token GitHub tidak ditemukan.", true); if (!file.type.startsWith('image/')) return showAlertModal("Error", "Pilih file gambar.", true); showLoader(); const sanitizedUserName = sanitizeForPath(currentUserName); const filePath = `schedules/${currentUserKey}/${sanitizedUserName}/schedule.jpg`; const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${filePath}`; try { const content = await fileToBase64(file); let sha = null; try { const res = await fetch(apiUrl, { headers: { 'Authorization': `token ${githubToken}` } }); if (res.ok) sha = (await res.json()).sha; } catch (e) {} const payload = { message: `Update jadwal ${new Date().toISOString()}`, content, sha }; const res = await fetch(apiUrl, { method: 'PUT', headers: { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); if (!res.ok) throw new Error((await res.json()).message); const data = await res.json(); await set(ref(db, `users_data/${currentUserKey}/jadwal`), { imageUrl: data.content.download_url }); showToast("Jadwal berhasil diunggah."); } catch (error) { showAlertModal("Gagal", `Gagal mengunggah: ${error.message}`, true); } finally { jadwalUploadInput.value = ''; hideLoader(); } }
+        async function handleJadwalUpload(e) { const file = e.target.files[0]; if (!file || !currentUserKey || !currentUserName) return showAlertModal("Error", "Info pengguna tidak lengkap.", true); if (!githubToken) return showAlertModal("Error", "Token GitHub tidak ditemukan.", true); if (!file.type.startsWith('image/')) return showAlertModal("Error", "Pilih file gambar.", true); showLoader(); const sanitizedUserName = sanitizeForPath(currentUserName); const filePath = `schedules/${currentUserKey}/${sanitizedUserName}/schedule.jpg`; const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${filePath}`; try { const content = await fileToBase64(file); let sha = null; try { const res = await fetch(apiUrl, { headers: { 'Authorization': `token ${githubToken}` } }); if (res.ok) sha = (await res.json()).sha; } catch (e) {} const payload = { message: `Update jadwal ${new Date().toISOString()}`, content, sha }; const res = await fetch(apiUrl, { method: 'PUT', headers: { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); if (!res.ok) throw new Error((await res.json()).message); const data = await res.json(); await set(ref(db, `jadwal`), { imageUrl: data.content.download_url }); showToast("Jadwal berhasil diunggah."); } catch (error) { showAlertModal("Gagal", `Gagal mengunggah: ${error.message}`, true); } finally { jadwalUploadInput.value = ''; hideLoader(); } }
         function showDeleteJadwalConfirmation() { openModal(`<h3 class="text-lg font-bold mb-2 text-red-600">Hapus Jadwal?</h3><p class="mb-6">Yakin ingin menghapus gambar jadwal?</p><div class="flex justify-end space-x-2"><button onclick="window.closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.handleDeleteJadwal()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Hapus</button></div>`); }
-        async function handleDeleteJadwal() { if (!currentUserKey || !currentUserName || !githubToken) return showAlertModal("Error", "Info tidak lengkap.", true); closeModal(); showLoader(); const sanitizedUserName = sanitizeForPath(currentUserName); const filePath = `schedules/${currentUserKey}/${sanitizedUserName}/schedule.jpg`; const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${filePath}`; try { const res = await fetch(apiUrl, { headers: { 'Authorization': `token ${githubToken}` } }); if (res.ok) { const { sha } = await res.json(); const delRes = await fetch(apiUrl, { method: 'DELETE', headers: { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify({ message: `Hapus jadwal ${new Date().toISOString()}`, sha }) }); if (!delRes.ok) throw new Error((await delRes.json()).message); } await remove(ref(db, `users_data/${currentUserKey}/jadwal`)); showToast("Jadwal berhasil dihapus."); } catch (error) { showAlertModal("Gagal", `Gagal menghapus: ${error.message}`, true); } finally { hideLoader(); } };
-        window.showEditStudentModal=(s)=>{const d=allStudents[s];let c='';Array.from(availableClasses).sort().forEach(k=>{c+=`<option value="${k}" ${k===d.kelas?'selected':''}>${k}</option>`;});openModal(`<h3 class="text-lg font-bold mb-4">Edit Siswa</h3><div class="mb-4"><label>Nama</label><input type="text" id="edit-student-name" value="${d.nama}" class="w-full mt-1 p-2 input-bg rounded-lg"></div><div class="mb-6"><label>Kelas</label><select id="edit-student-class" class="w-full mt-1 p-2 input-bg rounded-lg">${c}</select></div><div class="flex justify-end space-x-2"><button onclick="window.closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.handleEditStudent('${s}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Simpan</button></div>`);};window.handleEditStudent=(s)=>{const n=el('edit-student-name').value.trim().toUpperCase(),c=el('edit-student-class').value.toUpperCase();if(!n||!c)return showToast("Nama & kelas wajib.",true);showLoader();update(ref(db,`users_data/${currentUserKey}/siswa/${s}`),{nama:n,kelas:c}).then(()=>{showToast("Data siswa diperbarui.");closeModal();refreshRekapTableIfNeeded();}).catch(e=>showAlertModal("Error",e.message,true)).finally(hideLoader);};window.showDeleteStudentModal=(s,n)=>{openModal(`<h3 class="text-lg font-bold mb-2 text-red-600">Hapus Siswa?</h3><p class="mb-6">Yakin hapus <b>${n}</b> dan semua datanya?</p><div class="flex justify-end space-x-2"><button onclick="window.closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.handleDeleteStudent('${s}')" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Hapus</button></div>`);};window.handleDeleteStudent=async(s)=>{showLoader();try{const u={};u[`users_data/${currentUserKey}/siswa/${s}`]=null;const[p,n]=await Promise.all([get(ref(db,`users_data/${currentUserKey}/presensi`)),get(ref(db,`users_data/${currentUserKey}/nilai`))]);const ap=p.val()||{},an=n.val()||{};for(const k in ap){for(const m in ap[k]){if(ap[k][m][s])u[`users_data/${currentUserKey}/presensi/${k}/${m}/${s}`]=null;}}for(const k in an){for(const m in an[k]){if(an[k][m][s])u[`users_data/${currentUserKey}/nilai/${k}/${m}/${s}`]=null;}}await update(ref(db),u);showToast("Siswa dihapus.");closeModal();refreshRekapTableIfNeeded();}catch(e){showAlertModal("Error",e.message,true);}finally{hideLoader();}};
-        window.showEditMapelModal=(m)=>{const d=allMapel[m];let c='';Array.from(availableClasses).sort().forEach(k=>{c+=`<option value="${k}" ${k===d.kelas?'selected':''}>${k}</option>`;});openModal(`<h3 class="text-lg font-bold mb-4">Edit Mapel</h3><div class="mb-4"><label>Nama</label><input type="text" id="edit-mapel-name" value="${d.nama}" class="w-full mt-1 p-2 input-bg rounded-lg"></div><div class="mb-6"><label>Kelas</label><select id="edit-mapel-class" class="w-full mt-1 p-2 input-bg rounded-lg">${c}</select></div><div class="flex justify-end space-x-2"><button onclick="window.closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.handleEditMapel('${m}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Simpan</button></div>`);};window.handleEditMapel=(m)=>{const n=el('edit-mapel-name').value.trim().toUpperCase(),c=el('edit-mapel-class').value.toUpperCase();if(!n||!c)return showToast("Nama & kelas wajib.",true);showLoader();update(ref(db,`users_data/${currentUserKey}/mapel/${m}`),{nama:n,kelas:c}).then(()=>{showToast("Mapel diperbarui.");closeModal();}).catch(e=>showAlertModal("Error",e.message,true)).finally(hideLoader);};window.showDeleteMapelModal=(m,n,c)=>{openModal(`<h3 class="text-lg font-bold mb-2 text-red-600">Hapus Mapel?</h3><p class="mb-6">Yakin hapus <b>${n} (${c})</b> dan semua datanya?</p><div class="flex justify-end space-x-2"><button onclick="window.closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.handleDeleteMapel('${m}','${c}')" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Hapus</button></div>`);};window.handleDeleteMapel=async(m,c)=>{showLoader();try{const u={};u[`users_data/${currentUserKey}/mapel/${m}`]=null;u[`users_data/${currentUserKey}/presensi/${c}/${m}`]=null;u[`users_data/${currentUserKey}/nilai/${c}/${m}`]=null;u[`users_data/${currentUserKey}/kegiatan/${c}/${m}`]=null;const s={};for(const d in allJadwalTerstruktur){for(const i in allJadwalTerstruktur[d]){if(allJadwalTerstruktur[d][i].mapelId===m)s[`users_data/${currentUserKey}/jadwal_terstruktur/${d}/${i}`]=null;}}await update(ref(db),s);await update(ref(db),u);showToast("Mapel dihapus.");closeModal();refreshRekapTableIfNeeded();}catch(e){showAlertModal("Error",e.message,true);}finally{hideLoader();}};
+        async function handleDeleteJadwal() { if (!currentUserKey || !currentUserName || !githubToken) return showAlertModal("Error", "Info tidak lengkap.", true); closeModal(); showLoader(); const sanitizedUserName = sanitizeForPath(currentUserName); const filePath = `schedules/${currentUserKey}/${sanitizedUserName}/schedule.jpg`; const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${filePath}`; try { const res = await fetch(apiUrl, { headers: { 'Authorization': `token ${githubToken}` } }); if (res.ok) { const { sha } = await res.json(); const delRes = await fetch(apiUrl, { method: 'DELETE', headers: { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify({ message: `Hapus jadwal ${new Date().toISOString()}`, sha }) }); if (!delRes.ok) throw new Error((await delRes.json()).message); } await remove(ref(db, `jadwal`)); showToast("Jadwal berhasil dihapus."); } catch (error) { showAlertModal("Gagal", `Gagal menghapus: ${error.message}`, true); } finally { hideLoader(); } };
+        window.showEditStudentModal=(s)=>{const d=allStudents[s];let c='';Array.from(availableClasses).sort().forEach(k=>{c+=`<option value="${k}" ${k===d.kelas?'selected':''}>${k}</option>`;});openModal(`<h3 class="text-lg font-bold mb-4">Edit Siswa</h3><div class="mb-4"><label>Nama</label><input type="text" id="edit-student-name" value="${d.nama}" class="w-full mt-1 p-2 input-bg rounded-lg"></div><div class="mb-6"><label>Kelas</label><select id="edit-student-class" class="w-full mt-1 p-2 input-bg rounded-lg">${c}</select></div><div class="flex justify-end space-x-2"><button onclick="window.closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.handleEditStudent('${s}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Simpan</button></div>`);};window.handleEditStudent=(s)=>{const n=el('edit-student-name').value.trim().toUpperCase(),c=el('edit-student-class').value.toUpperCase();if(!n||!c)return showToast("Nama & kelas wajib.",true);showLoader();update(ref(db,`siswa/${s}`),{nama:n,kelas:c}).then(()=>{showToast("Data siswa diperbarui.");closeModal();refreshRekapTableIfNeeded();}).catch(e=>showAlertModal("Error",e.message,true)).finally(hideLoader);};window.showDeleteStudentModal=(s,n)=>{openModal(`<h3 class="text-lg font-bold mb-2 text-red-600">Hapus Siswa?</h3><p class="mb-6">Yakin hapus <b>${n}</b> dan semua datanya?</p><div class="flex justify-end space-x-2"><button onclick="window.closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.handleDeleteStudent('${s}')" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Hapus</button></div>`);};window.handleDeleteStudent=async(s)=>{showLoader();try{const u={};u[`siswa/${s}`]=null;const[p,n]=await Promise.all([get(ref(db,`presensi`)),get(ref(db,`nilai`))]);const ap=p.val()||{},an=n.val()||{};for(const k in ap){for(const m in ap[k]){if(ap[k][m][s])u[`presensi/${k}/${m}/${s}`]=null;}}for(const k in an){for(const m in an[k]){if(an[k][m][s])u[`nilai/${k}/${m}/${s}`]=null;}}await update(ref(db),u);showToast("Siswa dihapus.");closeModal();refreshRekapTableIfNeeded();}catch(e){showAlertModal("Error",e.message,true);}finally{hideLoader();}};
+        window.showEditMapelModal=(m)=>{const d=allMapel[m];let c='';Array.from(availableClasses).sort().forEach(k=>{c+=`<option value="${k}" ${k===d.kelas?'selected':''}>${k}</option>`;});openModal(`<h3 class="text-lg font-bold mb-4">Edit Mapel</h3><div class="mb-4"><label>Nama</label><input type="text" id="edit-mapel-name" value="${d.nama}" class="w-full mt-1 p-2 input-bg rounded-lg"></div><div class="mb-6"><label>Kelas</label><select id="edit-mapel-class" class="w-full mt-1 p-2 input-bg rounded-lg">${c}</select></div><div class="flex justify-end space-x-2"><button onclick="window.closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.handleEditMapel('${m}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Simpan</button></div>`);};window.handleEditMapel=(m)=>{const n=el('edit-mapel-name').value.trim().toUpperCase(),c=el('edit-mapel-class').value.toUpperCase();if(!n||!c)return showToast("Nama & kelas wajib.",true);showLoader();update(ref(db,`mapel/${m}`),{nama:n,kelas:c}).then(()=>{showToast("Mapel diperbarui.");closeModal();}).catch(e=>showAlertModal("Error",e.message,true)).finally(hideLoader);};window.showDeleteMapelModal=(m,n,c)=>{openModal(`<h3 class="text-lg font-bold mb-2 text-red-600">Hapus Mapel?</h3><p class="mb-6">Yakin hapus <b>${n} (${c})</b> dan semua datanya?</p><div class="flex justify-end space-x-2"><button onclick="window.closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.handleDeleteMapel('${m}','${c}')" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Hapus</button></div>`);};window.handleDeleteMapel=async(m,c)=>{showLoader();try{const u={};u[`mapel/${m}`]=null;u[`presensi/${c}/${m}`]=null;u[`nilai/${c}/${m}`]=null;u[`kegiatan/${c}/${m}`]=null;const s={};for(const d in allJadwalTerstruktur){for(const i in allJadwalTerstruktur[d]){if(allJadwalTerstruktur[d][i].mapelId===m)s[`jadwal_terstruktur/${d}/${i}`]=null;}}await update(ref(db),s);await update(ref(db),u);showToast("Mapel dihapus.");closeModal();refreshRekapTableIfNeeded();}catch(e){showAlertModal("Error",e.message,true);}finally{hideLoader();}};
         
         function fetchAndRenderKegiatanHistory(kelas, mapelId) { 
             kegiatanHistoryList.innerHTML = '<p>Memuat...</p>'; 
@@ -1517,7 +1664,18 @@
             if (!user) { closeModal(); hideLoader(); return showAlertModal("Gagal", "Tidak terautentikasi.", true); }
             try {
                 await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, pw));
-                await remove(ref(db, `users_data/${currentUserKey}`));
+                
+                // Menghapus data spesifik di root, BUKAN menghapus root itu sendiri
+                const updates = {};
+                updates['siswa'] = null;
+                updates['mapel'] = null;
+                updates['jadwal'] = null;
+                updates['jadwal_terstruktur'] = null;
+                updates['presensi'] = null;
+                updates['nilai'] = null;
+                updates['kegiatan'] = null;
+                
+                await update(ref(db), updates);
                 
                 // Hapus juga data lokal
                 storageService.clearPendingUpdates();
@@ -1566,9 +1724,9 @@
             showLoader(); 
             
             const updates = {};
-            const pPath = `users_data/${currentUserKey}/presensi/${kelas}/${mapelId}/${tgl}`;
-            const nPath = `users_data/${currentUserKey}/nilai/${kelas}/${mapelId}/${tgl}`;
-            const kPath = `users_data/${currentUserKey}/kegiatan/${kelas}/${mapelId}/${tgl}`;
+            const pPath = `presensi/${kelas}/${mapelId}/${tgl}`;
+            const nPath = `nilai/${kelas}/${mapelId}/${tgl}`;
+            const kPath = `kegiatan/${kelas}/${mapelId}/${tgl}`;
             updates[pPath] = null;
             updates[nPath] = null;
             updates[kPath] = null;
@@ -1616,9 +1774,9 @@
             
             const mapelData = allMapel[mapelId]; 
             const newScheduleData = { jam_mulai, jam_selesai, mapelId, mapelNama: mapelData.nama, kelas: mapelData.kelas }; 
-            const newRef = push(ref(db, `users_data/${currentUserKey}/jadwal_terstruktur/${hari}`)); 
+            const newRef = push(ref(db, `jadwal_terstruktur/${hari}`)); 
             const newKey = newRef.key;
-            const path = `users_data/${currentUserKey}/jadwal_terstruktur/${hari}/${newKey}`;
+            const path = `jadwal_terstruktur/${hari}/${newKey}`;
 
             if (navigator.onLine) {
                 try { 
@@ -1652,9 +1810,9 @@
 
         function renderJadwalTerstruktur() { jadwalTerstrukturContainer.innerHTML = ''; const daysOrder = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu']; daysOrder.forEach(day => { const daySchedule = allJadwalTerstruktur[day]; if (daySchedule) { const dayName = day.charAt(0).toUpperCase() + day.slice(1); let dayHtml = `<div class="mb-4"><h4 class="text-md font-bold border-b border-main pb-2 mb-2">${dayName}</h4><div class="space-y-2">`; Object.entries(daySchedule).sort(([,a],[,b])=>a.jam_mulai.localeCompare(b.jam_mulai)).forEach(([id, item]) => { dayHtml += `<div class="bg-white dark:bg-white dark:text-gray-800 p-3 rounded-lg flex justify-between items-center"><div><p class="font-medium">${item.jam_mulai} - ${item.jam_selesai}</p><p class="text-sm text-sub dark:text-gray-600">${item.mapelNama} - ${item.kelas}</p></div><div class="flex items-center"><button onclick="window.showEditJadwalModal('${day}','${id}')" class="p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400"><i class="fa-solid fa-pencil"></i></button><button onclick="window.handleDeleteJadwalEntry('${day}','${id}')" class="p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400"><i class="fa-solid fa-trash"></i></button></div></div>`; }); dayHtml += `</div></div>`; jadwalTerstrukturContainer.innerHTML += dayHtml; } }); if (jadwalTerstrukturContainer.innerHTML === '') jadwalTerstrukturContainer.innerHTML = '<p class="text-center text-sub py-4">Belum ada jadwal.</p>'; }
         window.showEditJadwalModal = (day, scheduleId) => { const jadwal = allJadwalTerstruktur[day]?.[scheduleId]; if(!jadwal) return; let dayOpts = '', mapelOpts = ''; ['senin','selasa','rabu','kamis','jumat','sabtu'].forEach(d=>{dayOpts+=`<option value="${d}" ${d===day?'selected':''}>${d.charAt(0).toUpperCase()+d.slice(1)}</option>`;}); Object.entries(allMapel).sort(([,a],[,b])=>a.nama.localeCompare(b.nama)||a.kelas.localeCompare(b.kelas)).forEach(([id,m])=>{mapelOpts+=`<option value="${id}" ${id===jadwal.mapelId?'selected':''}>${m.nama} - ${m.kelas}</option>`;}); openModal(`<h3 class="text-lg font-bold mb-4">Edit Jadwal</h3><div class="space-y-4"><div><label for="edit-jadwal-hari" class="block text-sm font-medium text-sub mb-1">Hari</label><select id="edit-jadwal-hari" class="w-full p-2 input-bg rounded-lg">${dayOpts}</select></div><div class="grid grid-cols-2 gap-4"><div><label for="edit-jadwal-jam-mulai" class="block text-sm font-medium text-sub mb-1">Mulai</label><input type="time" id="edit-jadwal-jam-mulai" value="${jadwal.jam_mulai}" class="w-full p-2 input-bg rounded-lg"></div><div><label for="edit-jadwal-jam-selesai" class="block text-sm font-medium text-sub mb-1">Selesai</label><input type="time" id="edit-jadwal-jam-selesai" value="${jadwal.jam_selesai}" class="w-full p-2 input-bg rounded-lg"></div></div><div><label for="edit-jadwal-mapel" class="block text-sm font-medium text-sub mb-1">Mapel</label><select id="edit-jadwal-mapel" class="w-full p-2 input-bg rounded-lg">${mapelOpts}</select></div></div><div class="flex justify-end space-x-2 mt-6"><button onclick="window.closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.handleEditJadwal('${day}','${scheduleId}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Simpan</button></div>`); }
-        async function handleEditJadwal(originalDay, scheduleId) { const newDay = el('edit-jadwal-hari').value, newStart = el('edit-jadwal-jam-mulai').value, newEnd = el('edit-jadwal-jam-selesai').value, newMapelId = el('edit-jadwal-mapel').value; if (!newDay || !newStart || !newEnd || !newMapelId) return showToast("Semua kolom wajib.", true); if (newStart >= newEnd) return showToast("Jam tidak valid.", true); showLoader(); try { const mapelData = allMapel[newMapelId]; const updatedData = { jam_mulai: newStart, jam_selesai: newEnd, mapelId: newMapelId, mapelNama: mapelData.nama, kelas: mapelData.kelas }; const updates = {}; updates[`users_data/${currentUserKey}/jadwal_terstruktur/${originalDay}/${scheduleId}`] = null; updates[`users_data/${currentUserKey}/jadwal_terstruktur/${newDay}/${scheduleId}`] = updatedData; await update(ref(db), updates); showToast("Jadwal berhasil diperbarui."); closeModal(); } catch (err) { showAlertModal("Error", `Gagal memperbarui: ${err.message}`, true); } finally { hideLoader(); } }
+        async function handleEditJadwal(originalDay, scheduleId) { const newDay = el('edit-jadwal-hari').value, newStart = el('edit-jadwal-jam-mulai').value, newEnd = el('edit-jadwal-jam-selesai').value, newMapelId = el('edit-jadwal-mapel').value; if (!newDay || !newStart || !newEnd || !newMapelId) return showToast("Semua kolom wajib.", true); if (newStart >= newEnd) return showToast("Jam tidak valid.", true); showLoader(); try { const mapelData = allMapel[newMapelId]; const updatedData = { jam_mulai: newStart, jam_selesai: newEnd, mapelId: newMapelId, mapelNama: mapelData.nama, kelas: mapelData.kelas }; const updates = {}; updates[`jadwal_terstruktur/${originalDay}/${scheduleId}`] = null; updates[`jadwal_terstruktur/${newDay}/${scheduleId}`] = updatedData; await update(ref(db), updates); showToast("Jadwal berhasil diperbarui."); closeModal(); } catch (err) { showAlertModal("Error", `Gagal memperbarui: ${err.message}`, true); } finally { hideLoader(); } }
         function handleDeleteJadwalEntry(day, scheduleId) { openModal(`<h3 class="text-lg font-bold mb-2 text-red-600">Hapus Jadwal?</h3><p class="mb-6">Yakin ingin menghapus jadwal ini?</p><div class="flex justify-end space-x-2"><button onclick="window.closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200 font-bold py-2 px-4 rounded-lg">Batal</button><button onclick="window.confirmDeleteJadwalEntry('${day}','${scheduleId}')" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Hapus</button></div>`); }
-        window.confirmDeleteJadwalEntry = async (day, scheduleId) => { closeModal(); showLoader(); try { await remove(ref(db, `users_data/${currentUserKey}/jadwal_terstruktur/${day}/${scheduleId}`)); showToast("Jadwal berhasil dihapus."); } catch (err) { showAlertModal("Error", `Gagal menghapus: ${err.message}`, true); } finally { hideLoader(); } };
+        window.confirmDeleteJadwalEntry = async (day, scheduleId) => { closeModal(); showLoader(); try { await remove(ref(db, `jadwal_terstruktur/${day}/${scheduleId}`)); showToast("Jadwal berhasil dihapus."); } catch (err) { showAlertModal("Error", `Gagal menghapus: ${err.message}`, true); } finally { hideLoader(); } };
 
         function handleToggleJadwalMode() { currentJadwalMode = currentJadwalMode === 'dinamis' ? 'gambar' : 'dinamis'; const isGambar = currentJadwalMode === 'gambar'; toggleJadwalModeSwitch.style.transform = isGambar ? 'translateX(0)' : 'translateX(1.25rem)'; toggleJadwalModeBtn.classList.toggle('bg-blue-600', !isGambar); toggleJadwalModeBtn.classList.toggle('bg-gray-200', isGambar); jadwalModeLabel.textContent = `Mode: ${isGambar ? 'Gambar' : 'Buat Jadwal'}`; jadwalViewDinamis.classList.toggle('hidden', isGambar); jadwalViewGambar.classList.toggle('hidden', !isGambar); }
         function displayDashboard() { const now = new Date(); const hours = now.getHours(); let greeting = 'Selamat Pagi!'; if (hours >= 11 && hours < 15) greeting = 'Selamat Siang!'; else if (hours >= 15 && hours < 19) greeting = 'Selamat Sore!'; else if (hours >= 19 || hours < 5) greeting = 'Selamat Malam!'; dashboardGreeting.textContent = greeting; dashboardDate.textContent = formatDateToIndonesian(now); renderSmartScheduleDashboard(); }
@@ -1736,12 +1894,10 @@
                     const hasKegiatan = !!allKegiatanData[item.kelas]?.[item.mapelId]?.[item.date]?.deskripsi;
                     const isComplete = hasPresensi && hasKegiatan;
                     
-                    let cardHeader, cardHeaderColor, cardBorderColor, cardIcon, dateDisplay = '';
+                    let cardHeader, cardHeaderColor, cardBorderColor, cardIcon;
 
                     if (item.isPastIncomplete) {
                         cardHeader = "PERLU DILENGKAPI"; cardHeaderColor = "text-yellow-600"; cardBorderColor = "persistent-card"; cardIcon = `<i class="fa-solid fa-exclamation-triangle text-xl ${cardHeaderColor}"></i>`;
-                        const pastDate = new Date(item.date + 'T00:00:00');
-                        dateDisplay = `<p class="text-xs font-semibold text-yellow-700 bg-yellow-100 px-2 py-1 rounded-full">${formatDateToIndonesian(pastDate)}</p>`;
                     
                     } else if (item.sortOrder === 1) { 
                         cardHeader = "PERLU DILENGKAPI"; cardHeaderColor = "text-yellow-600"; cardBorderColor = "persistent-card"; cardIcon = `<i class="fa-solid fa-exclamation-triangle text-xl ${cardHeaderColor}"></i>`;
@@ -1811,7 +1967,42 @@
                     }
                     
                     const detailContent = (kegiatanHTML + presensiHTML + presensiDetailHTML);
-                    dashboardHTML += ` <div class="card-bg dashboard-card rounded-xl shadow-md ${cardBorderColor} mb-4 p-4"> <div class="flex justify-between items-center mb-2"> <div class="flex items-center space-x-3"> ${cardIcon} <p class="text-sm font-bold ${cardHeaderColor}">${cardHeader}</p> </div> ${dateDisplay || `<p class="font-mono text-sm text-black px-2 py-1 rounded" style="background-color: #F0F8FF;">${item.jam_mulai} - ${item.jam_selesai}</p>`} </div> <div class="flex justify-between items-start"> <div> <h4 class="text-2xl font-bold mb-1"> <span class="px-2 py-1 rounded-md text-xl ${mapelColor.bg} ${mapelColor.text}"> ${item.mapelNama} </span> </h4> <p class="text-lg text-sub"> <span class="font-semibold px-2 py-1 rounded-md text-base ${kelasColor.bg} ${kelasColor.text}"> Kelas ${item.kelas} </span> </p> </div> ${buttonHTML ? `<div class="mt-2 sm:mt-0">${buttonHTML}</div>` : ''} </div> ${(hasPresensi || kegiatanHTML) ? `${detailContent}` : ''} </div>`;
+                    const formattedDate = formatDateToIndonesian(new Date(item.date + 'T00:00:00'));
+                    
+                    // MODIFIKASI: Menukar posisi Tanggal (Kiri) dan Status (Kanan)
+                    dashboardHTML += ` 
+                    <div class="card-bg dashboard-card rounded-xl shadow-md ${cardBorderColor} mb-4 p-4"> 
+                        <div class="flex justify-between items-start mb-2"> 
+                            <!-- Posisi Kiri: Tanggal (dan Jam sebagai subtext) -->
+                            <div>
+                                <p class="text-xs font-semibold text-gray-600 bg-gray-100 px-2 py-1 rounded-md dark:text-gray-300 dark:bg-gray-700 inline-block mb-1">
+                                    ${formattedDate}
+                                </p>
+                                <p class="text-xs font-mono text-sub pl-1">
+                                    ${item.jam_mulai} - ${item.jam_selesai}
+                                </p>
+                            </div>
+
+                            <!-- Posisi Kanan: Status (Icon + Text) -->
+                            <div class="flex items-center space-x-2"> 
+                                ${cardIcon} 
+                                <p class="text-sm font-bold ${cardHeaderColor} text-right">${cardHeader}</p> 
+                            </div> 
+                        </div> 
+                        
+                        <div class="flex justify-between items-start mt-2"> 
+                            <div> 
+                                <h4 class="text-2xl font-bold mb-1"> 
+                                    <span class="px-2 py-1 rounded-md text-xl ${mapelColor.bg} ${mapelColor.text}"> ${item.mapelNama} </span> 
+                                </h4> 
+                                <p class="text-lg text-sub"> 
+                                    <span class="font-semibold px-2 py-1 rounded-md text-base ${kelasColor.bg} ${kelasColor.text}"> Kelas ${item.kelas} </span> 
+                                </p> 
+                            </div> 
+                            ${buttonHTML ? `<div class="mt-2 sm:mt-0">${buttonHTML}</div>` : ''} 
+                        </div> 
+                        ${(hasPresensi || kegiatanHTML) ? `${detailContent}` : ''} 
+                    </div>`;
                 });
             }
             if (dashboardHTML === '') {
