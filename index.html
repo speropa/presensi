@@ -163,6 +163,11 @@
                     </div>
                 </div>
                 <div id="content-area" class="hidden">
+                    <div class="mb-4 flex justify-end">
+                        <button id="btn-acak-siswa" class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow hover:bg-indigo-700 transition flex items-center gap-2">
+                            <i class="fa-solid fa-shuffle"></i> Acak Siswa
+                        </button>
+                    </div>
                     <div class="p-4 rounded-xl shadow-md mb-6 bg-yellow-50 dark:bg-yellow-900/50 border border-yellow-200 dark:border-yellow-800">
                         <div class="flex items-center">
                             <label for="kegiatan-pembelajaran" class="text-sm font-bold text-main">Kegiatan Hari Ini</label>
@@ -415,7 +420,7 @@
         };
         // --- End of Data Storage Abstraction Layer ---
 
-        const loadingSpinner = el('loading-spinner'), loginPage = el('login-page'), mainApp = el('app'), userDisplayName = el('user-display-name'), offlineIndicator = el('offline-indicator'), installPwaBtn = el('install-pwa-btn'), filterMapel = el('filter-mapel'), filterKelas = el('filter-kelas'), filterTanggal = el('filter-tanggal'), terapkanBtn = el('terapkan-filter-btn'), rekapFilterMapel = el('rekap-filter-mapel'), rekapFilterKelas = el('rekap-filter-kelas'), terapkanRekapBtn = el('terapkan-rekap-btn'), deleteDailyDataBtn = el('delete-daily-data-btn'), toggleModeBtn = el('toggle-mode-btn'), toggleModeSwitch = el('toggle-mode-switch'), modeLabel = el('mode-label'), contentArea = el('content-area'), kegiatanInput = el('kegiatan-pembelajaran'), studentTableContainer = el('student-table-container'), saveAllBtn = el('save-all-btn'), kegiatanHistoryList = el('kegiatan-history-list'), kegiatanHistoryToggleMore = el('kegiatan-history-toggle-more'), presensiSearchContainer = el('presensi-search-container'), searchPresensiStudentInput = el('search-presensi-student'), addStudentForm = el('add-student-form'), allStudentsTable = el('all-students-table'), csvUploadInput = el('csv-upload'), downloadTemplateBtn = el('download-template-btn'), deleteAllStudentsBtn = el('delete-all-students-btn'), searchAllStudentsInput = el('search-all-students'), addMapelForm = el('add-mapel-form'), mapelListContainer = el('mapel-list-container'), jadwalUploadInput = el('jadwal-upload'), jadwalUploadLabel = el('jadwal-upload-label'), jadwalImageContainer = el('jadwal-image-container'), jadwalImage = el('jadwal-image'), jadwalPlaceholder = el('jadwal-placeholder'), deleteJadwalBtn = el('delete-jadwal-btn'), imageViewerModal = el('image-viewer-modal'), closeImageViewerBtn = el('close-image-viewer-btn'), fullscreenImage = el('fullscreen-image'), rekapTableContainer = el('rekap-table-container'), rekapDownloadDropdownBtn = el('rekap-download-dropdown-btn'), rekapDownloadOptions = el('rekap-download-options'), downloadCsvBtn = el('download-csv-btn'), printRekapBtn = el('print-rekap-btn'), rekapSearchContainer = el('rekap-search-container'), searchRekapStudentInput = el('search-rekap-student'), rekapDynamicTableContent = el('rekap-dynamic-table-content'), addJadwalForm = el('add-jadwal-form'), jadwalTerstrukturContainer = el('jadwal-terstruktur-container'), toggleJadwalModeBtn = el('toggle-jadwal-mode-btn'), toggleJadwalModeSwitch = el('toggle-jadwal-mode-switch'), jadwalModeLabel = el('jadwal-mode-label'), jadwalViewGambar = el('jadwal-view-gambar'), jadwalViewDinamis = el('jadwal-view-dinamis'), dashboardGreeting = el('dashboard-greeting'), dashboardDate = el('dashboard-date'), dashboardJadwalCerdas = el('dashboard-jadwal-cerdas'), modal = el('modal'), modalContent = el('modal-content'), burgerMenuBtn = el('burger-menu-btn'), dropdownMenu = el('dropdown-menu');
+        const loadingSpinner = el('loading-spinner'), loginPage = el('login-page'), mainApp = el('app'), userDisplayName = el('user-display-name'), offlineIndicator = el('offline-indicator'), installPwaBtn = el('install-pwa-btn'), filterMapel = el('filter-mapel'), filterKelas = el('filter-kelas'), filterTanggal = el('filter-tanggal'), terapkanBtn = el('terapkan-filter-btn'), rekapFilterMapel = el('rekap-filter-mapel'), rekapFilterKelas = el('rekap-filter-kelas'), terapkanRekapBtn = el('terapkan-rekap-btn'), deleteDailyDataBtn = el('delete-daily-data-btn'), toggleModeBtn = el('toggle-mode-btn'), toggleModeSwitch = el('toggle-mode-switch'), modeLabel = el('mode-label'), contentArea = el('content-area'), kegiatanInput = el('kegiatan-pembelajaran'), studentTableContainer = el('student-table-container'), saveAllBtn = el('save-all-btn'), kegiatanHistoryList = el('kegiatan-history-list'), kegiatanHistoryToggleMore = el('kegiatan-history-toggle-more'), presensiSearchContainer = el('presensi-search-container'), searchPresensiStudentInput = el('search-presensi-student'), addStudentForm = el('add-student-form'), allStudentsTable = el('all-students-table'), csvUploadInput = el('csv-upload'), downloadTemplateBtn = el('download-template-btn'), deleteAllStudentsBtn = el('delete-all-students-btn'), searchAllStudentsInput = el('search-all-students'), addMapelForm = el('add-mapel-form'), mapelListContainer = el('mapel-list-container'), jadwalUploadInput = el('jadwal-upload'), jadwalUploadLabel = el('jadwal-upload-label'), jadwalImageContainer = el('jadwal-image-container'), jadwalImage = el('jadwal-image'), jadwalPlaceholder = el('jadwal-placeholder'), deleteJadwalBtn = el('delete-jadwal-btn'), imageViewerModal = el('image-viewer-modal'), closeImageViewerBtn = el('close-image-viewer-btn'), fullscreenImage = el('fullscreen-image'), rekapTableContainer = el('rekap-table-container'), rekapDownloadDropdownBtn = el('rekap-download-dropdown-btn'), rekapDownloadOptions = el('rekap-download-options'), downloadCsvBtn = el('download-csv-btn'), printRekapBtn = el('print-rekap-btn'), rekapSearchContainer = el('rekap-search-container'), searchRekapStudentInput = el('search-rekap-student'), rekapDynamicTableContent = el('rekap-dynamic-table-content'), addJadwalForm = el('add-jadwal-form'), jadwalTerstrukturContainer = el('jadwal-terstruktur-container'), toggleJadwalModeBtn = el('toggle-jadwal-mode-btn'), toggleJadwalModeSwitch = el('toggle-jadwal-mode-switch'), jadwalModeLabel = el('jadwal-mode-label'), jadwalViewGambar = el('jadwal-view-gambar'), jadwalViewDinamis = el('jadwal-view-dinamis'), dashboardGreeting = el('dashboard-greeting'), dashboardDate = el('dashboard-date'), dashboardJadwalCerdas = el('dashboard-jadwal-cerdas'), modal = el('modal'), modalContent = el('modal-content'), burgerMenuBtn = el('burger-menu-btn'), dropdownMenu = el('dropdown-menu'), btnAcakSiswa = el('btn-acak-siswa');
         const offlineLoginContainer = el('offline-login-container'); 
         const offlineLoginBtn = el('offline-login-btn'); 
         
@@ -932,6 +937,7 @@
             window.addEventListener('online', handleOnlineStatus);
             window.addEventListener('offline', handleOfflineStatus);
             if (!navigator.onLine) handleOfflineStatus();
+            if(btnAcakSiswa) btnAcakSiswa.addEventListener('click', handleAcakSiswa);
         }
 
         function showResetDataModal() {
@@ -2058,6 +2064,37 @@
             offlineIndicator.classList.remove('hidden'); 
             showToast("Anda offline.", true); 
         }
+
+        // --- FUNGSI ACAK SISWA (BARU) ---
+        window.handleAcakSiswa = () => {
+            if (!currentPresensiStudentsData || currentPresensiStudentsData.length === 0) {
+                return showToast("Data siswa belum dimuat. Silakan terapkan filter terlebih dahulu.", true);
+            }
+            
+            const content = `
+                <div class="text-center py-6">
+                    <h3 class="text-lg text-sub mb-2">Siswa Terpilih</h3>
+                    <div id="acak-result" class="text-3xl font-bold text-blue-600 mb-6 min-h-[3rem] flex items-center justify-center">...</div>
+                    <button onclick="window.closeModal()" class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg font-bold hover:bg-gray-300">Tutup</button>
+                </div>
+            `;
+            openModal(content);
+            
+            const resultEl = el('acak-result');
+            let count = 0;
+            const maxCount = 20; 
+            const interval = setInterval(() => {
+                const rand = Math.floor(Math.random() * currentPresensiStudentsData.length);
+                resultEl.textContent = currentPresensiStudentsData[rand].nama;
+                count++;
+                if(count > maxCount) {
+                    clearInterval(interval);
+                    // Efek akhir
+                    resultEl.classList.add('scale-110', 'transition-transform', 'text-green-600');
+                }
+            }, 80); 
+        };
+        // --- AKHIR FUNGSI ACAK SISWA ---
         
         if (installPwaBtn) {
             window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; installPwaBtn.classList.remove('hidden'); });
