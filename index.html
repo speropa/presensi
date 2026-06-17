@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=0.85">
+    <meta name="viewport" content="width=device-width, initial-scale=0.85, maximum-scale=1.0, user-scalable=no">
     <title>Presensiku</title>
     <meta name="theme-color" content="#ffffff"/>
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/speropa/presensi/main/ikon%20presensi.jpg">
@@ -23,6 +23,7 @@
         
         html {
             font-size: 14px;
+            -webkit-tap-highlight-color: transparent;
         }
 
         @media (max-width: 720px) {
@@ -57,13 +58,16 @@
         .vertical-th { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; padding-bottom: 8px; padding-top: 8px; }
         button:disabled, select:disabled { background-color: #e5e7eb; cursor: not-allowed; color: #9ca3af; }
         
-        .pin-input-dashes { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 4rem; }
-        .pin-input-dashes .pin-dash { width: 16px; height: 16px; border-radius: 50%; background-color: #d1d5db; transition: background-color 0.2s ease; }
+        /* PIN Styles */
+        .pin-input-dashes { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 3rem; }
+        .pin-input-dashes .pin-dash { width: 16px; height: 16px; border-radius: 50%; border: 1px solid #1f2937; background-color: transparent; transition: all 0.2s ease; }
         .pin-input-dashes .pin-dash.filled { background-color: #1f2937; }
         
-        .ios-keypad-button { display: flex; align-items: center; justify-content: center; width: 75px; height: 75px; border-radius: 50%; font-size: 2rem; font-weight: 400; transition: background-color 0.2s ease; cursor: pointer; background-color: #e5e7eb; color: #1f2937; }
-        .ios-keypad-button:active { background-color: #d1d5db; }
-        .ios-keypad-button.functional { background-color: transparent; border: none; }
+        .ios-keypad-button { display: flex; align-items: center; justify-content: center; width: 70px; height: 70px; border-radius: 50%; font-size: 1.8rem; font-weight: 500; transition: background-color 0.2s ease; cursor: pointer; background-color: rgba(0,0,0,0.05); color: #1f2937; user-select: none; }
+        .ios-keypad-button:active { background-color: rgba(0,0,0,0.15); }
+        .ios-keypad-button.functional { background-color: transparent; border: none; font-size: 1.5rem; }
+        .ios-keypad-button.functional:active { background-color: transparent; opacity: 0.6; }
+
         .dashboard-card { transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
         .dashboard-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
         .highlight-card { border-left: 5px solid #2563eb; }
@@ -81,6 +85,40 @@
     </style>
 </head>
 <body class="app-bg">
+    <!-- PIN Lock Screen -->
+    <div id="pin-lock-screen" class="fixed inset-0 bg-white z-[150] flex flex-col items-center justify-center hidden">
+        <div class="w-full max-w-sm px-6 flex flex-col items-center">
+            <div class="mb-8 flex flex-col items-center">
+                <i class="fa-solid fa-lock text-4xl text-main mb-4"></i>
+                <h2 class="text-2xl font-bold text-center text-main">Aplikasi Terkunci</h2>
+                <p class="text-sub text-center mt-2">Masukkan PIN untuk mengakses</p>
+            </div>
+            
+            <div class="pin-input-dashes" id="pin-display">
+                <!-- 6 digits -->
+                <div class="pin-dash"></div><div class="pin-dash"></div><div class="pin-dash"></div>
+                <div class="pin-dash"></div><div class="pin-dash"></div><div class="pin-dash"></div>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-x-8 gap-y-6 justify-items-center w-full max-w-[280px]">
+                <div class="ios-keypad-button" onclick="window.handlePinInput(1)">1</div>
+                <div class="ios-keypad-button" onclick="window.handlePinInput(2)">2</div>
+                <div class="ios-keypad-button" onclick="window.handlePinInput(3)">3</div>
+                <div class="ios-keypad-button" onclick="window.handlePinInput(4)">4</div>
+                <div class="ios-keypad-button" onclick="window.handlePinInput(5)">5</div>
+                <div class="ios-keypad-button" onclick="window.handlePinInput(6)">6</div>
+                <div class="ios-keypad-button" onclick="window.handlePinInput(7)">7</div>
+                <div class="ios-keypad-button" onclick="window.handlePinInput(8)">8</div>
+                <div class="ios-keypad-button" onclick="window.handlePinInput(9)">9</div>
+                <div class="ios-keypad-button functional"></div>
+                <div class="ios-keypad-button" onclick="window.handlePinInput(0)">0</div>
+                <div class="ios-keypad-button functional" onclick="window.handlePinDelete()"><i class="fa-solid fa-delete-left"></i></div>
+            </div>
+            
+            <p id="pin-error-msg" class="text-red-500 mt-8 font-medium hidden animate-pulse">PIN Salah!</p>
+        </div>
+    </div>
+
     <div id="loading-spinner" class="fixed inset-0 bg-white bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 flex flex-col items-center justify-center z-50">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
         <div id="offline-login-container" class="mt-8 text-center hidden">
@@ -296,7 +334,13 @@
                         <h3 class="text-lg font-bold">Data Rekapitulasi</h3>
                         <div class="relative inline-block text-left">
                             <button id="rekap-download-dropdown-btn" class="bg-gray-600 text-white font-medium py-2 px-3 rounded-lg hover:bg-gray-700 flex items-center space-x-2 hidden"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg><span class="hidden sm:inline">Unduh Rekap</span><svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></button>
-                            <div id="rekap-download-options" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg card-bg ring-1 ring-black ring-opacity-5 focus:outline-none hidden"><div class="py-1"><button id="download-csv-btn" class="text-main block px-4 py-2 text-sm w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700">Unduh sebagai CSV</button><button id="print-rekap-btn" class="text-main block px-4 py-2 text-sm w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700">Cetak (PDF)</button></div></div>
+                            <div id="rekap-download-options" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg card-bg ring-1 ring-black ring-opacity-5 focus:outline-none hidden">
+                                <div class="py-1">
+                                    <button id="copy-table-btn" class="text-main block px-4 py-2 text-sm w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700">Salin Tabel</button>
+                                    <button id="download-csv-btn" class="text-main block px-4 py-2 text-sm w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700">Unduh sebagai CSV</button>
+                                    <button id="print-rekap-btn" class="text-main block px-4 py-2 text-sm w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700">Cetak (PDF)</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div id="rekap-search-container" class="mb-4 hidden"><label for="search-rekap-student" class="block text-sm font-medium text-sub mb-1">Cari Siswa:</label><input type="text" id="search-rekap-student" placeholder="Cari berdasarkan nama..." class="w-full px-4 py-2 input-bg rounded-lg focus:ring-blue-500 focus:border-blue-500"></div>
@@ -341,6 +385,14 @@
         let allPresensiData = {}, allKegiatanData = {}, allNilaiData = {};
         let authTimeout = null; 
         
+        // Variables for PIN Lock
+        const pinLockScreen = document.getElementById('pin-lock-screen');
+        const pinDisplay = document.getElementById('pin-display');
+        const pinErrorMsg = document.getElementById('pin-error-msg');
+        let currentPinInput = '';
+        let targetPin = '281299'; // Default Fallback, will be overwritten by Firebase
+        let isAppUnlocked = false;
+
         const el = id => document.getElementById(id);
 
         // --- Data Storage Abstraction Layer ---
@@ -420,7 +472,7 @@
         };
         // --- End of Data Storage Abstraction Layer ---
 
-        const loadingSpinner = el('loading-spinner'), loginPage = el('login-page'), mainApp = el('app'), userDisplayName = el('user-display-name'), offlineIndicator = el('offline-indicator'), installPwaBtn = el('install-pwa-btn'), filterMapel = el('filter-mapel'), filterKelas = el('filter-kelas'), filterTanggal = el('filter-tanggal'), terapkanBtn = el('terapkan-filter-btn'), rekapFilterMapel = el('rekap-filter-mapel'), rekapFilterKelas = el('rekap-filter-kelas'), terapkanRekapBtn = el('terapkan-rekap-btn'), deleteDailyDataBtn = el('delete-daily-data-btn'), toggleModeBtn = el('toggle-mode-btn'), toggleModeSwitch = el('toggle-mode-switch'), modeLabel = el('mode-label'), contentArea = el('content-area'), kegiatanInput = el('kegiatan-pembelajaran'), studentTableContainer = el('student-table-container'), saveAllBtn = el('save-all-btn'), kegiatanHistoryList = el('kegiatan-history-list'), kegiatanHistoryToggleMore = el('kegiatan-history-toggle-more'), presensiSearchContainer = el('presensi-search-container'), searchPresensiStudentInput = el('search-presensi-student'), addStudentForm = el('add-student-form'), allStudentsTable = el('all-students-table'), csvUploadInput = el('csv-upload'), downloadTemplateBtn = el('download-template-btn'), deleteAllStudentsBtn = el('delete-all-students-btn'), searchAllStudentsInput = el('search-all-students'), addMapelForm = el('add-mapel-form'), mapelListContainer = el('mapel-list-container'), jadwalUploadInput = el('jadwal-upload'), jadwalUploadLabel = el('jadwal-upload-label'), jadwalImageContainer = el('jadwal-image-container'), jadwalImage = el('jadwal-image'), jadwalPlaceholder = el('jadwal-placeholder'), deleteJadwalBtn = el('delete-jadwal-btn'), imageViewerModal = el('image-viewer-modal'), closeImageViewerBtn = el('close-image-viewer-btn'), fullscreenImage = el('fullscreen-image'), rekapTableContainer = el('rekap-table-container'), rekapDownloadDropdownBtn = el('rekap-download-dropdown-btn'), rekapDownloadOptions = el('rekap-download-options'), downloadCsvBtn = el('download-csv-btn'), printRekapBtn = el('print-rekap-btn'), rekapSearchContainer = el('rekap-search-container'), searchRekapStudentInput = el('search-rekap-student'), rekapDynamicTableContent = el('rekap-dynamic-table-content'), addJadwalForm = el('add-jadwal-form'), jadwalTerstrukturContainer = el('jadwal-terstruktur-container'), toggleJadwalModeBtn = el('toggle-jadwal-mode-btn'), toggleJadwalModeSwitch = el('toggle-jadwal-mode-switch'), jadwalModeLabel = el('jadwal-mode-label'), jadwalViewGambar = el('jadwal-view-gambar'), jadwalViewDinamis = el('jadwal-view-dinamis'), dashboardGreeting = el('dashboard-greeting'), dashboardDate = el('dashboard-date'), dashboardJadwalCerdas = el('dashboard-jadwal-cerdas'), modal = el('modal'), modalContent = el('modal-content'), burgerMenuBtn = el('burger-menu-btn'), dropdownMenu = el('dropdown-menu'), btnAcakSiswa = el('btn-acak-siswa');
+        const loadingSpinner = el('loading-spinner'), loginPage = el('login-page'), mainApp = el('app'), userDisplayName = el('user-display-name'), offlineIndicator = el('offline-indicator'), installPwaBtn = el('install-pwa-btn'), filterMapel = el('filter-mapel'), filterKelas = el('filter-kelas'), filterTanggal = el('filter-tanggal'), terapkanBtn = el('terapkan-filter-btn'), rekapFilterMapel = el('rekap-filter-mapel'), rekapFilterKelas = el('rekap-filter-kelas'), terapkanRekapBtn = el('terapkan-rekap-btn'), deleteDailyDataBtn = el('delete-daily-data-btn'), toggleModeBtn = el('toggle-mode-btn'), toggleModeSwitch = el('toggle-mode-switch'), modeLabel = el('mode-label'), contentArea = el('content-area'), kegiatanInput = el('kegiatan-pembelajaran'), studentTableContainer = el('student-table-container'), saveAllBtn = el('save-all-btn'), kegiatanHistoryList = el('kegiatan-history-list'), kegiatanHistoryToggleMore = el('kegiatan-history-toggle-more'), presensiSearchContainer = el('presensi-search-container'), searchPresensiStudentInput = el('search-presensi-student'), addStudentForm = el('add-student-form'), allStudentsTable = el('all-students-table'), csvUploadInput = el('csv-upload'), downloadTemplateBtn = el('download-template-btn'), deleteAllStudentsBtn = el('delete-all-students-btn'), searchAllStudentsInput = el('search-all-students'), addMapelForm = el('add-mapel-form'), mapelListContainer = el('mapel-list-container'), jadwalUploadInput = el('jadwal-upload'), jadwalUploadLabel = el('jadwal-upload-label'), jadwalImageContainer = el('jadwal-image-container'), jadwalImage = el('jadwal-image'), jadwalPlaceholder = el('jadwal-placeholder'), deleteJadwalBtn = el('delete-jadwal-btn'), imageViewerModal = el('image-viewer-modal'), closeImageViewerBtn = el('close-image-viewer-btn'), fullscreenImage = el('fullscreen-image'), rekapTableContainer = el('rekap-table-container'), rekapDownloadDropdownBtn = el('rekap-download-dropdown-btn'), rekapDownloadOptions = el('rekap-download-options'), copyTableBtn = el('copy-table-btn'), downloadCsvBtn = el('download-csv-btn'), printRekapBtn = el('print-rekap-btn'), rekapSearchContainer = el('rekap-search-container'), searchRekapStudentInput = el('search-rekap-student'), rekapDynamicTableContent = el('rekap-dynamic-table-content'), addJadwalForm = el('add-jadwal-form'), jadwalTerstrukturContainer = el('jadwal-terstruktur-container'), toggleJadwalModeBtn = el('toggle-jadwal-mode-btn'), toggleJadwalModeSwitch = el('toggle-jadwal-mode-switch'), jadwalModeLabel = el('jadwal-mode-label'), jadwalViewGambar = el('jadwal-view-gambar'), jadwalViewDinamis = el('jadwal-view-dinamis'), dashboardGreeting = el('dashboard-greeting'), dashboardDate = el('dashboard-date'), dashboardJadwalCerdas = el('dashboard-jadwal-cerdas'), modal = el('modal'), modalContent = el('modal-content'), burgerMenuBtn = el('burger-menu-btn'), dropdownMenu = el('dropdown-menu'), btnAcakSiswa = el('btn-acak-siswa');
         const offlineLoginContainer = el('offline-login-container'); 
         const offlineLoginBtn = el('offline-login-btn'); 
         
@@ -486,48 +538,86 @@
                 tableHTML += `<th class="vertical-th border border-main" rowspan="2">${d}/${m}/${y.slice(-2)}</th>`;
             });
             
-            tableHTML += `<th class="p-2 border border-main text-center font-bold" colspan="3">Jumlah</th>`;
+            tableHTML += `<th class="p-2 border border-main text-center font-bold" colspan="4">Jumlah</th>`;
+            tableHTML += `<th class="p-2 border border-main text-center font-bold" colspan="2">Nilai Akhir</th>`;
             tableHTML += `</tr>`;
 
             tableHTML += `<tr>`;
+            tableHTML += `<th class="p-2 border border-main text-center font-bold" style="background-color: #E6F2FF;">H</th>`;
             tableHTML += `<th class="p-2 border border-main text-center font-bold" style="background-color: #FFFACD;">S</th>`;
             tableHTML += `<th class="p-2 border border-main text-center font-bold" style="background-color: #E0FEE0;">I</th>`;
             tableHTML += `<th class="p-2 border border-main text-center font-bold" style="background-color: #FFEEEE;">A</th>`;
+            tableHTML += `<th class="p-2 border border-main text-center font-bold bg-blue-100">Absen</th>`;
+            tableHTML += `<th class="p-2 border border-main text-center font-bold bg-purple-100">Harian</th>`;
             tableHTML += `</tr>`;
             
             tableHTML += `</thead><tbody>`;
             
-            const statusSymbols = { Hadir: '•', Sakit: 'S', Izin: 'I', Alpa: 'A' }, statusColors = { S: 'text-orange-600', I: 'text-green-600', A: 'text-red-600' };
+            const statusSymbols = { Hadir: '-', Sakit: 'S', Izin: 'I', Alpa: 'A' };
+            const statusColors = { Hadir: 'text-gray-400', Sakit: 'text-orange-600', Izin: 'text-green-600', Alpa: 'text-red-600' };
             let filteredCount = 0;
             Object.entries(allStudents).filter(([id, student]) => student.kelas === kelas).sort(([, a], [, b]) => a.nama.localeCompare(b.nama)).forEach(([studentId, student]) => {
                 if (student.nama.toLowerCase().includes(query)) {
                     
-                    let countS = 0, countI = 0, countA = 0;
+                    let countH = 0, countS = 0, countI = 0, countA = 0;
+                    let sumNilai = 0, countNilai = 0;
                     
                     tableHTML += `<tr class="border-b border-main"><td class="p-2 border border-main text-center">${filteredCount + 1}</td><td class="p-2 border border-main font-medium">${student.nama}</td>`;
                     sortedDates.forEach(date => {
-                        const status = presensiData[date]?.[studentId]?.status, nilai = nilaiData[date]?.[studentId]?.nilai;
+                        // Secara default jika tanggal ada tapi status kosong, berarti Hadir
+                        const status = presensiData[date]?.[studentId]?.status || 'Hadir'; 
+                        const nilai = nilaiData[date]?.[studentId]?.nilai;
                         
-                        if (status === 'Sakit') countS++;
+                        if (status === 'Hadir') countH++;
+                        else if (status === 'Sakit') countS++;
                         else if (status === 'Izin') countI++;
                         else if (status === 'Alpa') countA++;
-
-                        let cellContent = '-';
-                        let cellBgClass = ''; 
-                        if (status || nilai || nilai === 0) {
-                            const symbol = status ? statusSymbols[status] || '?' : '•', colorClass = status ? statusColors[status] || '' : '', nilaiHtml = (nilai || nilai === 0) ? `<br><span class="font-bold">${nilai}</span>` : '';
-                            cellContent = `<span class="${colorClass}">${symbol}</span>${nilaiHtml}`;
-                            
-                            if (status === 'Sakit') cellBgClass = 'bg-orange-100';
-                            else if (status === 'Izin') cellBgClass = 'bg-green-100';
-                            else if (status === 'Alpa') cellBgClass = 'bg-red-100';
+                        
+                        if (nilai !== undefined && nilai !== null) {
+                            sumNilai += parseFloat(nilai);
+                            countNilai++;
                         }
+
+                        let cellBgClass = ''; 
+                        if (status === 'Sakit') cellBgClass = 'bg-orange-100';
+                        else if (status === 'Izin') cellBgClass = 'bg-green-100';
+                        else if (status === 'Alpa') cellBgClass = 'bg-red-100';
+
+                        const symbol = statusSymbols[status];
+                        const colorClass = statusColors[status];
+                        const fontClass = status === 'Hadir' ? 'font-medium' : 'font-bold';
+                        const nilaiHtml = (nilai !== undefined && nilai !== null) ? `<br><span class="font-bold text-gray-800">${nilai}</span>` : '';
+                        const cellContent = `<span class="${colorClass} ${fontClass}">${symbol}</span>${nilaiHtml}`;
+                        
                         tableHTML += `<td class="p-2 border border-main text-center ${cellBgClass}">${cellContent}</td>`; 
                     });
 
+                    tableHTML += `<td class="p-2 border border-main text-center font-bold" style="background-color: #E6F2FF;">${countH}</td>`;
                     tableHTML += `<td class="p-2 border border-main text-center font-bold" style="background-color: #FFFACD;">${countS}</td>`;
                     tableHTML += `<td class="p-2 border border-main text-center font-bold" style="background-color: #E0FEE0;">${countI}</td>`;
                     tableHTML += `<td class="p-2 border border-main text-center font-bold" style="background-color: #FFEEEE;">${countA}</td>`;
+                    
+                    // --- Kalkulasi Nilai Akhir (Absensi & Harian) ---
+                    let totalPertemuan = countH + countS + countI + countA;
+                    let nilaiAbsensi = '-';
+                    if (totalPertemuan > 0) {
+                        // Rumus Adil Absensi: Hadir=100, Sakit=90, Izin=80, Alpa=0
+                        let poinAbsen = (countH * 100) + (countS * 90) + (countI * 80) + (countA * 0);
+                        nilaiAbsensi = Math.round(poinAbsen / totalPertemuan);
+                    }
+
+                    let nilaiHarianAkhir = 60; // Default jika tidak ada nilai
+                    if (countNilai > 0) {
+                        let avg = sumNilai / countNilai;
+                        if (avg >= 70) {
+                            nilaiHarianAkhir = Math.round(avg);
+                        } else {
+                            nilaiHarianAkhir = 70; // Katrol ke 70
+                        }
+                    }
+
+                    tableHTML += `<td class="p-2 border border-main text-center font-bold text-blue-700 bg-blue-50">${nilaiAbsensi}</td>`;
+                    tableHTML += `<td class="p-2 border border-main text-center font-bold text-purple-700 bg-purple-50">${nilaiHarianAkhir}</td>`;
                     
                     tableHTML += `</tr>`;
                     filteredCount++;
@@ -542,6 +632,9 @@
                 tableHTML += `<td class="vertical-th border border-main" style="font-weight: 500;">${kegiatan}</td>`;
             });
             
+            tableHTML += `<td class="p-2 border border-main text-center">-</td>`;
+            tableHTML += `<td class="p-2 border border-main text-center">-</td>`;
+            tableHTML += `<td class="p-2 border border-main text-center">-</td>`;
             tableHTML += `<td class="p-2 border border-main text-center">-</td>`;
             tableHTML += `<td class="p-2 border border-main text-center">-</td>`;
             tableHTML += `<td class="p-2 border border-main text-center">-</td>`;
@@ -577,6 +670,95 @@
 
         // Listener untuk tombol offline baru
         offlineLoginBtn.addEventListener('click', handleOfflineLogin);
+
+        // --- Logic PWA & PIN Lock ---
+        async function initPinLock() {
+            // Check if PWA
+            const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                          window.navigator.standalone === true || 
+                          document.referrer.includes('android-app://');
+
+            if (isPWA) {
+                console.log("Mode PWA terdeteksi. Melewati kunci PIN.");
+                isAppUnlocked = true;
+                pinLockScreen.classList.add('hidden');
+            } else {
+                console.log("Mode Browser terdeteksi. Mengaktifkan kunci PIN.");
+                pinLockScreen.classList.remove('hidden');
+                
+                // Fetch PIN from Firebase
+                if (navigator.onLine) {
+                    try {
+                        const pinSnapshot = await get(ref(db, 'pin/kunci'));
+                        if (pinSnapshot.exists()) {
+                            targetPin = String(pinSnapshot.val());
+                            console.log("PIN berhasil diambil dari Firebase.");
+                        } else {
+                            console.log("Path 'pin/kunci' tidak ditemukan di Firebase. Menggunakan PIN default.");
+                        }
+                    } catch (e) {
+                        console.warn("Gagal mengambil PIN dari Firebase (akses ditolak/belum login). Menggunakan PIN default: " + targetPin);
+                    }
+                }
+            }
+        }
+
+        window.handlePinInput = (num) => {
+            if (currentPinInput.length < 6) {
+                currentPinInput += num;
+                updatePinDisplay();
+                pinErrorMsg.classList.add('hidden');
+                
+                if (currentPinInput.length === 6) {
+                    setTimeout(checkPin, 300);
+                }
+            }
+        };
+
+        window.handlePinDelete = () => {
+            if (currentPinInput.length > 0) {
+                currentPinInput = currentPinInput.slice(0, -1);
+                updatePinDisplay();
+                pinErrorMsg.classList.add('hidden');
+            }
+        };
+
+        function updatePinDisplay() {
+            const dashes = pinDisplay.querySelectorAll('.pin-dash');
+            dashes.forEach((dash, index) => {
+                if (index < currentPinInput.length) {
+                    dash.classList.add('filled');
+                } else {
+                    dash.classList.remove('filled');
+                }
+            });
+        }
+
+        function checkPin() {
+            if (currentPinInput === targetPin) {
+                isAppUnlocked = true;
+                pinLockScreen.classList.add('fade-out');
+                setTimeout(() => {
+                    pinLockScreen.classList.add('hidden');
+                    pinLockScreen.classList.remove('fade-out');
+                }, 300);
+                
+                // Trigger Auth Logic if waiting
+                // Authentication is handled separately by onAuthStateChanged
+            } else {
+                pinErrorMsg.classList.remove('hidden');
+                pinDisplay.classList.add('animate-shake');
+                currentPinInput = '';
+                setTimeout(() => {
+                    updatePinDisplay();
+                    pinDisplay.classList.remove('animate-shake');
+                }, 500);
+            }
+        }
+        // --- End of Logic PWA & PIN Lock ---
+
+        // Init PIN Lock immediately
+        initPinLock();
 
         // MODIFIKASI: Logika onAuthStateChanged DIPERBAIKI
         onAuthStateChanged(auth, async (user) => {
@@ -923,6 +1105,7 @@
             jadwalUploadInput.addEventListener('change', handleJadwalUpload);
             deleteJadwalBtn.addEventListener('click', showDeleteJadwalConfirmation);
             rekapDownloadDropdownBtn.addEventListener('click', toggleRekapDownloadDropdown);
+            copyTableBtn.addEventListener('click', handleCopyTable);
             downloadCsvBtn.addEventListener('click', handleDownloadCSV);
             printRekapBtn.addEventListener('click', handlePrintRekap);
             addJadwalForm.addEventListener('submit', handleAddJadwal);
@@ -1326,6 +1509,7 @@
                         const nilai = (nData.nilai !== undefined && nData.nilai !== null) ? nData.nilai : '';
 
                         let cellContent = '';
+                        let tdClass = '';
                         
                         if (date === mainDate) {
                             if (currentMode === 'presensi') {
@@ -1361,21 +1545,23 @@
                                 cellContent = `<input type="number" min="0" max="100" value="${nilai}" oninput="window.updateNilai(this, '${student.id}', '${date}')" placeholder="-">`;
                             }
                         } else {
-                            const statusSymbols = { Hadir: '•', Sakit: 'S', Izin: 'I', Alpa: 'A' };
-                            const statusColors = { S: 'text-orange-600', I: 'text-green-600', A: 'text-red-600' };
-                            const historicalStatus = presensiData[date]?.[student.id]?.status;
+                            const statusSymbols = { Hadir: '-', Sakit: 'S', Izin: 'I', Alpa: 'A' };
+                            const statusColors = { Hadir: 'text-gray-400', Sakit: 'text-orange-600', Izin: 'text-green-600', Alpa: 'text-red-600' };
+                            
+                            const historicalStatus = presensiData[date]?.[student.id]?.status || 'Hadir'; // Default Hadir
                             const historicalNilai = nilaiData[date]?.[student.id]?.nilai;
 
-                            if (historicalStatus || historicalNilai !== undefined) {
-                                const symbol = historicalStatus ? statusSymbols[historicalStatus] || '?' : '•';
-                                const colorClass = historicalStatus ? statusColors[historicalStatus] || '' : '';
-                                const nilaiHtml = (historicalNilai !== undefined && historicalNilai !== null) ? `<br><span class="font-bold text-xs">${historicalNilai}</span>` : '';
-                                cellContent = `<span class="${colorClass}">${symbol}</span>${nilaiHtml}`;
-                            } else {
-                                cellContent = '-';
-                            }
+                            if (historicalStatus === 'Sakit') tdClass = 'bg-orange-100';
+                            else if (historicalStatus === 'Izin') tdClass = 'bg-green-100';
+                            else if (historicalStatus === 'Alpa') tdClass = 'bg-red-100';
+
+                            const symbol = statusSymbols[historicalStatus] || '-';
+                            const colorClass = statusColors[historicalStatus] || 'text-gray-400';
+                            const fontClass = historicalStatus === 'Hadir' ? 'font-medium' : 'font-bold';
+                            const nilaiHtml = (historicalNilai !== undefined && historicalNilai !== null) ? `<br><span class="font-bold text-xs text-gray-800">${historicalNilai}</span>` : '';
+                            cellContent = `<span class="${colorClass} ${fontClass}">${symbol}</span>${nilaiHtml}`;
                         }
-                        tableHTML += `<td>${cellContent}</td>`;
+                        tableHTML += `<td class="${tdClass}">${cellContent}</td>`;
                     });
                     tableHTML += `</tr>`;
                     
@@ -1594,16 +1780,108 @@
         }
         
         function toggleRekapDownloadDropdown() { rekapDownloadOptions.classList.toggle('hidden'); }
+        
+        async function handleCopyTable() {
+            rekapDownloadOptions.classList.add('hidden');
+            const table = rekapDynamicTableContent.querySelector('table');
+            if (!table) return showToast("Tidak ada data untuk disalin.", true);
+            
+            const headerRow1Els = table.rows[0].querySelectorAll('th');
+            
+            // Menangani colspan agar kolom atas terentang dengan TSV
+            let headerRow1Arr = [];
+            headerRow1Els.forEach(th => {
+                headerRow1Arr.push(th.textContent.trim());
+                const colspan = parseInt(th.getAttribute('colspan') || '1', 10);
+                for (let c = 1; c < colspan; c++) {
+                    headerRow1Arr.push('');
+                }
+            });
+            const headerRow1 = headerRow1Arr.join('\t');
+
+            const paddingCount = headerRow1Els.length > 2 ? headerRow1Els.length - 2 : 0; 
+            const header2Padding = Array(paddingCount).fill('').join('\t'); 
+
+            const headerRow2Data = Array.from(table.rows[1].querySelectorAll('th'))
+                                    .map(th => th.textContent.trim()).join('\t');
+            
+            const finalHeaderRow2 = header2Padding + (paddingCount > 0 ? '\t' : '') + headerRow2Data;
+            
+            let tsv = [headerRow1, finalHeaderRow2];
+            
+            for (let i = 2; i < table.rows.length; i++) {
+                const rowData = Array.from(table.rows[i].querySelectorAll('td')).map(td => {
+                    let cellText = td.textContent.trim().replace(/\s*\n\s*/g, ' ').trim();
+                    const isKegiatanRow = (i === table.rows.length - 1);
+                    
+                    if (!isKegiatanRow) {
+                        const match = cellText.match(/^([SIA\-])?\s*([\d\.]+)?$/);
+                        if (match) {
+                            const statusPart = match[1] || '';
+                            const nilaiPart = match[2] || '';
+                            
+                            if (statusPart === '-' && nilaiPart) {
+                                cellText = nilaiPart;
+                            } else if (statusPart && nilaiPart) {
+                                cellText = `${statusPart} - ${nilaiPart}`;
+                            } else if (statusPart) {
+                                cellText = statusPart;
+                            } else if (nilaiPart) {
+                                cellText = nilaiPart;
+                            }
+                        } else if (cellText === '•' || cellText === '') {
+                            cellText = '-';
+                        }
+                    }
+                    
+                    return cellText;
+                });
+                
+                tsv.push(rowData.join('\t'));
+            }
+            
+            const finalTsvData = tsv.join('\n');
+
+            // Fallback method karena environment iFrame memblokir navigator.clipboard
+            const textArea = document.createElement("textarea");
+            textArea.value = finalTsvData;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast("Tabel berhasil disalin!");
+            } catch (err) {
+                console.error(err);
+                showToast("Gagal menyalin tabel.", true);
+            }
+            textArea.remove();
+        }
+
         function handleDownloadCSV() {
             rekapDownloadOptions.classList.add('hidden');
             const table = rekapDynamicTableContent.querySelector('table');
             if (!table) return showToast("Tidak ada data.", true);
             
             const headerRow1Els = table.rows[0].querySelectorAll('th');
-            const headerRow1 = Array.from(headerRow1Els)
-                                    .map(th => `"${th.textContent.trim()}"`).join(';');
+            
+            // Menangani colspan agar kolom atas (Jumlah & Nilai Akhir) terentang rapi di Excel
+            let headerRow1Arr = [];
+            headerRow1Els.forEach(th => {
+                headerRow1Arr.push(`"${th.textContent.trim()}"`);
+                const colspan = parseInt(th.getAttribute('colspan') || '1', 10);
+                for (let c = 1; c < colspan; c++) {
+                    headerRow1Arr.push('""');
+                }
+            });
+            const headerRow1 = headerRow1Arr.join(';');
 
-            const paddingCount = headerRow1Els.length > 0 ? headerRow1Els.length - 1 : 0; 
+            // Padding untuk baris kedua disesuaikan dengan jumlah kolom sebelum "Jumlah"
+            // (yaitu: No, Nama, dan kolom-kolom Tanggal)
+            const paddingCount = headerRow1Els.length > 2 ? headerRow1Els.length - 2 : 0; 
             const header2Padding = Array(paddingCount).fill('""').join(';'); 
 
             const headerRow2Data = Array.from(table.rows[1].querySelectorAll('th'))
@@ -1619,10 +1897,24 @@
                     const isKegiatanRow = (i === table.rows.length - 1);
                     
                     if (!isKegiatanRow) {
-                        const gradeMatch = cellText.match(/([\d\.]+)$/);
-                        if (gradeMatch) {
-                            cellText = gradeMatch[1];
-                        } else if (cellText === '•') {
+                        // Memisahkan status huruf (-/S/I/A) dan angka (nilai) yang tergabung karena textContent
+                        const match = cellText.match(/^([SIA\-])?\s*([\d\.]+)?$/);
+                        if (match) {
+                            const statusPart = match[1] || '';
+                            const nilaiPart = match[2] || '';
+                            
+                            if (statusPart === '-' && nilaiPart) {
+                                // Jika Hadir (-) dan ada nilai, hanya tampilkan nilainya saja di CSV
+                                cellText = nilaiPart;
+                            } else if (statusPart && nilaiPart) {
+                                // Jika Sakit/Izin/Alpa dan ada nilai, tampilkan keduanya (contoh: S - 80)
+                                cellText = `${statusPart} - ${nilaiPart}`;
+                            } else if (statusPart) {
+                                cellText = statusPart;
+                            } else if (nilaiPart) {
+                                cellText = nilaiPart;
+                            }
+                        } else if (cellText === '•' || cellText === '') {
                             cellText = '-';
                         }
                     }
@@ -1933,7 +2225,35 @@
                         buttonHTML = `<button onclick="window.handlePresensiShortcut('${item.mapelId}', '${item.kelas}', '${item.date}')" class="${buttonClass} text-white font-bold py-2 px-4 rounded-lg flex items-center transition text-sm">${buttonIcon}<span>${buttonText}</span></button>`;
                     }
 
-                    if (presensiData) { let h = 0, s = 0, i = 0, a = 0; let sakitList = [], izinList = [], alpaList = [], hadirDenganCatatanList = []; Object.entries(presensiData).forEach(([studentId, p]) => { const studentName = allStudents[studentId]?.nama || 'Siswa Dihapus'; switch(p.status) { case 'Hadir': h++; if(p.catatan) hadirDenganCatatanList.push({name: studentName, note: p.catatan}); break; case 'Sakit': s++; sakitList.push({name: studentName, note: p.catatan}); break; case 'Izin': i++; izinList.push({name: studentName, note: p.catatan}); break; case 'Alpa': a++; alpaList.push({name: studentName, note: p.catatan}); break; } }); presensiHTML = `<div class="mt-4 pt-4 border-t border-main"><p class="text-sm font-bold mb-2">Rekap Presensi</p><div class="flex justify-around text-center text-sm"><div><strong>${h}</strong><p>Hadir</p></div><div><strong class="text-orange-600">${s}</strong><p>Sakit</p></div><div><strong class="text-green-600">${i}</strong><p>Izin</p></div><div><strong class="text-red-600">${a}</strong><p>Alpa</p></div></div></div>`; if (sakitList.length > 0 || izinList.length > 0 || alpaList.length > 0 || hadirDenganCatatanList.length > 0) { presensiDetailHTML += '<div class="mt-3 text-xs space-y-1">'; const createList = (title, list) => { if(list.length > 0) presensiDetailHTML += `<div><strong>${title}:</strong> ${list.map(item => `${item.name}${item.note ? ` (<span class="italic text-sub">${item.note}</span>)` : ''}`).join(', ')}</div>`; }; createList('Sakit', sakitList); createList('Izin', izinList); createList('Alpa', alpaList); createList('Hadir (dgn catatan)', hadirDenganCatatanList); presensiDetailHTML += '</div>'; } }
+                    if (presensiData) { 
+                        let h = 0, s = 0, i = 0, a = 0; 
+                        let sakitList = [], izinList = [], alpaList = [], hadirDenganCatatanList = []; 
+                        const totalSiswaDiKelas = Object.values(allStudents).filter(st => st.kelas === item.kelas).length;
+                        
+                        Object.entries(presensiData).forEach(([studentId, p]) => { 
+                            const studentName = allStudents[studentId]?.nama || 'Siswa Dihapus'; 
+                            switch(p.status) { 
+                                case 'Hadir': h++; if(p.catatan) hadirDenganCatatanList.push({name: studentName, note: p.catatan}); break; 
+                                case 'Sakit': s++; sakitList.push({name: studentName, note: p.catatan}); break; 
+                                case 'Izin': i++; izinList.push({name: studentName, note: p.catatan}); break; 
+                                case 'Alpa': a++; alpaList.push({name: studentName, note: p.catatan}); break; 
+                            } 
+                        }); 
+                        
+                        // Kalkulasi otomatis siswa yang belum tersimpan statusnya sebagai "Hadir"
+                        const siswaTercatat = h + s + i + a;
+                        if (totalSiswaDiKelas > siswaTercatat) {
+                            h += (totalSiswaDiKelas - siswaTercatat);
+                        }
+
+                        presensiHTML = `<div class="mt-4 pt-4 border-t border-main"><p class="text-sm font-bold mb-2">Rekap Presensi</p><div class="flex justify-around text-center text-sm"><div><strong>${h}</strong><p>Hadir</p></div><div><strong class="text-orange-600">${s}</strong><p>Sakit</p></div><div><strong class="text-green-600">${i}</strong><p>Izin</p></div><div><strong class="text-red-600">${a}</strong><p>Alpa</p></div></div></div>`; 
+                        if (sakitList.length > 0 || izinList.length > 0 || alpaList.length > 0 || hadirDenganCatatanList.length > 0) { 
+                            presensiDetailHTML += '<div class="mt-3 text-xs space-y-1">'; 
+                            const createList = (title, list) => { if(list.length > 0) presensiDetailHTML += `<div><strong>${title}:</strong> ${list.map(item => `${item.name}${item.note ? ` (<span class="italic text-sub">${item.note}</span>)` : ''}`).join(', ')}</div>`; }; 
+                            createList('Sakit', sakitList); createList('Izin', izinList); createList('Alpa', alpaList); createList('Hadir (dgn catatan)', hadirDenganCatatanList); 
+                            presensiDetailHTML += '</div>'; 
+                        } 
+                    }
                     
                     if (kegiatanData?.deskripsi) {
                         const label = item.date === todayDateString ? "Kegiatan Hari Ini" : "Kegiatan Tercatat";
@@ -2102,7 +2422,7 @@
             window.addEventListener('appinstalled', () => { installPwaBtn.classList.add('hidden'); deferredPrompt = null; showToast("Aplikasi berhasil diinstal!"); });
         }
 
-        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration failed: ', err)); }); }
+        if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.protocol === 'http:')) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(err => console.warn('SW registration tertunda (bukan https/http): ', err.message)); }); }
         window.handleDeleteDailyData = handleDeleteDailyData; window.handleDeleteJadwal = handleDeleteJadwal; window.handleDeleteMapel = handleDeleteMapel; window.handleDeleteStudent = handleDeleteStudent; window.handleEditMapel = handleEditMapel; window.handleEditStudent = handleEditStudent; window.showDeleteMapelModal = showDeleteMapelModal; window.showDeleteStudentModal = showDeleteStudentModal; window.showEditMapelModal = showEditMapelModal; window.showEditStudentModal = showEditStudentModal; window.goToBuatJadwal = goToBuatJadwal; window.handlePresensiShortcut = handlePresensiShortcut; window.showEditJadwalModal = showEditJadwalModal; window.handleEditJadwal = handleEditJadwal; window.handleDeleteJadwalEntry = handleDeleteJadwalEntry; window.confirmDeleteJadwalEntry = window.confirmDeleteJadwalEntry;
         setupPreLoginEventListeners();
     </script>
